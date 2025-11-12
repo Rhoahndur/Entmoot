@@ -1,0 +1,216 @@
+Entmoot Project Structure (Updated with Docker & CI/CD)
+========================================================
+
+Entmoot/
+│
+├── 🐳 DOCKER INFRASTRUCTURE (NEW)
+│   ├── Dockerfile                      # Backend container (Python 3.10 + GDAL)
+│   ├── docker-compose.yml              # Production orchestration
+│   ├── docker-compose.dev.yml          # Development orchestration  
+│   ├── .dockerignore                   # Build optimization
+│   ├── .env.example                    # Configuration template
+│   └── docker-test.sh                  # Validation script
+│
+├── 🔄 CI/CD WORKFLOWS (NEW)
+│   └── .github/
+│       └── workflows/
+│           ├── ci.yml                  # Continuous Integration
+│           └── deploy.yml              # Continuous Deployment
+│
+├── 💻 BACKEND
+│   └── src/
+│       └── entmoot/
+│           ├── api/
+│           │   ├── main.py             # FastAPI app with health checks
+│           │   ├── upload.py           # File upload endpoints
+│           │   ├── error_handlers.py   # Error handling
+│           │   └── middleware.py       # Request middleware
+│           ├── core/
+│           │   ├── config.py           # Configuration management
+│           │   ├── storage.py          # File storage
+│           │   ├── validation.py       # Input validation
+│           │   ├── boundaries.py       # Boundary extraction
+│           │   ├── cleanup.py          # Cleanup service
+│           │   ├── logging_config.py   # Logging setup
+│           │   ├── retry.py            # Retry logic
+│           │   ├── errors.py           # Error definitions
+│           │   ├── parsers/
+│           │   │   ├── kml_parser.py
+│           │   │   ├── kmz_parser.py
+│           │   │   ├── kml_validator.py
+│           │   │   ├── kmz_validator.py
+│           │   │   └── geometry.py
+│           │   ├── crs/
+│           │   │   ├── detector.py     # CRS detection
+│           │   │   ├── transformer.py  # Coordinate transforms
+│           │   │   ├── normalizer.py   # CRS normalization
+│           │   │   └── utm.py          # UTM zone handling
+│           │   ├── terrain/
+│           │   │   ├── dem_loader.py   # DEM data loading
+│           │   │   ├── dem_validator.py
+│           │   │   ├── dem_processor.py
+│           │   │   ├── slope.py        # Slope analysis
+│           │   │   ├── aspect.py       # Aspect analysis
+│           │   │   └── buildability.py # Buildability maps
+│           │   └── constraints/
+│           │       ├── validator.py    # Constraint validation
+│           │       ├── aggregator.py   # Constraint aggregation
+│           │       ├── collection.py   # Constraint collections
+│           │       └── buffers.py      # Buffer operations
+│           ├── models/
+│           │   ├── upload.py           # Upload models
+│           │   ├── boundary.py         # Boundary models
+│           │   ├── crs.py              # CRS models
+│           │   ├── constraints.py      # Constraint models
+│           │   ├── regulatory.py       # Regulatory models
+│           │   ├── terrain.py          # Terrain models
+│           │   ├── elevation.py        # Elevation models
+│           │   └── errors.py           # Error models
+│           ├── integrations/
+│           │   ├── fema/               # FEMA API integration
+│           │   │   ├── client.py
+│           │   │   ├── cache.py
+│           │   │   └── parser.py
+│           │   └── usgs/               # USGS API integration
+│           │       ├── client.py
+│           │       ├── cache.py
+│           │       └── parser.py
+│           └── utils/
+│               ├── version.py
+│               └── logging.py
+│
+├── 🎨 FRONTEND (NEW - Updated with Docker)
+│   ├── Dockerfile                      # Frontend container (Node + Nginx)
+│   ├── nginx.conf                      # Nginx configuration
+│   ├── .dockerignore                   # Build optimization
+│   ├── src/
+│   │   ├── App.tsx                     # Main app component
+│   │   ├── main.tsx                    # Entry point
+│   │   ├── components/
+│   │   │   ├── MapView.tsx             # Interactive map
+│   │   │   ├── FileUpload.tsx          # File upload UI
+│   │   │   ├── BoundaryInfo.tsx        # Boundary display
+│   │   │   ├── AnalysisResults.tsx     # Results display
+│   │   │   └── TerrainVisualization.tsx
+│   │   ├── services/
+│   │   │   └── api.ts                  # API client
+│   │   └── types/
+│   │       └── index.ts                # TypeScript types
+│   ├── public/
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   └── tailwind.config.js
+│
+├── 🧪 TESTS
+│   ├── test_api.py
+│   ├── test_boundaries.py
+│   ├── test_cleanup.py
+│   ├── test_config.py
+│   ├── test_errors.py
+│   ├── test_kml_parser.py
+│   ├── test_kmz_parser.py
+│   ├── test_logging.py
+│   ├── test_main_api.py
+│   ├── test_models.py
+│   ├── test_storage.py
+│   ├── test_upload_api.py
+│   ├── test_validation.py
+│   ├── test_crs/
+│   │   ├── test_detector.py
+│   │   ├── test_transformer.py
+│   │   ├── test_normalizer.py
+│   │   └── test_utm.py
+│   ├── test_terrain/
+│   │   ├── test_slope.py
+│   │   ├── test_aspect.py
+│   │   ├── test_buildability.py
+│   │   ├── test_dem_loader.py
+│   │   └── test_dem_validator.py
+│   ├── test_constraints/
+│   │   ├── test_models.py
+│   │   ├── test_collection.py
+│   │   └── test_buffers.py
+│   └── test_integrations/
+│       ├── test_fema.py
+│       └── test_usgs.py
+│
+├── 📚 DOCUMENTATION (NEW - Enhanced)
+│   ├── README.md                       # Updated with Docker
+│   ├── STORIES_6.5-6.6_COMPLETION.md  # Completion report
+│   ├── DOCKER_QUICKSTART.md           # Docker guide
+│   ├── DEPLOYMENT_CHECKLIST.md        # Deployment guide
+│   ├── IMPLEMENTATION_SUMMARY_6.5-6.6.md
+│   ├── FILES_CREATED_6.5-6.6.txt
+│   ├── PROJECT_STRUCTURE.txt          # This file
+│   ├── QUICKSTART_FRONTEND.md
+│   ├── STORIES_5.5-5.7_COMPLETION.md
+│   ├── IMPLEMENTATION_STORIES_5.3-5.4.md
+│   ├── STORIES_4.4-4.6_COMPLETE.md
+│   ├── STORY_3.6_3.7_COMPLETION_REPORT.md
+│   ├── STORY_2.6_IMPLEMENTATION_SUMMARY.md
+│   ├── STORY_2.3_COMPLETION_REPORT.md
+│   ├── STORY_2.1_COMPLETION_REPORT.md
+│   ├── STORY_2.4_COMPLETION_REPORT.md
+│   ├── STORY_1.6_COMPLETION_REPORT.md
+│   ├── STORY_1.3_COMPLETION_REPORT.md
+│   ├── STORY_1.2_COMPLETE.md
+│   ├── SETUP_COMPLETE.md
+│   ├── CONTRIBUTING.md
+│   ├── architecture.md
+│   ├── PRD.md
+│   ├── Tasklist.md
+│   ├── project_description.md
+│   └── TERRAIN_ANALYSIS.md
+│
+├── 🛠️ CONFIGURATION
+│   ├── pyproject.toml                  # Python project config
+│   ├── requirements.txt                # Production dependencies
+│   ├── requirements-dev.txt            # Dev dependencies
+│   ├── .flake8                         # Flake8 config
+│   ├── .pre-commit-config.yaml         # Pre-commit hooks
+│   ├── .gitignore                      # Git ignore rules
+│   └── .env.example                    # Environment template
+│
+├── 📊 EXAMPLES
+│   ├── boundary_extraction_demo.py
+│   ├── terrain_analysis_demo.py
+│   ├── buildability_analysis_demo.py
+│   └── fema_floodplain_example.py
+│
+└── 📦 DATA (Generated at runtime)
+    ├── uploads/                        # User uploaded files
+    ├── temp/                           # Temporary processing
+    └── logs/                           # Application logs
+
+DOCKER VOLUMES (Created at runtime):
+====================================
+- postgres_data/                        # Database persistence
+- redis_data/                           # Cache persistence
+- upload_data/                          # Upload persistence
+- temp_data/                            # Temporary files
+- logs/                                 # Log persistence
+
+KEY TECHNOLOGIES:
+=================
+Backend:  FastAPI, GDAL, Shapely, GeoPandas, PyProj, Rasterio
+Frontend: React 19, TypeScript, Vite, TailwindCSS, MapLibre GL
+Database: PostgreSQL 15 + PostGIS 3.4
+Cache:    Redis 7
+DevOps:   Docker, Docker Compose, GitHub Actions
+Testing:  pytest, coverage
+
+DEPLOYMENT OPTIONS:
+===================
+1. Local Development:  docker compose -f docker-compose.dev.yml up
+2. Production:         docker compose up -d
+3. CI/CD:             Automatic via GitHub Actions
+
+QUICK START:
+============
+$ cp .env.example .env
+$ docker compose up -d
+$ open http://localhost
+
+For more details, see DOCKER_QUICKSTART.md
+

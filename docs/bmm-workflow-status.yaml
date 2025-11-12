@@ -1,0 +1,24 @@
+# Workflow Status Template
+# This tracks progress through BMM methodology phases
+# Phase 3/4 (Implementation) is tracked separately in sprint-status.yaml
+
+generated: "2025-11-10"
+project: "Entmoot"
+project_type: "software"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: "method-greenfield.yaml"
+
+workflow_status:
+  # Phase 1: Planning
+  prd: "PRD.md"  # agent: pm
+  validate-prd: optional  # agent: pm
+  create-design: skipped  # agent: ux-designer (iterative UX during frontend dev)
+
+  # Phase 2: Solutioning
+  create-architecture: "architecture.md"  # agent: architect
+  validate-architecture: optional  # agent: architect
+  solutioning-gate-check: "docs/bmm-readiness-assessment-2025-11-10.md"  # agent: architect
+
+  # Phase 3: Implementation
+  sprint-planning: required  # agent: sm

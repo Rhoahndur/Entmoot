@@ -1,0 +1,86 @@
+═══════════════════════════════════════════════════════════════
+    ENTMOOT - VERCEL + RAILWAY DEPLOYMENT CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+⏱️  Total Time: ~15 minutes
+💰  Cost: FREE (with credits)
+
+───────────────────────────────────────────────────────────────
+PART 1: RAILWAY (BACKEND) - 5 MINUTES
+───────────────────────────────────────────────────────────────
+
+□ 1. Go to https://railway.app
+□ 2. Sign in with GitHub
+□ 3. Click "+ New Project"
+□ 4. Select "Deploy from GitHub repo"
+□ 5. Choose your Entmoot repository
+
+□ 6. Click "+ New" → "Database" → "Add PostgreSQL"
+□ 7. Click "+ New" → "Database" → "Add Redis"
+
+□ 8. Click on backend service → "Variables" tab
+□ 9. Add these variables:
+     SECRET_KEY = [run: openssl rand -hex 32]
+     ENVIRONMENT = production
+     PORT = 8000
+     CORS_ORIGINS = *
+
+□ 10. Go to "Settings" → "Generate Domain"
+□ 11. **COPY THE URL** (e.g., entmoot-backend.up.railway.app)
+      Write it here: _________________________________
+
+□ 12. Wait for deployment (~2 min)
+□ 13. Test: https://YOUR-URL/health
+
+───────────────────────────────────────────────────────────────
+PART 2: VERCEL (FRONTEND) - 5 MINUTES
+───────────────────────────────────────────────────────────────
+
+□ 1. Go to https://vercel.com
+□ 2. Sign in with GitHub
+□ 3. Click "Add New..." → "Project"
+□ 4. Import your Entmoot repository
+
+□ 5. Configure:
+     Framework: Vite
+     Root Directory: frontend
+     Build Command: npm run build
+     Output: dist
+
+□ 6. Add Environment Variable:
+     VITE_API_URL = [YOUR RAILWAY URL FROM ABOVE]
+
+□ 7. Click "Deploy"
+□ 8. Wait for deployment (~2 min)
+□ 9. **COPY YOUR VERCEL URL**
+     Write it here: _________________________________
+
+───────────────────────────────────────────────────────────────
+PART 3: UPDATE CORS - 2 MINUTES
+───────────────────────────────────────────────────────────────
+
+□ 1. Go back to Railway dashboard
+□ 2. Click backend service → "Variables"
+□ 3. Update CORS_ORIGINS to:
+     https://YOUR-VERCEL-URL,https://*.vercel.app
+
+□ 4. Wait ~1 min for redeploy
+
+───────────────────────────────────────────────────────────────
+FINAL TEST
+───────────────────────────────────────────────────────────────
+
+□ Open your Vercel URL
+□ Create a new project
+□ Upload property boundary
+□ Test placing assets
+
+═══════════════════════════════════════════════════════════════
+
+🎉 DONE! Your app is live at:
+   https://YOUR-VERCEL-URL
+
+📚 Detailed guide: START_DEPLOYMENT.md
+❓ Need help? Check DEPLOY_VERCEL_HYBRID.md
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,111 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Examples
+examples/
+
+# Tests
+tests/
+test_*.py
+*_test.py
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Development files
+.pre-commit-config.yaml
+.flake8
+.mypy_cache/
+.black
+
+# Environment files
+.env.example
+.env.local
+.env.*.local
+
+# Data files
+data/
+output/
+*.csv
+*.json
+*.geojson
+*.kml
+*.kmz
+*.tif
+*.tiff
+
+# Frontend
+frontend/
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Other
+*.bak
+*.tmp
+tmp/
+temp/
+.bmad/
+.bmad-ephemeral/

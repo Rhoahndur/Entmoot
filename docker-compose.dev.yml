@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database with PostGIS (development)
+  postgres:
+    image: postgis/postgis:15-3.4-alpine
+    container_name: entmoot-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: entmoot_dev
+      POSTGRES_USER: entmoot
+      POSTGRES_PASSWORD: devpassword
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U entmoot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - entmoot-dev-network
+
+  # Redis cache (development)
+  redis:
+    image: redis:7-alpine
+    container_name: entmoot-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - entmoot-dev-network
+
+  # Backend API (development with hot reload)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: entmoot-backend-dev
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: development
+      UPLOADS_DIR: /app/data/uploads
+      TEMP_DIR: /app/data/temp
+      DATABASE_URL: postgresql://entmoot:devpassword@postgres:5432/entmoot_dev
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-key-not-for-production
+      MAX_UPLOAD_SIZE: 52428800
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+      - upload_dev_data:/app/data/uploads
+      - temp_dev_data:/app/data/temp
+      - logs_dev:/app/data/logs
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # Debug port for Python debugger
+    command: uvicorn entmoot.api.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - entmoot-dev-network
+
+  # Frontend dev server (with hot reload)
+  frontend:
+    image: node:18-alpine
+    container_name: entmoot-frontend-dev
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend:/app
+      - /app/node_modules  # Anonymous volume to prevent overwriting node_modules
+    ports:
+      - "5173:5173"  # Vite dev server
+    command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - entmoot-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  upload_dev_data:
+    driver: local
+  temp_dev_data:
+    driver: local
+  logs_dev:
+    driver: local
+
+networks:
+  entmoot-dev-network:
+    driver: bridge
