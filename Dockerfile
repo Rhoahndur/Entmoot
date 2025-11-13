@@ -52,14 +52,14 @@ COPY pyproject.toml /app/
 RUN pip install --no-cache-dir -e .
 
 # Create necessary directories
-RUN mkdir -p /app/data/uploads /app/data/temp /app/data/logs && \
+RUN mkdir -p /app/data/uploads/logs /app/data/temp && \
     chown -R entmoot:entmoot /app/data
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV UPLOADS_DIR=/app/data/uploads
-ENV TEMP_DIR=/app/data/temp
-ENV ENVIRONMENT=production
+ENV ENTMOOT_UPLOADS_DIR=/app/data/uploads
+ENV ENTMOOT_ENVIRONMENT=production
+ENV ENTMOOT_CORS_ORIGINS=*
 
 # Switch to non-root user
 USER entmoot

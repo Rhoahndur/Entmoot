@@ -41,8 +41,16 @@ class Settings(BaseSettings):
     # API settings
     api_v1_prefix: str = "/api/v1"
 
+    # CORS settings
+    cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:4173"
+
     # Environment
     environment: Literal["development", "staging", "production"] = "development"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Get CORS origins as a list."""
+        return [origin.strip() for origin in self.cors_origins.split(",")]
 
     @property
     def max_upload_size_bytes(self) -> int:
