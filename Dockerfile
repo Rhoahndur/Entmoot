@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Set GDAL environment variables
 ENV GDAL_CONFIG=/usr/bin/gdal-config
-ENV GDAL_VERSION=$(gdal-config --version)
 
 # Create a virtual environment
 RUN python -m venv /opt/venv
