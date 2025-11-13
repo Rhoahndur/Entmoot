@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
 
+from entmoot.core.redis_storage import get_storage
 from entmoot.models.errors import ErrorResponse
 from entmoot.models.project import (
     Bounds,
@@ -33,9 +34,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
-# In-memory storage for projects (in production, use a database)
-projects_db: Dict[str, Dict] = {}
-layout_results_db: Dict[str, LayoutResults] = {}
+# Redis storage for projects (persists across container restarts)
+storage = get_storage()
 
 
 @router.get(
@@ -52,9 +52,11 @@ async def get_all_projects():
         List of projects with basic information
     """
     projects = []
-    for project_id, project_data in projects_db.items():
+    all_project_data = storage.get_all_projects()
+
+    for project_data in all_project_data:
         projects.append({
-            "id": project_id,
+            "id": project_data.get("project_id"),
             "name": project_data.get("project_name", "Unnamed Project"),
             "status": project_data.get("status", "unknown"),
             "created_at": project_data.get("created_at"),
@@ -113,7 +115,8 @@ async def create_project(config: ProjectConfig) -> ProjectResponse:
 
         # Store project configuration
         created_at_iso = datetime.utcnow().isoformat()
-        projects_db[project_id] = {
+        project_data = {
+            "project_id": project_id,
             "config": config.model_dump(),
             "project_name": config.project_name,
             "status": ProjectStatus.CREATED,
@@ -122,6 +125,7 @@ async def create_project(config: ProjectConfig) -> ProjectResponse:
             "progress": 0,
             "error": None,
         }
+        storage.set_project(project_id, project_data)
 
         logger.info(f"Created project {project_id}: {config.project_name}")
 
@@ -132,7 +136,7 @@ async def create_project(config: ProjectConfig) -> ProjectResponse:
             project_id=project_id,
             project_name=config.project_name,
             status=ProjectStatus.PROCESSING,
-            created_at=datetime.fromisoformat(projects_db[project_id]["created_at"]),
+            created_at=datetime.fromisoformat(created_at_iso),
             message="Project created successfully. Layout generation started.",
         )
 
@@ -169,7 +173,8 @@ async def get_project_status(project_id: str) -> ProjectStatusResponse:
     Returns:
         ProjectStatusResponse with current status and progress
     """
-    if project_id not in projects_db:
+    project = storage.get_project(project_id)
+    if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=ErrorResponse(
@@ -177,8 +182,6 @@ async def get_project_status(project_id: str) -> ProjectStatusResponse:
                 message=f"Project {project_id} not found",
             ).model_dump(mode="json"),
         )
-
-    project = projects_db[project_id]
 
     status_messages = {
         ProjectStatus.CREATED: "Project created, initializing...",
@@ -224,7 +227,8 @@ async def reoptimize_project(
     """
     try:
         # Check if project exists
-        if project_id not in projects_db:
+        project = storage.get_project(project_id)
+        if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=ErrorResponse(
@@ -234,7 +238,6 @@ async def reoptimize_project(
             )
 
         # Get existing project configuration
-        project = projects_db[project_id]
         existing_config = ProjectConfig(**project["config"])
 
         # Merge updates into existing config
@@ -276,13 +279,14 @@ async def reoptimize_project(
 
         # Update project configuration and reset status
         updated_at_iso = datetime.utcnow().isoformat()
-        projects_db[project_id].update({
+        project.update({
             "config": updated_config.model_dump(),
             "status": ProjectStatus.PROCESSING,
             "updated_at": updated_at_iso,
             "progress": 0,
             "error": None,
         })
+        storage.set_project(project_id, project)
 
         logger.info(f"Re-optimizing project {project_id}: {updated_config.project_name}")
 
@@ -348,7 +352,8 @@ async def update_alternative(
     """
     try:
         # Check if project exists
-        if project_id not in projects_db:
+        project = storage.get_project(project_id)
+        if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=ErrorResponse(
@@ -358,7 +363,8 @@ async def update_alternative(
             )
 
         # Check if results exist
-        if project_id not in layout_results_db:
+        results_data = storage.get_results(project_id)
+        if not results_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=ErrorResponse(
@@ -374,11 +380,13 @@ async def update_alternative(
             # Validate and convert assets
             updated_assets = [PlacedAsset(**asset) for asset in update_data['assets']]
 
-            # Update the stored results
-            layout_results_db[project_id].placed_assets = updated_assets
+            # Update the stored results (convert to dict for storage)
+            results_data['placed_assets'] = [asset.model_dump() for asset in updated_assets]
+            storage.set_results(project_id, results_data)
 
             # Update timestamp
-            projects_db[project_id]["updated_at"] = datetime.utcnow().isoformat()
+            project["updated_at"] = datetime.utcnow().isoformat()
+            storage.set_project(project_id, project)
 
             logger.info(f"Updated {len(updated_assets)} assets for project {project_id}")
 
@@ -418,7 +426,8 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
     Returns:
         OptimizationResults with placed assets, roads, cost estimates, and metadata
     """
-    if project_id not in projects_db:
+    project = storage.get_project(project_id)
+    if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=ErrorResponse(
@@ -426,8 +435,6 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
                 message=f"Project {project_id} not found",
             ).model_dump(mode="json"),
         )
-
-    project = projects_db[project_id]
 
     if project["status"] != ProjectStatus.COMPLETED:
         raise HTTPException(
@@ -439,7 +446,8 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
             ).model_dump(mode="json"),
         )
 
-    if project_id not in layout_results_db:
+    results_data = storage.get_results(project_id)
+    if not results_data:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=ErrorResponse(
@@ -448,7 +456,8 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
             ).model_dump(mode="json"),
         )
 
-    layout_results = layout_results_db[project_id]
+    # Convert results data dict back to LayoutResults object
+    layout_results = LayoutResults(**results_data)
 
     # Get property boundary and bounds from project metadata
     property_boundary_coords = project.get("property_boundary", [])
@@ -660,8 +669,11 @@ async def generate_layout_async(
         logger.info(f"Starting layout generation for project {project_id}")
 
         # Update status to processing
-        projects_db[project_id]["status"] = ProjectStatus.PROCESSING
-        projects_db[project_id]["progress"] = 0
+        project = storage.get_project(project_id)
+        if project:
+            project["status"] = ProjectStatus.PROCESSING
+            project["progress"] = 0
+            storage.set_project(project_id, project)
 
         # Run the actual optimization in a thread pool to avoid blocking
         # (CPU-intensive work should not run in the async event loop)
@@ -671,20 +683,26 @@ async def generate_layout_async(
             future = executor.submit(run_optimization_sync, project_id, config, current_assets)
             results = await asyncio.get_event_loop().run_in_executor(None, future.result)
 
-        # Store results
-        layout_results_db[project_id] = results
+        # Store results (convert LayoutResults to dict for storage)
+        storage.set_results(project_id, results.model_dump())
 
         # Update status to completed
-        projects_db[project_id]["status"] = ProjectStatus.COMPLETED
-        projects_db[project_id]["progress"] = 100
-        projects_db[project_id]["updated_at"] = datetime.utcnow().isoformat()
+        project = storage.get_project(project_id)
+        if project:
+            project["status"] = ProjectStatus.COMPLETED
+            project["progress"] = 100
+            project["updated_at"] = datetime.utcnow().isoformat()
+            storage.set_project(project_id, project)
 
         logger.info(f"Layout generation completed for project {project_id}")
 
     except Exception as e:
         logger.error(f"Error generating layout for project {project_id}: {e}", exc_info=True)
-        projects_db[project_id]["status"] = ProjectStatus.FAILED
-        projects_db[project_id]["error"] = str(e)
+        project = storage.get_project(project_id)
+        if project:
+            project["status"] = ProjectStatus.FAILED
+            project["error"] = str(e)
+            storage.set_project(project_id, project)
 
 
 def run_optimization_sync(
@@ -797,11 +815,14 @@ def run_optimization_sync(
             "west": min(coords_x),
         }
 
-        # Store property boundary and bounds in projects_db
-        projects_db[project_id]["property_boundary"] = property_boundary_latlon
-        projects_db[project_id]["bounds"] = bounds
-        projects_db[project_id]["property_area"] = 0.0  # Will be updated after transformation
-        projects_db[project_id]["buildable_area"] = 0.0  # Will be updated after transformation
+        # Store property boundary and bounds in Redis
+        project = storage.get_project(project_id)
+        if project:
+            project["property_boundary"] = property_boundary_latlon
+            project["bounds"] = bounds
+            project["property_area"] = 0.0  # Will be updated after transformation
+            project["buildable_area"] = 0.0  # Will be updated after transformation
+            storage.set_project(project_id, project)
         logger.info(f"Stored property boundary with {len(property_boundary_latlon)} points and bounds: {bounds}")
 
         # If it's geographic (lat/lon), transform to UTM for accurate meter-based measurements
@@ -834,8 +855,11 @@ def run_optimization_sync(
             )
 
             # Update the property area with accurate measurement
-            projects_db[project_id]["property_area"] = boundary_area_sqft
-            projects_db[project_id]["buildable_area"] = boundary_area_sqft * 0.75  # Rough estimate: 75% buildable
+            project = storage.get_project(project_id)
+            if project:
+                project["property_area"] = boundary_area_sqft
+                project["buildable_area"] = boundary_area_sqft * 0.75  # Rough estimate: 75% buildable
+                storage.set_project(project_id, project)
         else:
             # Already in projected coordinates
             site_boundary = raw_boundary
@@ -852,7 +876,10 @@ def run_optimization_sync(
             site_boundary = box(0, 0, 500 * 0.3048, 500 * 0.3048)
 
     # Update progress
-    projects_db[project_id]["progress"] = 10
+    project = storage.get_project(project_id)
+    if project:
+        project["progress"] = 10
+        storage.set_project(project_id, project)
 
     # Step 3: Create Asset instances from config
     logger.info(f"Creating {len(config.assets)} asset instances")
@@ -904,7 +931,10 @@ def run_optimization_sync(
     logger.info(f"Created {len(assets)} total asset instances")
 
     # Update progress
-    projects_db[project_id]["progress"] = 20
+    project = storage.get_project(project_id)
+    if project:
+        project["progress"] = 20
+        storage.set_project(project_id, project)
 
     # Step 4: Set up constraints
     logger.info("Setting up optimization constraints")
@@ -949,7 +979,10 @@ def run_optimization_sync(
     )
 
     # Update progress
-    projects_db[project_id]["progress"] = 30
+    project = storage.get_project(project_id)
+    if project:
+        project["progress"] = 30
+        storage.set_project(project_id, project)
 
     # Step 6: Run genetic algorithm optimization
     logger.info("Running genetic algorithm optimization")
@@ -974,7 +1007,10 @@ def run_optimization_sync(
     # Run optimization with progress updates
     def update_progress(generation: int, max_generations: int):
         progress = 30 + int((generation / max_generations) * 50)
-        projects_db[project_id]["progress"] = progress
+        project = storage.get_project(project_id)
+        if project:
+            project["progress"] = progress
+            storage.set_project(project_id, project)
 
     # If current assets provided, create seed solution from them
     seed_solution = None
@@ -1012,7 +1048,10 @@ def run_optimization_sync(
     )
 
     # Update progress
-    projects_db[project_id]["progress"] = 80
+    project = storage.get_project(project_id)
+    if project:
+        project["progress"] = 80
+        storage.set_project(project_id, project)
 
     # Step 7: Extract placed assets from best solution
     # Import models for results
@@ -1061,7 +1100,10 @@ def run_optimization_sync(
         placed_assets.append(placed_asset)
 
     # Update progress
-    projects_db[project_id]["progress"] = 90
+    project = storage.get_project(project_id)
+    if project:
+        project["progress"] = 90
+        storage.set_project(project_id, project)
 
     # Step 8: Generate road network (simplified for now)
     logger.info("Generating road network")

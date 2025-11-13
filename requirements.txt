@@ -19,5 +19,5 @@ plotly>=5.14.0
 # HTTP client for API integrations
 httpx>=0.25.0
 
-# Optional: Redis for caching (install separately if needed)
-# redis>=5.0.0
+# Redis for production data persistence
+redis>=5.0.0
