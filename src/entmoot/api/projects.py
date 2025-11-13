@@ -292,12 +292,11 @@ async def reoptimize_project(
 
         # Get current assets if available (to use as starting point for optimization)
         current_assets = None
-        if project.get("results") and project["results"].get("alternatives"):
-            # Use the first (best) alternative's assets
-            current_alternative = project["results"]["alternatives"][0]
-            if current_alternative.get("assets"):
-                current_assets = current_alternative["assets"]
-                logger.info(f"Re-optimization will start from current asset positions")
+        results_data = storage.get_results(project_id)
+        if results_data and results_data.get("placed_assets"):
+            # Use the current placed assets as seed
+            current_assets = results_data["placed_assets"]
+            logger.info(f"Re-optimization will start from {len(current_assets)} current asset positions")
 
         # Start layout generation in background
         asyncio.create_task(generate_layout_async(project_id, updated_config, current_assets))
