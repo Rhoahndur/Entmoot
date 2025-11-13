@@ -53,7 +53,9 @@ export const ProjectsListPage: React.FC = () => {
     window.location.reload();
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
+
     switch (status.toLowerCase()) {
       case 'completed':
         return 'bg-green-100 text-green-800';
@@ -190,7 +192,7 @@ export const ProjectsListPage: React.FC = () => {
                               project.status
                             )}`}
                           >
-                            {project.status}
+                            {project.status || 'Pending'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
