@@ -61,5 +61,5 @@ ENV ENTMOOT_CORS_ORIGINS=*
 EXPOSE 8000
 
 # Run the application
-# Use shell form to allow environment variable substitution
-CMD uvicorn entmoot.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info
+# Use shell form with proper shell invocation for environment variable substitution
+CMD sh -c "uvicorn entmoot.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"
