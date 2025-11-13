@@ -153,7 +153,7 @@ export const ResultsPage: React.FC = () => {
   };
 
   // Debounced violation check ref
-  const violationCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const violationCheckTimeoutRef = useRef<number | null>(null);
 
   // Initialize violations on first load or alternative switch
   useEffect(() => {

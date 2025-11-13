@@ -10,9 +10,9 @@ import { getProjects } from '../api/client';
 interface Project {
   id: string;
   name: string;
-  status: string;
+  status?: string;
   created_at: string;
-  progress: number;
+  progress?: number;
 }
 
 export const ProjectsListPage: React.FC = () => {

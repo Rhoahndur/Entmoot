@@ -69,7 +69,7 @@ function isAssetInConstraintZone(
  * Get constraint violation message based on type
  */
 function getViolationMessage(
-  assetType: string,
+  _assetType: string,
   constraintType: string
 ): string {
   const messages: Record<string, string> = {

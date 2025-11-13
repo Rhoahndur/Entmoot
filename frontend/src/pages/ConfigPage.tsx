@@ -13,7 +13,7 @@ import type {
   OptimizationWeights,
   ProjectConfig,
 } from '../types/config';
-import { submitProjectConfig, checkProjectStatus } from '../api/client';
+import { submitProjectConfig } from '../api/client';
 
 export const ConfigPage: React.FC = () => {
   const navigate = useNavigate();
