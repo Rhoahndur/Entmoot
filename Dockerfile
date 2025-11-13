@@ -44,6 +44,10 @@ WORKDIR /app
 # Copy application code
 COPY src/ /app/src/
 COPY pyproject.toml /app/
+COPY start.sh /app/
+
+# Make start script executable
+RUN chmod +x /app/start.sh
 
 # Install the application in editable mode
 RUN pip install --no-cache-dir -e .
@@ -61,5 +65,4 @@ ENV ENTMOOT_CORS_ORIGINS=*
 EXPOSE 8000
 
 # Run the application
-# Use shell form with proper shell invocation for environment variable substitution
-CMD sh -c "uvicorn entmoot.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"
+CMD ["/app/start.sh"]
