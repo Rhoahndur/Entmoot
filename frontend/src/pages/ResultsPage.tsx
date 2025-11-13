@@ -250,7 +250,20 @@ export const ResultsPage: React.FC = () => {
 
   // Handle save
   const handleSave = async () => {
-    if (!results || !currentAlternative || !projectId || !selectedAlternativeId) return;
+    console.log('handleSave called:', {
+      hasResults: !!results,
+      hasCurrentAlternative: !!currentAlternative,
+      projectId,
+      selectedAlternativeId,
+      alternativeIdType: typeof selectedAlternativeId,
+      alternativesCount: results?.alternatives?.length,
+      alternativeIds: results?.alternatives?.map(a => a.id),
+    });
+
+    if (!results || !currentAlternative || !projectId || !selectedAlternativeId) {
+      console.error('Save blocked - missing required data');
+      return;
+    }
 
     try {
       // Save the updated assets to the backend
