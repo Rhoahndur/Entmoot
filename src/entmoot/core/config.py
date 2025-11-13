@@ -40,6 +40,7 @@ class Settings(BaseSettings):
 
     # API settings
     api_v1_prefix: str = "/api/v1"
+    port: int = 8000
 
     # CORS settings
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:4173"

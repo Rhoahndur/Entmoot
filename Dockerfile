@@ -38,9 +38,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Create non-root user for security
-RUN groupadd -r entmoot && useradd -r -g entmoot entmoot
-
 # Set working directory
 WORKDIR /app
 
@@ -52,8 +49,7 @@ COPY pyproject.toml /app/
 RUN pip install --no-cache-dir -e .
 
 # Create necessary directories
-RUN mkdir -p /app/data/uploads/logs /app/data/temp && \
-    chown -R entmoot:entmoot /app/data
+RUN mkdir -p /app/data/uploads/logs /app/data/temp
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -61,15 +57,9 @@ ENV ENTMOOT_UPLOADS_DIR=/app/data/uploads
 ENV ENTMOOT_ENVIRONMENT=production
 ENV ENTMOOT_CORS_ORIGINS=*
 
-# Switch to non-root user
-USER entmoot
-
 # Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
 # Run the application
-CMD ["uvicorn", "entmoot.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use shell form to allow environment variable substitution
+CMD uvicorn entmoot.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info
