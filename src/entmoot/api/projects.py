@@ -768,9 +768,16 @@ def run_optimization_sync(
     if not kml_file_path or not kml_file_path.exists():
         raise ValueError(f"KML file not found for upload_id: {config.upload_id}")
 
-    # Step 2: Parse KML file
-    logger.info(f"Parsing KML file: {kml_file_path}")
-    parser = KMLParser(validate=False)  # Skip validation for speed
+    # Step 2: Parse KML/KMZ file
+    logger.info(f"Parsing file: {kml_file_path}")
+
+    # Use appropriate parser based on file extension
+    if kml_file_path.suffix.lower() == '.kmz':
+        from entmoot.core.parsers.kmz_parser import KMZParser
+        parser = KMZParser(validate=False)  # Skip validation for speed
+    else:
+        parser = KMLParser(validate=False)  # Skip validation for speed
+
     parsed_kml = parser.parse(kml_file_path)
 
     # Initialize inverse transformer at function scope (will be set if we need CRS transformation)
