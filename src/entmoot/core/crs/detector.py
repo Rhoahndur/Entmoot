@@ -65,13 +65,13 @@ def detect_crs_from_file(file_path: Union[str, Path]) -> CRSInfo:
 
 def detect_crs_from_kml(file_path: Union[str, Path]) -> CRSInfo:
     """
-    Detect CRS from KML file.
+    Detect CRS from KML or KMZ file.
 
     KML files typically use WGS84 (EPSG:4326) by default, but may specify
     a different CRS in the XML.
 
     Args:
-        file_path: Path to KML file
+        file_path: Path to KML or KMZ file
 
     Returns:
         Detected CRSInfo (usually WGS84)
@@ -82,8 +82,40 @@ def detect_crs_from_kml(file_path: Union[str, Path]) -> CRSInfo:
     file_path = Path(file_path)
 
     try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
+        # Handle KMZ files (ZIP archives containing KML)
+        kml_content = None
+        is_kmz = file_path.suffix.lower() == '.kmz'
+
+        # Also check file signature for ZIP files
+        if not is_kmz:
+            with open(file_path, 'rb') as f:
+                header = f.read(2)
+                if header == b'PK':
+                    is_kmz = True
+
+        if is_kmz:
+            import zipfile
+            with zipfile.ZipFile(file_path, 'r') as zf:
+                # Find KML file in archive
+                kml_files = [n for n in zf.namelist() if n.lower().endswith('.kml')]
+                if not kml_files:
+                    # No KML found, assume WGS84 default
+                    return CRSInfo(
+                        epsg=4326,
+                        name="WGS 84",
+                        units=DistanceUnit.DEGREES,
+                        is_geographic=True,
+                        coordinate_order=CoordinateOrder.LON_LAT,
+                        authority="EPSG",
+                        code="4326",
+                    )
+                # Prefer doc.kml, otherwise first KML
+                main_kml = next((n for n in kml_files if n.lower().endswith('doc.kml')), kml_files[0])
+                kml_content = zf.read(main_kml)
+            root = ET.fromstring(kml_content)
+        else:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
 
         # Check for namespace
         namespace = {'kml': 'http://www.opengis.net/kml/2.2'}

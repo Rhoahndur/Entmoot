@@ -769,13 +769,29 @@ def run_optimization_sync(
         raise ValueError(f"KML file not found for upload_id: {config.upload_id}")
 
     # Step 2: Parse KML/KMZ file
-    logger.info(f"Parsing file: {kml_file_path}")
+    file_extension = kml_file_path.suffix.lower()
+    logger.info(f"Parsing file: {kml_file_path} (extension: {file_extension})")
 
-    # Use appropriate parser based on file extension
-    if kml_file_path.suffix.lower() == '.kmz':
+    # Use appropriate parser based on file extension or file signature
+    is_kmz = file_extension == '.kmz'
+
+    # Also check file signature (KMZ/ZIP files start with 'PK')
+    if not is_kmz:
+        try:
+            with open(kml_file_path, 'rb') as f:
+                header = f.read(2)
+                if header == b'PK':
+                    logger.info("File has ZIP signature (PK), treating as KMZ")
+                    is_kmz = True
+        except Exception as e:
+            logger.warning(f"Could not check file signature: {e}")
+
+    if is_kmz:
         from entmoot.core.parsers.kmz_parser import KMZParser
+        logger.info("Using KMZParser for KMZ file")
         parser = KMZParser(validate=False)  # Skip validation for speed
     else:
+        logger.info("Using KMLParser for KML file")
         parser = KMLParser(validate=False)  # Skip validation for speed
 
     parsed_kml = parser.parse(kml_file_path)
