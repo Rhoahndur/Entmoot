@@ -766,59 +766,102 @@ def run_optimization_sync(
     loop.close()
 
     if not kml_file_path or not kml_file_path.exists():
-        raise ValueError(f"KML file not found for upload_id: {config.upload_id}")
+        raise ValueError(f"File not found for upload_id: {config.upload_id}")
 
-    # Step 2: Parse KML/KMZ file
+    # Step 2: Parse uploaded file (KML, KMZ, or GeoJSON)
     file_extension = kml_file_path.suffix.lower()
     logger.info(f"Parsing file: {kml_file_path} (extension: {file_extension})")
 
-    # Use appropriate parser based on file extension or file signature
-    is_kmz = file_extension == '.kmz'
+    # Initialize variables
+    site_boundary = None
+    raw_boundary = None
 
-    # Also check file signature (KMZ/ZIP files start with 'PK')
-    if not is_kmz:
-        try:
-            with open(kml_file_path, 'rb') as f:
-                header = f.read(2)
-                if header == b'PK':
-                    logger.info("File has ZIP signature (PK), treating as KMZ")
-                    is_kmz = True
-        except Exception as e:
-            logger.warning(f"Could not check file signature: {e}")
+    # Handle different file formats
+    if file_extension in ['.geojson', '.json']:
+        # Parse GeoJSON file
+        import json
+        from shapely.geometry import shape, Polygon as ShapelyPolygon
 
-    if is_kmz:
-        from entmoot.core.parsers.kmz_parser import KMZParser
-        logger.info("Using KMZParser for KMZ file")
-        parser = KMZParser(validate=False)  # Skip validation for speed
+        logger.info("Using GeoJSON parser")
+        with open(kml_file_path, 'r') as f:
+            geojson_data = json.load(f)
+
+        # Extract polygons from GeoJSON
+        polygons = []
+        if geojson_data.get('type') == 'FeatureCollection':
+            for feature in geojson_data.get('features', []):
+                geom = feature.get('geometry', {})
+                if geom.get('type') == 'Polygon':
+                    polygons.append(shape(geom))
+                elif geom.get('type') == 'MultiPolygon':
+                    multi = shape(geom)
+                    polygons.extend(list(multi.geoms))
+        elif geojson_data.get('type') == 'Feature':
+            geom = geojson_data.get('geometry', {})
+            if geom.get('type') == 'Polygon':
+                polygons.append(shape(geom))
+        elif geojson_data.get('type') == 'Polygon':
+            polygons.append(shape(geojson_data))
+
+        if polygons:
+            raw_boundary = polygons[0]  # Use first polygon as boundary
+            logger.info(f"Found {len(polygons)} polygon(s) in GeoJSON, using first as boundary")
+        else:
+            logger.warning("No polygons found in GeoJSON")
     else:
-        logger.info("Using KMLParser for KML file")
-        parser = KMLParser(validate=False)  # Skip validation for speed
+        # Parse KML/KMZ file
+        is_kmz = file_extension == '.kmz'
 
-    parsed_kml = parser.parse(kml_file_path)
+        # Also check file signature (KMZ/ZIP files start with 'PK')
+        if not is_kmz:
+            try:
+                with open(kml_file_path, 'rb') as f:
+                    header = f.read(2)
+                    if header == b'PK':
+                        logger.info("File has ZIP signature (PK), treating as KMZ")
+                        is_kmz = True
+            except Exception as e:
+                logger.warning(f"Could not check file signature: {e}")
+
+        if is_kmz:
+            from entmoot.core.parsers.kmz_parser import KMZParser
+            logger.info("Using KMZParser for KMZ file")
+            parser = KMZParser(validate=False)  # Skip validation for speed
+        else:
+            logger.info("Using KMLParser for KML file")
+            parser = KMLParser(validate=False)  # Skip validation for speed
+
+        parsed_kml = parser.parse(kml_file_path)
+
+        # Extract property boundary (first polygon)
+        property_boundaries = parsed_kml.get_property_boundaries()
+        if property_boundaries and property_boundaries[0].geometry:
+            raw_boundary = property_boundaries[0].geometry
 
     # Initialize inverse transformer at function scope (will be set if we need CRS transformation)
     inverse_transformer = None
 
-    # Extract property boundary (first polygon)
-    property_boundaries = parsed_kml.get_property_boundaries()
-    if not property_boundaries or not property_boundaries[0].geometry:
+    # Check if we have a valid boundary
+    if not raw_boundary:
         # Fallback: create a default boundary
-        logger.warning("No property boundary found in KML, using default 500x500 ft boundary")
+        logger.warning("No property boundary found in file, using default 500x500 ft boundary")
         site_boundary = box(0, 0, 500 * 0.3048, 500 * 0.3048)  # 500x500 feet converted to meters
     else:
-        from entmoot.core.crs.detector import detect_crs_from_kml
+        from entmoot.core.crs.detector import detect_crs_from_kml, detect_crs_from_geojson
         from entmoot.core.crs.transformer import CRSTransformer
         from entmoot.core.crs.utm import get_utm_crs_info
         from entmoot.models.crs import CRSInfo
         from shapely.ops import transform as shapely_transform
 
-        raw_boundary = property_boundaries[0].geometry
         logger.info(
             f"Found property boundary with area in source CRS: {raw_boundary.area:.6f} sq degrees"
         )
 
-        # Detect CRS from KML (usually WGS84 EPSG:4326)
-        source_crs = detect_crs_from_kml(kml_file_path)
+        # Detect CRS based on file type (usually WGS84 EPSG:4326)
+        if file_extension in ['.geojson', '.json']:
+            source_crs = detect_crs_from_geojson(kml_file_path)
+        else:
+            source_crs = detect_crs_from_kml(kml_file_path)
         logger.info(f"Detected CRS: {source_crs.name} (EPSG:{source_crs.epsg})")
 
         # Extract and store property boundary coordinates (lat/lon)
