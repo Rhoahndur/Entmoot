@@ -358,7 +358,7 @@ class OptimizationObjective:
         if violations > 0:
             solution.is_valid = False
             # Exponential penalty: much worse for multiple violations
-            solution.fitness = -10000.0 * (violations ** 1.5)
+            solution.fitness = -10000.0 * (violations**1.5)
             return solution.fitness
 
         solution.is_valid = True
@@ -458,7 +458,9 @@ class OptimizationObjective:
 
         # Normalize to 0-100 (lower variance = higher score)
         max_variance = len(solution.assets) * 200
-        score = 100.0 * (1.0 - min(total_variance / max_variance, 1.0)) if max_variance > 0 else 100.0
+        score = (
+            100.0 * (1.0 - min(total_variance / max_variance, 1.0)) if max_variance > 0 else 100.0
+        )
         return score
 
     def _evaluate_accessibility(self, solution: PlacementSolution) -> float:

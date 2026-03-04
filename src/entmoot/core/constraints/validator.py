@@ -42,15 +42,14 @@ class ConstraintValidator:
             errors.append("Geometry is empty")
 
         # Check if geometry has area (for polygon constraints)
-        if hasattr(geom, 'area') and geom.area == 0:
+        if hasattr(geom, "area") and geom.area == 0:
             errors.append("Geometry has zero area")
 
         return (len(errors) == 0, errors)
 
     @staticmethod
     def validate_spatial_relationships(
-        constraint: Constraint,
-        site_boundary: BaseGeometry
+        constraint: Constraint, site_boundary: BaseGeometry
     ) -> Tuple[bool, List[str]]:
         """
         Validate spatial relationships between constraint and site.
@@ -90,9 +89,7 @@ class ConstraintValidator:
         return (len(errors) == 0, errors)
 
     @staticmethod
-    def check_contradictions(
-        constraints: List[Constraint]
-    ) -> List[Dict[str, any]]:
+    def check_contradictions(constraints: List[Constraint]) -> List[Dict[str, any]]:
         """
         Check for contradictory constraints.
 
@@ -111,7 +108,7 @@ class ConstraintValidator:
 
             geom1 = c1.get_geometry()
 
-            for c2 in constraints[i + 1:]:
+            for c2 in constraints[i + 1 :]:
                 if c2.severity != ConstraintSeverity.BLOCKING:
                     continue
 
@@ -126,22 +123,23 @@ class ConstraintValidator:
                     # If overlap is significant
                     min_area = min(geom1.area, geom2.area)
                     if min_area > 0 and (overlap_area / min_area) > 0.1:
-                        contradictions.append({
-                            "constraint_1_id": c1.id,
-                            "constraint_1_name": c1.name,
-                            "constraint_2_id": c2.id,
-                            "constraint_2_name": c2.name,
-                            "overlap_area_sqm": overlap_area,
-                            "overlap_percent": (overlap_area / min_area) * 100,
-                            "issue": "Overlapping blocking constraints"
-                        })
+                        contradictions.append(
+                            {
+                                "constraint_1_id": c1.id,
+                                "constraint_1_name": c1.name,
+                                "constraint_2_id": c2.id,
+                                "constraint_2_name": c2.name,
+                                "overlap_area_sqm": overlap_area,
+                                "overlap_percent": (overlap_area / min_area) * 100,
+                                "issue": "Overlapping blocking constraints",
+                            }
+                        )
 
         return contradictions
 
     @staticmethod
     def verify_coverage(
-        constraints: List[Constraint],
-        site_boundary: BaseGeometry
+        constraints: List[Constraint], site_boundary: BaseGeometry
     ) -> Tuple[bool, List[str]]:
         """
         Verify that constraint coverage doesn't exceed 100% unreasonably.
@@ -158,10 +156,7 @@ class ConstraintValidator:
         from shapely.ops import unary_union
 
         # Get blocking constraints
-        blocking_constraints = [
-            c for c in constraints
-            if c.severity == ConstraintSeverity.BLOCKING
-        ]
+        blocking_constraints = [c for c in constraints if c.severity == ConstraintSeverity.BLOCKING]
 
         if not blocking_constraints:
             return (True, [])
@@ -210,9 +205,7 @@ class ConstraintValidator:
 
     @classmethod
     def validate_collection(
-        cls,
-        constraints: List[Constraint],
-        site_boundary: BaseGeometry
+        cls, constraints: List[Constraint], site_boundary: BaseGeometry
     ) -> Dict[str, any]:
         """
         Perform comprehensive validation of a constraint collection.
@@ -241,9 +234,7 @@ class ConstraintValidator:
                 results["is_valid"] = False
 
             # Validate spatial relationships
-            is_valid, errors = cls.validate_spatial_relationships(
-                constraint, site_boundary
-            )
+            is_valid, errors = cls.validate_spatial_relationships(constraint, site_boundary)
             if not is_valid:
                 results["spatial_errors"][constraint.id] = errors
                 results["is_valid"] = False

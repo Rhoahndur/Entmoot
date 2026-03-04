@@ -168,9 +168,7 @@ class DEMData:
     def __post_init__(self) -> None:
         """Validate DEM data after initialization."""
         if self.elevation.ndim != 2:
-            raise ValueError(
-                f"Elevation array must be 2D, got {self.elevation.ndim} dimensions"
-            )
+            raise ValueError(f"Elevation array must be 2D, got {self.elevation.ndim} dimensions")
         if self.elevation.shape != (self.metadata.height, self.metadata.width):
             raise ValueError(
                 f"Elevation shape {self.elevation.shape} does not match "

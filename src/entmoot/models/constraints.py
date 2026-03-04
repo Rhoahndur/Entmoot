@@ -54,7 +54,7 @@ class ConstraintSeverity(str, Enum):
     """Severity level of a constraint."""
 
     BLOCKING = "blocking"  # Absolute prohibition
-    WARNING = "warning"    # Strong recommendation against
+    WARNING = "warning"  # Strong recommendation against
     PREFERENCE = "preference"  # Soft preference
 
 
@@ -62,9 +62,9 @@ class ConstraintPriority(str, Enum):
     """Priority level for constraint conflict resolution."""
 
     CRITICAL = "critical"  # Cannot be overridden (regulatory, safety)
-    HIGH = "high"         # Requires special approval to override
-    MEDIUM = "medium"     # Can be overridden with justification
-    LOW = "low"          # Soft preference, easily overridden
+    HIGH = "high"  # Requires special approval to override
+    MEDIUM = "medium"  # Can be overridden with justification
+    LOW = "low"  # Soft preference, easily overridden
 
 
 class Constraint(BaseModel, ABC):
@@ -91,29 +91,21 @@ class Constraint(BaseModel, ABC):
     description: Optional[str] = Field(None, description="Detailed description")
     constraint_type: ConstraintType = Field(..., description="Type of constraint")
     severity: ConstraintSeverity = Field(
-        default=ConstraintSeverity.BLOCKING,
-        description="Severity level"
+        default=ConstraintSeverity.BLOCKING, description="Severity level"
     )
     priority: ConstraintPriority = Field(
-        default=ConstraintPriority.MEDIUM,
-        description="Priority for conflict resolution"
+        default=ConstraintPriority.MEDIUM, description="Priority for conflict resolution"
     )
     geometry_wkt: str = Field(..., description="WKT representation of constraint area")
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional metadata"
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Creation timestamp"
-    )
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     created_by: Optional[str] = Field(None, description="Creator")
     can_override: bool = Field(default=False, description="Whether constraint can be overridden")
     override_reason: Optional[str] = Field(None, description="Override justification")
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    @field_validator('geometry_wkt')
+    @field_validator("geometry_wkt")
     @classmethod
     def validate_geometry(cls, v: str) -> str:
         """Validate that geometry WKT is valid."""
@@ -137,7 +129,7 @@ class Constraint(BaseModel, ABC):
     def get_area_sqm(self) -> float:
         """Calculate area in square meters."""
         geom = self.get_geometry()
-        if hasattr(geom, 'area'):
+        if hasattr(geom, "area"):
             return geom.area
         return 0.0
 
@@ -212,21 +204,13 @@ class SetbackConstraint(Constraint):
         buffer_type: Type of buffer (flat, rounded, etc.)
     """
 
-    setback_distance_m: float = Field(
-        ...,
-        description="Required setback distance in meters",
-        gt=0
-    )
+    setback_distance_m: float = Field(..., description="Required setback distance in meters", gt=0)
     source_feature_wkt: Optional[str] = Field(
-        None,
-        description="WKT of source feature (e.g., property line)"
+        None, description="WKT of source feature (e.g., property line)"
     )
-    buffer_type: str = Field(
-        default="flat",
-        description="Buffer style: flat, round, square"
-    )
+    buffer_type: str = Field(default="flat", description="Buffer style: flat, round, square")
 
-    @field_validator('source_feature_wkt')
+    @field_validator("source_feature_wkt")
     @classmethod
     def validate_source_geometry(cls, v: Optional[str]) -> Optional[str]:
         """Validate source feature geometry."""
@@ -257,9 +241,7 @@ class SetbackConstraint(Constraint):
 
                 # Check if constraint geometry roughly matches buffered source
                 if not buffered.buffer(1).contains(constraint_geom.centroid):
-                    errors.append(
-                        "Constraint geometry does not match expected buffer from source"
-                    )
+                    errors.append("Constraint geometry does not match expected buffer from source")
             except Exception as e:
                 errors.append(f"Error validating buffer consistency: {str(e)}")
 
@@ -296,21 +278,19 @@ class ExclusionZoneConstraint(Constraint):
     reason: str = Field(..., description="Reason for exclusion", min_length=1)
     is_permanent: bool = Field(default=True, description="Whether exclusion is permanent")
     expiration_date: Optional[datetime] = Field(
-        None,
-        description="Expiration for temporary exclusions"
+        None, description="Expiration for temporary exclusions"
     )
     regulatory_reference: Optional[str] = Field(
-        None,
-        description="Reference to applicable regulation"
+        None, description="Reference to applicable regulation"
     )
 
-    @field_validator('expiration_date')
+    @field_validator("expiration_date")
     @classmethod
     def validate_expiration(cls, v: Optional[datetime], info) -> Optional[datetime]:
         """Validate expiration date logic."""
-        if v and info.data.get('is_permanent'):
+        if v and info.data.get("is_permanent"):
             raise ValueError("Permanent exclusions cannot have expiration dates")
-        if not info.data.get('is_permanent') and v is None:
+        if not info.data.get("is_permanent") and v is None:
             raise ValueError("Temporary exclusions must have expiration dates")
         if v and v < datetime.utcnow():
             raise ValueError("Expiration date cannot be in the past")
@@ -327,9 +307,7 @@ class ExclusionZoneConstraint(Constraint):
         # For regulatory exclusions, should have reference
         if self.constraint_type in [ConstraintType.WETLAND, ConstraintType.FLOODPLAIN]:
             if not self.regulatory_reference:
-                errors.append(
-                    f"Regulatory constraint {self.constraint_type} should have reference"
-                )
+                errors.append(f"Regulatory constraint {self.constraint_type} should have reference")
 
         # Exclusion zones should generally be blocking
         if self.severity != ConstraintSeverity.BLOCKING:
@@ -372,19 +350,12 @@ class RegulatoryConstraint(Constraint):
     regulation_name: str = Field(..., description="Name of regulation", min_length=1)
     regulation_code: Optional[str] = Field(None, description="Code/section reference")
     authority: str = Field(
-        ...,
-        description="Regulatory authority (Federal, State, Local)",
-        min_length=1
+        ..., description="Regulatory authority (Federal, State, Local)", min_length=1
     )
-    compliance_requirement: str = Field(
-        ...,
-        description="Compliance requirement",
-        min_length=1
-    )
+    compliance_requirement: str = Field(..., description="Compliance requirement", min_length=1)
     data_source: Optional[str] = Field(None, description="Source of regulatory data")
     verification_date: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Last verification date"
+        default_factory=datetime.utcnow, description="Last verification date"
     )
     verification_url: Optional[str] = Field(None, description="URL to source")
 
@@ -398,16 +369,12 @@ class RegulatoryConstraint(Constraint):
 
         # Should have data source for traceability
         if not self.data_source and not self.verification_url:
-            errors.append(
-                "Regulatory constraints should have data_source or verification_url"
-            )
+            errors.append("Regulatory constraints should have data_source or verification_url")
 
         # Check verification date is not too old (more than 1 year)
         age_days = (datetime.utcnow() - self.verification_date).days
         if age_days > 365:
-            errors.append(
-                f"Regulation verification is {age_days} days old, may need update"
-            )
+            errors.append(f"Regulation verification is {age_days} days old, may need update")
 
         return (len(errors) == 0, errors)
 
@@ -443,19 +410,9 @@ class UserDefinedConstraint(Constraint):
         notes: Additional notes about the constraint
     """
 
-    rule_description: str = Field(
-        ...,
-        description="Description of custom rule",
-        min_length=1
-    )
-    parameters: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Custom parameters"
-    )
-    evaluation_logic: Optional[str] = Field(
-        None,
-        description="How to evaluate this constraint"
-    )
+    rule_description: str = Field(..., description="Description of custom rule", min_length=1)
+    parameters: Dict[str, Any] = Field(default_factory=dict, description="Custom parameters")
+    evaluation_logic: Optional[str] = Field(None, description="How to evaluate this constraint")
     notes: Optional[str] = Field(None, description="Additional notes")
 
     def validate_constraint(self) -> tuple[bool, List[str]]:
@@ -494,12 +451,12 @@ class UserDefinedConstraint(Constraint):
 
 # Standard setback distances (in meters) for common constraint types
 STANDARD_SETBACKS: Dict[ConstraintType, float] = {
-    ConstraintType.PROPERTY_LINE: 7.62,     # 25 feet
-    ConstraintType.ROAD: 15.24,             # 50 feet
-    ConstraintType.WATER_FEATURE: 30.48,    # 100 feet
-    ConstraintType.WETLAND: 15.24,          # 50 feet
-    ConstraintType.UTILITY: 3.05,           # 10 feet
-    ConstraintType.STEEP_SLOPE: 6.10,       # 20 feet
+    ConstraintType.PROPERTY_LINE: 7.62,  # 25 feet
+    ConstraintType.ROAD: 15.24,  # 50 feet
+    ConstraintType.WATER_FEATURE: 30.48,  # 100 feet
+    ConstraintType.WETLAND: 15.24,  # 50 feet
+    ConstraintType.UTILITY: 3.05,  # 10 feet
+    ConstraintType.STEEP_SLOPE: 6.10,  # 20 feet
 }
 
 
@@ -509,7 +466,7 @@ def create_standard_setback(
     source_geometry: BaseGeometry,
     name: Optional[str] = None,
     distance_override: Optional[float] = None,
-    **kwargs
+    **kwargs,
 ) -> SetbackConstraint:
     """
     Create a standard setback constraint with default distances.
@@ -540,5 +497,5 @@ def create_standard_setback(
         geometry_wkt=buffered_geom.wkt,
         source_feature_wkt=source_geometry.wkt,
         setback_distance_m=distance,
-        **kwargs
+        **kwargs,
     )

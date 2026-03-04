@@ -112,9 +112,7 @@ class BoundaryMetadata(BaseModel):
     properties: Dict[str, Any] = Field(
         default_factory=dict, description="Additional custom properties"
     )
-    folder_path: List[str] = Field(
-        default_factory=list, description="Folder hierarchy from KML"
-    )
+    folder_path: List[str] = Field(default_factory=list, description="Folder hierarchy from KML")
     extraction_time: datetime = Field(
         default_factory=datetime.utcnow, description="Extraction timestamp"
     )

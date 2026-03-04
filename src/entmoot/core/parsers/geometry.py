@@ -165,18 +165,14 @@ def kml_to_shapely(
         elif geometry_type == "LineString":
             coords = parse_kml_coordinates(coord_string)
             if len(coords) < 2:
-                raise ValueError(
-                    f"LineString must have at least 2 coordinates, got {len(coords)}"
-                )
+                raise ValueError(f"LineString must have at least 2 coordinates, got {len(coords)}")
             # Use only x, y coordinates
             return LineString([c[:2] for c in coords])
 
         elif geometry_type == "LinearRing":
             coords = parse_kml_coordinates(coord_string)
             if len(coords) < 3:
-                raise ValueError(
-                    f"LinearRing must have at least 3 coordinates, got {len(coords)}"
-                )
+                raise ValueError(f"LinearRing must have at least 3 coordinates, got {len(coords)}")
             # Use only x, y coordinates
             return LinearRing([c[:2] for c in coords])
 

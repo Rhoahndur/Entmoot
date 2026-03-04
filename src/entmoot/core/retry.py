@@ -42,7 +42,7 @@ def exponential_backoff(
     Returns:
         Delay in seconds for this attempt
     """
-    delay = base_delay * (exponential_base ** attempt)
+    delay = base_delay * (exponential_base**attempt)
     return min(delay, max_delay)
 
 
@@ -122,9 +122,7 @@ def retry(
                         raise
 
                     # Calculate delay
-                    delay = exponential_backoff(
-                        attempt, base_delay, max_delay, exponential_base
-                    )
+                    delay = exponential_backoff(attempt, base_delay, max_delay, exponential_base)
 
                     # Log retry attempt
                     logger.info(
@@ -217,9 +215,7 @@ def async_retry(
                         raise
 
                     # Calculate delay
-                    delay = exponential_backoff(
-                        attempt, base_delay, max_delay, exponential_base
-                    )
+                    delay = exponential_backoff(attempt, base_delay, max_delay, exponential_base)
 
                     # Log retry attempt
                     logger.info(
@@ -318,9 +314,7 @@ class RetryContext:
 
         if self.attempt >= self.max_attempts:
             # Max attempts reached
-            logger.warning(
-                f"Max retry attempts ({self.max_attempts}) reached, raising exception"
-            )
+            logger.warning(f"Max retry attempts ({self.max_attempts}) reached, raising exception")
             return False
 
         # Calculate delay and wait

@@ -15,14 +15,12 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urlencode
 
 import httpx
 import numpy as np
 import rasterio
 from pydantic import BaseModel, Field
 from rasterio.merge import merge
-from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 from entmoot.integrations.rate_limiter import RateLimiter
 from entmoot.models.elevation import (
@@ -35,7 +33,6 @@ from entmoot.models.elevation import (
     ElevationQuery,
     ElevationQueryStatus,
     ElevationUnit,
-    USRegion,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,17 +51,15 @@ class USGSClientConfig(BaseModel):
         default=1.0, description="Exponential backoff factor", ge=0.1, le=10.0
     )
     rate_limit_calls: int = Field(default=20, description="Max calls per time window", ge=1)
-    rate_limit_period: float = Field(default=1.0, description="Rate limit window in seconds", ge=0.1)
-    batch_size: int = Field(default=100, description="Max points per batch query", ge=1, le=1000)
-    cache_dir: Optional[Path] = Field(
-        default=None, description="Directory for DEM tile cache"
+    rate_limit_period: float = Field(
+        default=1.0, description="Rate limit window in seconds", ge=0.1
     )
+    batch_size: int = Field(default=100, description="Max points per batch query", ge=1, le=1000)
+    cache_dir: Optional[Path] = Field(default=None, description="Directory for DEM tile cache")
     point_cache_ttl: int = Field(
         default=2592000, description="Point query cache TTL (30 days)", ge=0
     )
-    tile_cache_permanent: bool = Field(
-        default=True, description="DEM tiles cached permanently"
-    )
+    tile_cache_permanent: bool = Field(default=True, description="DEM tiles cached permanently")
 
 
 class USGSClient:

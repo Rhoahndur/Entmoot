@@ -39,40 +39,22 @@ class ConstraintStatistics(BaseModel):
     """
 
     total_constraints: int = Field(default=0, description="Total constraint count")
-    by_type: Dict[str, int] = Field(
-        default_factory=dict,
-        description="Count by type"
-    )
-    by_severity: Dict[str, int] = Field(
-        default_factory=dict,
-        description="Count by severity"
-    )
-    by_priority: Dict[str, int] = Field(
-        default_factory=dict,
-        description="Count by priority"
-    )
+    by_type: Dict[str, int] = Field(default_factory=dict, description="Count by type")
+    by_severity: Dict[str, int] = Field(default_factory=dict, description="Count by severity")
+    by_priority: Dict[str, int] = Field(default_factory=dict, description="Count by priority")
     total_constrained_area_sqm: float = Field(
-        default=0.0,
-        description="Total area under constraint (union)"
+        default=0.0, description="Total area under constraint (union)"
     )
     total_constrained_area_acres: float = Field(
-        default=0.0,
-        description="Total area under constraint in acres"
+        default=0.0, description="Total area under constraint in acres"
     )
     constraint_coverage_percent: float = Field(
-        default=0.0,
-        description="Percentage of site covered",
-        ge=0,
-        le=100
+        default=0.0, description="Percentage of site covered", ge=0, le=100
     )
     overlapping_constraints: int = Field(
-        default=0,
-        description="Number of overlapping constraint pairs"
+        default=0, description="Number of overlapping constraint pairs"
     )
-    blocking_constraints: int = Field(
-        default=0,
-        description="Number of blocking constraints"
-    )
+    blocking_constraints: int = Field(default=0, description="Number of blocking constraints")
 
 
 class ConstraintCollection:
@@ -186,9 +168,7 @@ class ConstraintCollection:
         self._index_dirty = False
 
     def query_by_location(
-        self,
-        geometry: BaseGeometry,
-        predicate: str = "intersects"
+        self, geometry: BaseGeometry, predicate: str = "intersects"
     ) -> List[Constraint]:
         """
         Query constraints by spatial relationship to a geometry.
@@ -240,10 +220,7 @@ class ConstraintCollection:
         candidates = self.query_by_location(point, predicate="intersects")
         return [c for c in candidates if c.contains(point)]
 
-    def query_by_type(
-        self,
-        constraint_types: List[ConstraintType]
-    ) -> List[Constraint]:
+    def query_by_type(self, constraint_types: List[ConstraintType]) -> List[Constraint]:
         """
         Query constraints by type.
 
@@ -254,15 +231,9 @@ class ConstraintCollection:
             List of constraints matching any of the types
         """
         type_set = set(constraint_types)
-        return [
-            c for c in self._constraints.values()
-            if c.constraint_type in type_set
-        ]
+        return [c for c in self._constraints.values() if c.constraint_type in type_set]
 
-    def query_by_severity(
-        self,
-        severities: List[ConstraintSeverity]
-    ) -> List[Constraint]:
+    def query_by_severity(self, severities: List[ConstraintSeverity]) -> List[Constraint]:
         """
         Query constraints by severity.
 
@@ -273,15 +244,9 @@ class ConstraintCollection:
             List of constraints matching any of the severities
         """
         severity_set = set(severities)
-        return [
-            c for c in self._constraints.values()
-            if c.severity in severity_set
-        ]
+        return [c for c in self._constraints.values() if c.severity in severity_set]
 
-    def query_by_priority(
-        self,
-        priorities: List[ConstraintPriority]
-    ) -> List[Constraint]:
+    def query_by_priority(self, priorities: List[ConstraintPriority]) -> List[Constraint]:
         """
         Query constraints by priority.
 
@@ -292,10 +257,7 @@ class ConstraintCollection:
             List of constraints matching any of the priorities
         """
         priority_set = set(priorities)
-        return [
-            c for c in self._constraints.values()
-            if c.priority in priority_set
-        ]
+        return [c for c in self._constraints.values() if c.priority in priority_set]
 
     def get_blocking_constraints(self) -> List[Constraint]:
         """Get all blocking severity constraints."""
@@ -306,8 +268,7 @@ class ConstraintCollection:
         return self.query_by_priority([ConstraintPriority.CRITICAL])
 
     def find_overlapping_constraints(
-        self,
-        constraint_id: Optional[str] = None
+        self, constraint_id: Optional[str] = None
     ) -> List[Tuple[Constraint, Constraint]]:
         """
         Find pairs of overlapping constraints.
@@ -337,7 +298,7 @@ class ConstraintCollection:
             constraints = list(self._constraints.values())
             for i, c1 in enumerate(constraints):
                 geom1 = c1.get_geometry()
-                for c2 in constraints[i + 1:]:
+                for c2 in constraints[i + 1 :]:
                     geom2 = c2.get_geometry()
                     if geom1.intersects(geom2):
                         overlaps.append((c1, c2))
@@ -451,10 +412,7 @@ class ConstraintCollection:
 
         return validation_results
 
-    def resolve_conflicts(
-        self,
-        point: ShapelyPoint
-    ) -> Optional[Constraint]:
+    def resolve_conflicts(self, point: ShapelyPoint) -> Optional[Constraint]:
         """
         Resolve conflicts when multiple constraints apply to a point.
 
@@ -487,10 +445,7 @@ class ConstraintCollection:
         }
 
         constraints_at_point.sort(
-            key=lambda c: (
-                priority_order.get(c.priority, 999),
-                severity_order.get(c.severity, 999)
-            )
+            key=lambda c: (priority_order.get(c.priority, 999), severity_order.get(c.severity, 999))
         )
 
         return constraints_at_point[0]

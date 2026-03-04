@@ -21,7 +21,12 @@ MIME_TYPE_MAPPING = {
         "text/plain",
         "application/octet-stream",  # Browsers often use this for unknown types
     ],
-    ".geojson": ["application/geo+json", "application/json", "text/plain", "application/octet-stream"],
+    ".geojson": [
+        "application/geo+json",
+        "application/json",
+        "text/plain",
+        "application/octet-stream",
+    ],
     ".tif": ["image/tiff", "application/octet-stream"],
     ".tiff": ["image/tiff", "application/octet-stream"],
 }

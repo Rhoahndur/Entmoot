@@ -15,6 +15,7 @@ try:
     import rasterio
     from rasterio.transform import Affine
     from rasterio.features import rasterize
+
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
@@ -86,11 +87,7 @@ class PreGradingModel:
 
         try:
             # Calculate slope in degrees
-            slope_degrees = calculate_slope(
-                self.elevation,
-                cell_size=cell_width,
-                units="degrees"
-            )
+            slope_degrees = calculate_slope(self.elevation, cell_size=cell_width, units="degrees")
 
             # Convert slope to radians
             slope_radians = np.deg2rad(slope_degrees)
@@ -139,10 +136,7 @@ class PreGradingModel:
         return float(elevation)
 
     def get_elevation_profile(
-        self,
-        start: Tuple[float, float],
-        end: Tuple[float, float],
-        num_points: int = 100
+        self, start: Tuple[float, float], end: Tuple[float, float], num_points: int = 100
     ) -> Tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
         """
         Get elevation profile along a line.
@@ -198,9 +192,7 @@ class PreGradingModel:
         return col, row
 
     def extract_zone_elevations(
-        self,
-        geometry: Any,
-        resolution: Optional[float] = None
+        self, geometry: Any, resolution: Optional[float] = None
     ) -> NDArray[np.floating[Any]]:
         """
         Extract elevation values within a geometry.
@@ -242,8 +234,7 @@ class PreGradingModel:
         else:
             min_x, min_y, max_x, max_y = self.metadata.bounds
             transform = Affine.translation(min_x, max_y) * Affine.scale(
-                self.metadata.resolution[0],
-                -self.metadata.resolution[1]
+                self.metadata.resolution[0], -self.metadata.resolution[1]
             )
 
         # Rasterize the geometry
@@ -253,7 +244,7 @@ class PreGradingModel:
                 out_shape=(self.metadata.height, self.metadata.width),
                 transform=transform,
                 fill=0,
-                dtype=np.uint8
+                dtype=np.uint8,
             )
             return mask.astype(bool)
         except Exception as e:
@@ -305,15 +296,14 @@ class PreGradingModel:
         else:
             min_x, min_y, max_x, max_y = self.metadata.bounds
             transform = Affine.translation(min_x, max_y) * Affine.scale(
-                self.metadata.resolution[0],
-                -self.metadata.resolution[1]
+                self.metadata.resolution[0], -self.metadata.resolution[1]
             )
 
         # Write to GeoTIFF
         with rasterio.open(
             output_path,
-            'w',
-            driver='GTiff',
+            "w",
+            driver="GTiff",
             height=self.metadata.height,
             width=self.metadata.width,
             count=1,

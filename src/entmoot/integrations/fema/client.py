@@ -14,8 +14,7 @@ import asyncio
 import hashlib
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urlencode
+from typing import Any, Dict, Optional, Tuple
 
 import httpx
 from pydantic import BaseModel, Field
@@ -39,11 +38,11 @@ class FEMAClientConfig(BaseModel):
     retry_backoff_factor: float = Field(
         default=1.0, description="Exponential backoff factor", ge=0.1, le=10.0
     )
-    max_records: int = Field(
-        default=1000, description="Maximum records per request", ge=1, le=2000
-    )
+    max_records: int = Field(default=1000, description="Maximum records per request", ge=1, le=2000)
     rate_limit_calls: int = Field(default=10, description="Max calls per time window", ge=1)
-    rate_limit_period: float = Field(default=1.0, description="Rate limit window in seconds", ge=0.1)
+    rate_limit_period: float = Field(
+        default=1.0, description="Rate limit window in seconds", ge=0.1
+    )
     api_key: Optional[str] = Field(None, description="API key if required")
     cache_enabled: bool = Field(default=True, description="Enable caching")
     cache_ttl: int = Field(default=2592000, description="Cache TTL in seconds (30 days)", ge=0)

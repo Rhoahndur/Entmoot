@@ -74,8 +74,8 @@ class ExportData:
         self.roads: List[Dict[str, Any]] = []
         self.buildable_zones: List[Dict[str, Any]] = []
         self.metadata: Dict[str, Any] = {
-            'created_at': datetime.now().isoformat(),
-            'crs': f'EPSG:{crs_epsg}',
+            "created_at": datetime.now().isoformat(),
+            "crs": f"EPSG:{crs_epsg}",
         }
 
     def add_constraint(
@@ -86,12 +86,14 @@ class ExportData:
         properties: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Add a constraint to the export."""
-        self.constraints.append({
-            'geometry': geometry,
-            'name': name,
-            'type': constraint_type,
-            'properties': properties or {},
-        })
+        self.constraints.append(
+            {
+                "geometry": geometry,
+                "name": name,
+                "type": constraint_type,
+                "properties": properties or {},
+            }
+        )
 
     def add_asset(
         self,
@@ -101,12 +103,14 @@ class ExportData:
         properties: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Add an asset to the export."""
-        self.assets.append({
-            'geometry': geometry,
-            'name': name,
-            'type': asset_type,
-            'properties': properties or {},
-        })
+        self.assets.append(
+            {
+                "geometry": geometry,
+                "name": name,
+                "type": asset_type,
+                "properties": properties or {},
+            }
+        )
 
     def add_road(
         self,
@@ -115,11 +119,13 @@ class ExportData:
         properties: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Add a road to the export."""
-        self.roads.append({
-            'geometry': geometry,
-            'name': name,
-            'properties': properties or {},
-        })
+        self.roads.append(
+            {
+                "geometry": geometry,
+                "name": name,
+                "properties": properties or {},
+            }
+        )
 
     def add_buildable_zone(
         self,
@@ -128,11 +134,13 @@ class ExportData:
         properties: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Add a buildable zone to the export."""
-        self.buildable_zones.append({
-            'geometry': geometry,
-            'name': name,
-            'properties': properties or {},
-        })
+        self.buildable_zones.append(
+            {
+                "geometry": geometry,
+                "name": name,
+                "properties": properties or {},
+            }
+        )
 
 
 class GeospatialExporter:
@@ -169,19 +177,19 @@ class KMZExporter(GeospatialExporter):
 
     # Icon URLs for different asset types
     ASSET_ICONS = {
-        'building': 'http://maps.google.com/mapfiles/kml/shapes/homegardenbusiness.png',
-        'equipment_yard': 'http://maps.google.com/mapfiles/kml/shapes/ranger_station.png',
-        'parking_lot': 'http://maps.google.com/mapfiles/kml/shapes/parking_lot.png',
-        'storage_tank': 'http://maps.google.com/mapfiles/kml/shapes/water.png',
+        "building": "http://maps.google.com/mapfiles/kml/shapes/homegardenbusiness.png",
+        "equipment_yard": "http://maps.google.com/mapfiles/kml/shapes/ranger_station.png",
+        "parking_lot": "http://maps.google.com/mapfiles/kml/shapes/parking_lot.png",
+        "storage_tank": "http://maps.google.com/mapfiles/kml/shapes/water.png",
     }
 
     # Colors for different constraint types (AABBGGRR format)
     CONSTRAINT_COLORS = {
-        'property_line': simplekml.Color.blue,
-        'wetland': simplekml.Color.green,
-        'floodplain': simplekml.Color.cyan,
-        'steep_slope': simplekml.Color.orange,
-        'setback': simplekml.Color.yellow,
+        "property_line": simplekml.Color.blue,
+        "wetland": simplekml.Color.green,
+        "floodplain": simplekml.Color.cyan,
+        "steep_slope": simplekml.Color.orange,
+        "setback": simplekml.Color.yellow,
     }
 
     def export(self, data: ExportData, output_path: Path) -> None:
@@ -246,8 +254,8 @@ class KMZExporter(GeospatialExporter):
 
     def _add_buildable_zone(self, folder: simplekml.Folder, zone: Dict[str, Any]) -> None:
         """Add buildable zone to KML folder."""
-        geom = zone['geometry']
-        name = zone['name']
+        geom = zone["geometry"]
+        name = zone["name"]
 
         if isinstance(geom, ShapelyPolygon):
             coords = list(geom.exterior.coords)
@@ -262,15 +270,15 @@ class KMZExporter(GeospatialExporter):
             )
 
             # Add properties as description
-            props = zone.get('properties', {})
+            props = zone.get("properties", {})
             if props:
                 pol.description = self._format_properties(props)
 
     def _add_constraint(self, folder: simplekml.Folder, constraint: Dict[str, Any]) -> None:
         """Add constraint to KML folder."""
-        geom = constraint['geometry']
-        name = constraint['name']
-        ctype = constraint.get('type', 'unknown')
+        geom = constraint["geometry"]
+        name = constraint["name"]
+        ctype = constraint.get("type", "unknown")
 
         # Get color for constraint type
         color = self.CONSTRAINT_COLORS.get(ctype, simplekml.Color.red)
@@ -286,15 +294,15 @@ class KMZExporter(GeospatialExporter):
             pol.style.polystyle.color = simplekml.Color.changealphaint(100, color)
 
             # Add properties
-            props = constraint.get('properties', {})
-            props['constraint_type'] = ctype
+            props = constraint.get("properties", {})
+            props["constraint_type"] = ctype
             pol.description = self._format_properties(props)
 
     def _add_asset(self, folder: simplekml.Folder, asset: Dict[str, Any]) -> None:
         """Add asset to KML folder."""
-        geom = asset['geometry']
-        name = asset['name']
-        atype = asset.get('type', 'building')
+        geom = asset["geometry"]
+        name = asset["name"]
+        atype = asset.get("type", "building")
 
         if isinstance(geom, ShapelyPoint):
             # Use point with custom icon
@@ -302,7 +310,7 @@ class KMZExporter(GeospatialExporter):
             pnt.coords = [(geom.x, geom.y)]
 
             # Set icon
-            icon_url = self.ASSET_ICONS.get(atype, self.ASSET_ICONS['building'])
+            icon_url = self.ASSET_ICONS.get(atype, self.ASSET_ICONS["building"])
             pnt.style.iconstyle.icon.href = icon_url
             pnt.style.iconstyle.scale = 1.2
 
@@ -313,11 +321,11 @@ class KMZExporter(GeospatialExporter):
             pol.outerboundaryis = coords
 
             # Style based on type
-            if atype == 'building':
+            if atype == "building":
                 color = simplekml.Color.red
-            elif atype == 'equipment_yard':
+            elif atype == "equipment_yard":
                 color = simplekml.Color.orange
-            elif atype == 'parking_lot':
+            elif atype == "parking_lot":
                 color = simplekml.Color.grey
             else:
                 color = simplekml.Color.purple
@@ -327,8 +335,8 @@ class KMZExporter(GeospatialExporter):
             pol.style.polystyle.color = simplekml.Color.changealphaint(150, color)
 
         # Add properties
-        props = asset.get('properties', {})
-        props['asset_type'] = atype
+        props = asset.get("properties", {})
+        props["asset_type"] = atype
         if isinstance(geom, ShapelyPoint):
             pnt.description = self._format_properties(props)
         else:
@@ -336,8 +344,8 @@ class KMZExporter(GeospatialExporter):
 
     def _add_road(self, folder: simplekml.Folder, road: Dict[str, Any]) -> None:
         """Add road to KML folder."""
-        geom = road['geometry']
-        name = road['name']
+        geom = road["geometry"]
+        name = road["name"]
 
         if isinstance(geom, ShapelyLineString):
             coords = list(geom.coords)
@@ -349,7 +357,7 @@ class KMZExporter(GeospatialExporter):
             line.style.linestyle.width = 4
 
             # Add properties
-            props = road.get('properties', {})
+            props = road.get("properties", {})
             line.description = self._format_properties(props)
 
     def _format_properties(self, props: Dict[str, Any]) -> str:
@@ -401,9 +409,7 @@ class GeoJSONExporter(GeospatialExporter):
             "name": data.project_name,
             "crs": {
                 "type": "name",
-                "properties": {
-                    "name": f"urn:ogc:def:crs:EPSG::{data.crs_epsg}"
-                }
+                "properties": {"name": f"urn:ogc:def:crs:EPSG::{data.crs_epsg}"},
             },
             "features": [],
             "metadata": data.metadata,
@@ -418,7 +424,7 @@ class GeoJSONExporter(GeospatialExporter):
                         "name": "Site Boundary",
                         "layer": "boundary",
                         "type": "site_boundary",
-                    }
+                    },
                 )
             )
 
@@ -426,12 +432,12 @@ class GeoJSONExporter(GeospatialExporter):
         for zone in data.buildable_zones:
             feature_collection["features"].append(
                 self._create_feature(
-                    zone['geometry'],
+                    zone["geometry"],
                     {
-                        "name": zone['name'],
+                        "name": zone["name"],
                         "layer": "buildable_zones",
-                        **zone.get('properties', {}),
-                    }
+                        **zone.get("properties", {}),
+                    },
                 )
             )
 
@@ -439,13 +445,13 @@ class GeoJSONExporter(GeospatialExporter):
         for constraint in data.constraints:
             feature_collection["features"].append(
                 self._create_feature(
-                    constraint['geometry'],
+                    constraint["geometry"],
                     {
-                        "name": constraint['name'],
+                        "name": constraint["name"],
                         "layer": "constraints",
-                        "constraint_type": constraint['type'],
-                        **constraint.get('properties', {}),
-                    }
+                        "constraint_type": constraint["type"],
+                        **constraint.get("properties", {}),
+                    },
                 )
             )
 
@@ -453,13 +459,13 @@ class GeoJSONExporter(GeospatialExporter):
         for asset in data.assets:
             feature_collection["features"].append(
                 self._create_feature(
-                    asset['geometry'],
+                    asset["geometry"],
                     {
-                        "name": asset['name'],
+                        "name": asset["name"],
                         "layer": "assets",
-                        "asset_type": asset['type'],
-                        **asset.get('properties', {}),
-                    }
+                        "asset_type": asset["type"],
+                        **asset.get("properties", {}),
+                    },
                 )
             )
 
@@ -467,17 +473,17 @@ class GeoJSONExporter(GeospatialExporter):
         for road in data.roads:
             feature_collection["features"].append(
                 self._create_feature(
-                    road['geometry'],
+                    road["geometry"],
                     {
-                        "name": road['name'],
+                        "name": road["name"],
                         "layer": "roads",
-                        **road.get('properties', {}),
-                    }
+                        **road.get("properties", {}),
+                    },
                 )
             )
 
         # Write to file
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(feature_collection, f, indent=2)
 
         logger.info(f"GeoJSON export completed: {output_path}")
@@ -500,32 +506,20 @@ class GeoJSONExporter(GeospatialExporter):
     def _geometry_to_geojson(self, geometry: BaseGeometry) -> Dict[str, Any]:
         """Convert Shapely geometry to GeoJSON geometry dict."""
         if isinstance(geometry, ShapelyPoint):
-            return {
-                "type": "Point",
-                "coordinates": [geometry.x, geometry.y]
-            }
+            return {"type": "Point", "coordinates": [geometry.x, geometry.y]}
         elif isinstance(geometry, ShapelyLineString):
-            return {
-                "type": "LineString",
-                "coordinates": list(geometry.coords)
-            }
+            return {"type": "LineString", "coordinates": list(geometry.coords)}
         elif isinstance(geometry, ShapelyPolygon):
             coords = [list(geometry.exterior.coords)]
             for interior in geometry.interiors:
                 coords.append(list(interior.coords))
-            return {
-                "type": "Polygon",
-                "coordinates": coords
-            }
+            return {"type": "Polygon", "coordinates": coords}
         elif isinstance(geometry, MultiPoint):
-            return {
-                "type": "MultiPoint",
-                "coordinates": [[p.x, p.y] for p in geometry.geoms]
-            }
+            return {"type": "MultiPoint", "coordinates": [[p.x, p.y] for p in geometry.geoms]}
         elif isinstance(geometry, MultiLineString):
             return {
                 "type": "MultiLineString",
-                "coordinates": [list(line.coords) for line in geometry.geoms]
+                "coordinates": [list(line.coords) for line in geometry.geoms],
             }
         elif isinstance(geometry, MultiPolygon):
             coords = []
@@ -534,10 +528,7 @@ class GeoJSONExporter(GeospatialExporter):
                 for interior in poly.interiors:
                     poly_coords.append(list(interior.coords))
                 coords.append(poly_coords)
-            return {
-                "type": "MultiPolygon",
-                "coordinates": coords
-            }
+            return {"type": "MultiPolygon", "coordinates": coords}
         else:
             raise ValueError(f"Unsupported geometry type: {type(geometry)}")
 
@@ -556,12 +547,12 @@ class DXFExporter(GeospatialExporter):
 
     # Layer definitions with colors (AutoCAD color index)
     LAYERS = {
-        'BOUNDARY': {'color': 5},  # Blue
-        'BUILDABLE': {'color': 3},  # Green
-        'CONSTRAINTS': {'color': 1},  # Red
-        'ASSETS': {'color': 4},  # Cyan
-        'ROADS': {'color': 6},  # Magenta
-        'LABELS': {'color': 7},  # White/Black
+        "BOUNDARY": {"color": 5},  # Blue
+        "BUILDABLE": {"color": 3},  # Green
+        "CONSTRAINTS": {"color": 1},  # Red
+        "ASSETS": {"color": 4},  # Cyan
+        "ROADS": {"color": 6},  # Magenta
+        "LABELS": {"color": 7},  # White/Black
     }
 
     def export(self, data: ExportData, output_path: Path) -> None:
@@ -575,49 +566,39 @@ class DXFExporter(GeospatialExporter):
         logger.info(f"Exporting to DXF: {output_path}")
 
         # Create new DXF document
-        doc = ezdxf.new('R2010')  # AutoCAD 2010 format
+        doc = ezdxf.new("R2010")  # AutoCAD 2010 format
         doc.units = units.M  # Meters
 
         # Create layers
         for layer_name, layer_props in self.LAYERS.items():
-            doc.layers.add(name=layer_name, color=layer_props['color'])
+            doc.layers.add(name=layer_name, color=layer_props["color"])
 
         # Get modelspace
         msp = doc.modelspace()
 
         # Add site boundary
         if data.site_boundary:
-            self._add_polygon(msp, data.site_boundary, 'BOUNDARY', 'Site Boundary')
+            self._add_polygon(msp, data.site_boundary, "BOUNDARY", "Site Boundary")
 
         # Add buildable zones
         for zone in data.buildable_zones:
-            self._add_polygon(
-                msp,
-                zone['geometry'],
-                'BUILDABLE',
-                zone['name']
-            )
+            self._add_polygon(msp, zone["geometry"], "BUILDABLE", zone["name"])
 
         # Add constraints
         for constraint in data.constraints:
-            self._add_polygon(
-                msp,
-                constraint['geometry'],
-                'CONSTRAINTS',
-                constraint['name']
-            )
+            self._add_polygon(msp, constraint["geometry"], "CONSTRAINTS", constraint["name"])
 
         # Add assets
         for asset in data.assets:
-            geom = asset['geometry']
+            geom = asset["geometry"]
             if isinstance(geom, ShapelyPoint):
-                self._add_point(msp, geom, 'ASSETS', asset['name'])
+                self._add_point(msp, geom, "ASSETS", asset["name"])
             elif isinstance(geom, ShapelyPolygon):
-                self._add_polygon(msp, geom, 'ASSETS', asset['name'])
+                self._add_polygon(msp, geom, "ASSETS", asset["name"])
 
         # Add roads
         for road in data.roads:
-            self._add_linestring(msp, road['geometry'], 'ROADS', road['name'])
+            self._add_linestring(msp, road["geometry"], "ROADS", road["name"])
 
         # Save DXF
         doc.saveas(str(output_path))
@@ -635,15 +616,11 @@ class DXFExporter(GeospatialExporter):
         coords = list(polygon.exterior.coords)
 
         # Add as polyline
-        msp.add_lwpolyline(
-            coords,
-            close=True,
-            dxfattribs={'layer': layer}
-        )
+        msp.add_lwpolyline(coords, close=True, dxfattribs={"layer": layer})
 
         # Add label at centroid
         centroid = polygon.centroid
-        self._add_text(msp, centroid.x, centroid.y, label, layer='LABELS')
+        self._add_text(msp, centroid.x, centroid.y, label, layer="LABELS")
 
     def _add_linestring(
         self,
@@ -656,15 +633,11 @@ class DXFExporter(GeospatialExporter):
         coords = list(linestring.coords)
 
         # Add as polyline (not closed)
-        msp.add_lwpolyline(
-            coords,
-            close=False,
-            dxfattribs={'layer': layer}
-        )
+        msp.add_lwpolyline(coords, close=False, dxfattribs={"layer": layer})
 
         # Add label at midpoint
         midpoint = linestring.interpolate(0.5, normalized=True)
-        self._add_text(msp, midpoint.x, midpoint.y, label, layer='LABELS')
+        self._add_text(msp, midpoint.x, midpoint.y, label, layer="LABELS")
 
     def _add_point(
         self,
@@ -675,13 +648,10 @@ class DXFExporter(GeospatialExporter):
     ) -> None:
         """Add point to modelspace."""
         # Add point entity
-        msp.add_point(
-            (point.x, point.y),
-            dxfattribs={'layer': layer}
-        )
+        msp.add_point((point.x, point.y), dxfattribs={"layer": layer})
 
         # Add label
-        self._add_text(msp, point.x, point.y + 2, label, layer='LABELS')
+        self._add_text(msp, point.x, point.y + 2, label, layer="LABELS")
 
     def _add_text(
         self,
@@ -689,14 +659,14 @@ class DXFExporter(GeospatialExporter):
         x: float,
         y: float,
         text: str,
-        layer: str = 'LABELS',
+        layer: str = "LABELS",
         height: float = 2.0,
     ) -> None:
         """Add text label to modelspace."""
         msp.add_text(
             text,
             dxfattribs={
-                'layer': layer,
-                'height': height,
-            }
+                "layer": layer,
+                "height": height,
+            },
         ).set_placement((x, y), align=TextEntityAlignment.MIDDLE_CENTER)

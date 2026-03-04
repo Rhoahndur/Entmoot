@@ -18,12 +18,14 @@ from numpy.typing import NDArray
 try:
     import rasterio
     from rasterio.transform import Affine
+
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
 
 try:
     from PIL import Image
+
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
@@ -138,17 +140,12 @@ class VolumeCalculator:
 
         # Handle NaN values
         cut_fill = np.where(
-            np.isnan(self.pre_elevation) | np.isnan(self.post_elevation),
-            0.0,
-            cut_fill
+            np.isnan(self.pre_elevation) | np.isnan(self.post_elevation), 0.0, cut_fill
         )
 
         return cut_fill.astype(np.float32)
 
-    def calculate_volumes(
-        self,
-        apply_shrink_swell: bool = True
-    ) -> VolumeResult:
+    def calculate_volumes(self, apply_shrink_swell: bool = True) -> VolumeResult:
         """
         Calculate cut and fill volumes.
 
@@ -241,9 +238,7 @@ class VolumeCalculator:
         return result
 
     def calculate_costs(
-        self,
-        volume_result: VolumeResult,
-        average_haul_distance_miles: float = 0.25
+        self, volume_result: VolumeResult, average_haul_distance_miles: float = 0.25
     ) -> EarthworkCost:
         """
         Calculate earthwork costs.
@@ -258,45 +253,30 @@ class VolumeCalculator:
         logger.info("Calculating earthwork costs...")
 
         # Excavation cost
-        excavation_cost = (
-            volume_result.cut_volume_cy * self.cost_database.excavation_cost_cy
-        )
+        excavation_cost = volume_result.cut_volume_cy * self.cost_database.excavation_cost_cy
 
         # Fill placement cost
-        fill_cost = (
-            volume_result.fill_volume_cy * self.cost_database.fill_cost_cy
-        )
+        fill_cost = volume_result.fill_volume_cy * self.cost_database.fill_cost_cy
 
         # Haul cost (for balanced volume)
         haul_cost = (
-            volume_result.balanced_volume_cy *
-            average_haul_distance_miles *
-            self.cost_database.haul_cost_cy_mile
+            volume_result.balanced_volume_cy
+            * average_haul_distance_miles
+            * self.cost_database.haul_cost_cy_mile
         )
 
         # Import cost
-        import_cost = (
-            volume_result.import_volume_cy * self.cost_database.import_cost_cy
-        )
+        import_cost = volume_result.import_volume_cy * self.cost_database.import_cost_cy
 
         # Export cost
-        export_cost = (
-            volume_result.export_volume_cy * self.cost_database.export_cost_cy
-        )
+        export_cost = volume_result.export_volume_cy * self.cost_database.export_cost_cy
 
         # Compaction cost
-        compaction_cost = (
-            volume_result.fill_volume_cy * self.cost_database.compaction_cost_cy
-        )
+        compaction_cost = volume_result.fill_volume_cy * self.cost_database.compaction_cost_cy
 
         # Total cost
         total_cost = (
-            excavation_cost +
-            fill_cost +
-            haul_cost +
-            import_cost +
-            export_cost +
-            compaction_cost
+            excavation_cost + fill_cost + haul_cost + import_cost + export_cost + compaction_cost
         )
 
         # Cost breakdown
@@ -406,17 +386,13 @@ class VolumeCalculator:
         )
 
         logger.info(
-            f"Balancing analysis complete: "
-            f"ratio={balance_ratio:.2f}, balanced={is_balanced}"
+            f"Balancing analysis complete: " f"ratio={balance_ratio:.2f}, balanced={is_balanced}"
         )
 
         return result
 
     def generate_cross_section(
-        self,
-        start: Tuple[float, float],
-        end: Tuple[float, float],
-        num_points: int = 100
+        self, start: Tuple[float, float], end: Tuple[float, float], num_points: int = 100
     ) -> CrossSection:
         """
         Generate a cross-section through the terrain.
@@ -476,7 +452,7 @@ class VolumeCalculator:
         self,
         output_path: str,
         format: str = "geotiff",
-        color_range: Tuple[float, float] = (-10.0, 10.0)
+        color_range: Tuple[float, float] = (-10.0, 10.0),
     ) -> None:
         """
         Generate cut/fill heatmap.
@@ -506,15 +482,14 @@ class VolumeCalculator:
         else:
             min_x, min_y, max_x, max_y = self.metadata.bounds
             transform = Affine.translation(min_x, max_y) * Affine.scale(
-                self.metadata.resolution[0],
-                -self.metadata.resolution[1]
+                self.metadata.resolution[0], -self.metadata.resolution[1]
             )
 
         # Write to GeoTIFF
         with rasterio.open(
             output_path,
-            'w',
-            driver='GTiff',
+            "w",
+            driver="GTiff",
             height=self.metadata.height,
             width=self.metadata.width,
             count=1,
@@ -527,11 +502,7 @@ class VolumeCalculator:
 
         logger.info(f"Exported GeoTIFF heatmap to {output_path}")
 
-    def _generate_png_heatmap(
-        self,
-        output_path: str,
-        color_range: Tuple[float, float]
-    ) -> None:
+    def _generate_png_heatmap(self, output_path: str, color_range: Tuple[float, float]) -> None:
         """Generate PNG heatmap with color visualization."""
         if not PIL_AVAILABLE:
             raise ImportError("Pillow is required for PNG export")
@@ -559,7 +530,7 @@ class VolumeCalculator:
         rgb[balanced_mask, 1] = 128  # Green channel
 
         # Create and save image
-        img = Image.fromarray(rgb, mode='RGB')
+        img = Image.fromarray(rgb, mode="RGB")
         img.save(output_path)
 
         logger.info(f"Exported PNG heatmap to {output_path}")

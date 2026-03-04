@@ -17,6 +17,7 @@ try:
     import rasterio
     from rasterio.windows import Window
     from rasterio.enums import Resampling
+
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
@@ -60,8 +61,7 @@ class DEMLoader:
         """
         if not RASTERIO_AVAILABLE:
             raise ImportError(
-                "rasterio is required for DEM loading. "
-                "Install with: pip install rasterio"
+                "rasterio is required for DEM loading. " "Install with: pip install rasterio"
             )
         self.max_memory_mb = max_memory_mb
         self.max_pixels = (max_memory_mb * 1024 * 1024) // 4  # Assume float32
@@ -150,9 +150,7 @@ class DEMLoader:
                 if window:
                     elevation = src.read(1, window=window)
                     # Update metadata for windowed read
-                    metadata = self._update_metadata_for_window(
-                        metadata, src, window
-                    )
+                    metadata = self._update_metadata_for_window(metadata, src, window)
                 else:
                     elevation = src.read(1)
 
@@ -167,9 +165,7 @@ class DEMLoader:
 
                 # Unit conversion if needed
                 if target_unit != metadata.elevation_unit:
-                    elevation = self._convert_units(
-                        elevation, metadata.elevation_unit, target_unit
-                    )
+                    elevation = self._convert_units(elevation, metadata.elevation_unit, target_unit)
                     metadata.elevation_unit = target_unit
 
                 logger.info(
@@ -270,9 +266,7 @@ class DEMLoader:
             transform=metadata.transform,
         )
 
-    def _load_ascii_grid(
-        self, file_path: Path, target_unit: ElevationUnit
-    ) -> DEMData:
+    def _load_ascii_grid(self, file_path: Path, target_unit: ElevationUnit) -> DEMData:
         """
         Load ASCII grid DEM file.
 
@@ -310,9 +304,7 @@ class DEMLoader:
                 required = ["ncols", "nrows", "cellsize"]
                 for field in required:
                     if field not in header:
-                        raise ValidationError(
-                            f"Missing required field in ASCII grid: {field}"
-                        )
+                        raise ValidationError(f"Missing required field in ASCII grid: {field}")
 
                 # Parse header
                 ncols = int(header["ncols"])
@@ -365,9 +357,7 @@ class DEMLoader:
                     dtype="float32",
                 )
 
-                logger.info(
-                    f"Loaded ASCII grid: {ncols}x{nrows}, cellsize: {cellsize}"
-                )
+                logger.info(f"Loaded ASCII grid: {ncols}x{nrows}, cellsize: {cellsize}")
 
                 return DEMData(elevation=elevation, metadata=metadata)
 
@@ -460,9 +450,7 @@ class DEMLoader:
         window = Window(col_off, row_off, width, height)
         return self.load(file_path, target_unit, window=window, use_streaming=False)
 
-    def get_metadata(
-        self, file_path: Union[str, Path]
-    ) -> DEMMetadata:
+    def get_metadata(self, file_path: Union[str, Path]) -> DEMMetadata:
         """
         Get DEM metadata without loading the full dataset.
 

@@ -19,6 +19,7 @@ try:
     from rasterio.features import rasterize
     from shapely.geometry import Point, LineString, Polygon
     from shapely.ops import nearest_points
+
     DEPENDENCIES_AVAILABLE = True
 except ImportError:
     DEPENDENCIES_AVAILABLE = False
@@ -39,9 +40,7 @@ class PostGradingModel:
     """
 
     def __init__(
-        self,
-        metadata: DEMMetadata,
-        base_elevation: Optional[NDArray[np.floating[Any]]] = None
+        self, metadata: DEMMetadata, base_elevation: Optional[NDArray[np.floating[Any]]] = None
     ) -> None:
         """
         Initialize post-grading model.
@@ -55,8 +54,7 @@ class PostGradingModel:
         """
         if not DEPENDENCIES_AVAILABLE:
             raise ImportError(
-                "Required dependencies not available. "
-                "Install with: pip install rasterio shapely"
+                "Required dependencies not available. " "Install with: pip install rasterio shapely"
             )
 
         self.metadata = metadata
@@ -66,19 +64,13 @@ class PostGradingModel:
         if base_elevation is not None:
             self.elevation = base_elevation.copy()
         else:
-            self.elevation = np.full(
-                (metadata.height, metadata.width),
-                np.nan,
-                dtype=np.float32
-            )
+            self.elevation = np.full((metadata.height, metadata.width), np.nan, dtype=np.float32)
 
         # Track which cells have been graded
         self.graded_mask = np.zeros((metadata.height, metadata.width), dtype=bool)
         self.zone_priority = np.zeros((metadata.height, metadata.width), dtype=np.int32)
 
-        logger.info(
-            f"Initialized post-grading model: {metadata.width}x{metadata.height}"
-        )
+        logger.info(f"Initialized post-grading model: {metadata.width}x{metadata.height}")
 
     def add_grading_zone(self, zone: GradingZone) -> None:
         """
@@ -95,7 +87,7 @@ class PostGradingModel:
         geometry: Any,
         target_elevation: float,
         transition_slope: float = 3.0,
-        priority: int = 10
+        priority: int = 10,
     ) -> None:
         """
         Add a flat building pad.
@@ -111,7 +103,7 @@ class PostGradingModel:
             geometry=geometry,
             target_elevation=target_elevation,
             transition_slope=transition_slope,
-            priority=priority
+            priority=priority,
         )
         self.add_grading_zone(zone)
 
@@ -121,7 +113,7 @@ class PostGradingModel:
         width: float,
         crown_height: float = 0.5,
         cross_slope: float = 2.0,
-        priority: int = 8
+        priority: int = 8,
     ) -> None:
         """
         Add a road corridor with crown and cross-slope.
@@ -141,17 +133,12 @@ class PostGradingModel:
             geometry=geometry,
             crown_height=crown_height,
             cross_slope=cross_slope,
-            priority=priority
+            priority=priority,
         )
         self.add_grading_zone(zone)
 
     def add_drainage_swale(
-        self,
-        centerline: Any,
-        width: float,
-        slope: float,
-        direction: float,
-        priority: int = 5
+        self, centerline: Any, width: float, slope: float, direction: float, priority: int = 5
     ) -> None:
         """
         Add a drainage swale with positive drainage.
@@ -170,7 +157,7 @@ class PostGradingModel:
             geometry=geometry,
             target_slope=slope,
             slope_direction=direction,
-            priority=priority
+            priority=priority,
         )
         self.add_grading_zone(zone)
 
@@ -196,8 +183,7 @@ class PostGradingModel:
         ungraded = ~self.graded_mask
         if np.any(ungraded) and not np.all(np.isnan(self.elevation)):
             logger.warning(
-                f"{np.sum(ungraded)} cells remain ungraded. "
-                "Using original elevation."
+                f"{np.sum(ungraded)} cells remain ungraded. " "Using original elevation."
             )
 
         logger.info("Grading generation complete")
@@ -233,11 +219,7 @@ class PostGradingModel:
         self.graded_mask[can_grade] = True
         self.zone_priority[can_grade] = zone.priority
 
-    def _grade_building_pad(
-        self,
-        zone: GradingZone,
-        mask: NDArray[np.bool_]
-    ) -> None:
+    def _grade_building_pad(self, zone: GradingZone, mask: NDArray[np.bool_]) -> None:
         """
         Grade a flat building pad.
 
@@ -253,15 +235,10 @@ class PostGradingModel:
         self.elevation[mask] = zone.target_elevation
 
         logger.debug(
-            f"Graded building pad at {zone.target_elevation:.1f} ft, "
-            f"{np.sum(mask)} cells"
+            f"Graded building pad at {zone.target_elevation:.1f} ft, " f"{np.sum(mask)} cells"
         )
 
-    def _grade_road_corridor(
-        self,
-        zone: GradingZone,
-        mask: NDArray[np.bool_]
-    ) -> None:
+    def _grade_road_corridor(self, zone: GradingZone, mask: NDArray[np.bool_]) -> None:
         """
         Grade a road corridor with crown and cross-slope.
 
@@ -311,20 +288,14 @@ class PostGradingModel:
                 base_elev = 0.0
 
             # Calculate final elevation
-            self.elevation[row, col] = (
-                base_elev + crown_adjustment - cross_slope_adjustment
-            )
+            self.elevation[row, col] = base_elev + crown_adjustment - cross_slope_adjustment
 
         logger.debug(
             f"Graded road corridor with crown={zone.crown_height:.2f} ft, "
             f"cross-slope={zone.cross_slope:.1f}%, {np.sum(mask)} cells"
         )
 
-    def _grade_drainage_swale(
-        self,
-        zone: GradingZone,
-        mask: NDArray[np.bool_]
-    ) -> None:
+    def _grade_drainage_swale(self, zone: GradingZone, mask: NDArray[np.bool_]) -> None:
         """
         Grade a drainage swale with positive drainage.
 
@@ -366,15 +337,10 @@ class PostGradingModel:
             self.elevation[row, col] = base_elev - slope_drop
 
         logger.debug(
-            f"Graded drainage swale with slope={zone.target_slope:.2f}%, "
-            f"{np.sum(mask)} cells"
+            f"Graded drainage swale with slope={zone.target_slope:.2f}%, " f"{np.sum(mask)} cells"
         )
 
-    def _grade_transition(
-        self,
-        zone: GradingZone,
-        mask: NDArray[np.bool_]
-    ) -> None:
+    def _grade_transition(self, zone: GradingZone, mask: NDArray[np.bool_]) -> None:
         """
         Grade a transition zone that blends to natural terrain.
 
@@ -396,9 +362,7 @@ class PostGradingModel:
             graded_neighbors = neighbors[self.graded_mask[neighbors[:, 0], neighbors[:, 1]]]
 
             if len(graded_neighbors) > 0:
-                avg_elev = np.mean(
-                    self.elevation[graded_neighbors[:, 0], graded_neighbors[:, 1]]
-                )
+                avg_elev = np.mean(self.elevation[graded_neighbors[:, 0], graded_neighbors[:, 1]])
                 self.elevation[row, col] = avg_elev
             else:
                 # No graded neighbors, skip
@@ -422,8 +386,7 @@ class PostGradingModel:
         else:
             min_x, min_y, max_x, max_y = self.metadata.bounds
             transform = Affine.translation(min_x, max_y) * Affine.scale(
-                self.metadata.resolution[0],
-                -self.metadata.resolution[1]
+                self.metadata.resolution[0], -self.metadata.resolution[1]
             )
 
         # Rasterize the geometry
@@ -433,7 +396,7 @@ class PostGradingModel:
                 out_shape=(self.metadata.height, self.metadata.width),
                 transform=transform,
                 fill=0,
-                dtype=np.uint8
+                dtype=np.uint8,
             )
             return mask.astype(bool)
         except Exception as e:
@@ -462,12 +425,7 @@ class PostGradingModel:
 
         return x, y
 
-    def _get_neighbors(
-        self,
-        row: int,
-        col: int,
-        radius: int = 1
-    ) -> NDArray[np.integer[Any]]:
+    def _get_neighbors(self, row: int, col: int, radius: int = 1) -> NDArray[np.integer[Any]]:
         """
         Get neighboring cell indices.
 
@@ -504,15 +462,14 @@ class PostGradingModel:
         else:
             min_x, min_y, max_x, max_y = self.metadata.bounds
             transform = Affine.translation(min_x, max_y) * Affine.scale(
-                self.metadata.resolution[0],
-                -self.metadata.resolution[1]
+                self.metadata.resolution[0], -self.metadata.resolution[1]
             )
 
         # Write to GeoTIFF
         with rasterio.open(
             output_path,
-            'w',
-            driver='GTiff',
+            "w",
+            driver="GTiff",
             height=self.metadata.height,
             width=self.metadata.width,
             count=1,

@@ -56,14 +56,18 @@ class OptimizationWeights(BaseModel):
     """Optimization weights for layout generation."""
 
     cost: float = Field(40, ge=0, le=100, description="Weight for cost minimization")
-    buildable_area: float = Field(30, ge=0, le=100, description="Weight for buildable area maximization")
+    buildable_area: float = Field(
+        30, ge=0, le=100, description="Weight for buildable area maximization"
+    )
     accessibility: float = Field(15, ge=0, le=100, description="Weight for accessibility")
     environmental_impact: float = Field(
         10, ge=0, le=100, description="Weight for environmental impact"
     )
     aesthetics: float = Field(5, ge=0, le=100, description="Weight for aesthetics")
 
-    @field_validator("cost", "buildable_area", "accessibility", "environmental_impact", "aesthetics")
+    @field_validator(
+        "cost", "buildable_area", "accessibility", "environmental_impact", "aesthetics"
+    )
     @classmethod
     def validate_total_weight(cls, v, info):
         """Validate that weights sum to 100."""
@@ -79,9 +83,7 @@ class ProjectConfig(BaseModel):
     assets: List[AssetConfig] = Field(..., min_length=1, description="List of assets to place")
     constraints: ConstraintConfig = Field(..., description="Constraint configuration")
     road_design: RoadConfig = Field(..., description="Road design configuration")
-    optimization_weights: OptimizationWeights = Field(
-        ..., description="Optimization weights"
-    )
+    optimization_weights: OptimizationWeights = Field(..., description="Optimization weights")
 
 
 class ProjectStatus(str, Enum):
@@ -130,7 +132,7 @@ class PlacedAsset(BaseModel):
     width: float = Field(..., description="Width in feet")
     length: float = Field(..., description="Length in feet")
     height: Optional[float] = Field(None, description="Height in feet")
-    polygon: List['Coordinate'] = Field(default_factory=list, description="Footprint corners")
+    polygon: List["Coordinate"] = Field(default_factory=list, description="Footprint corners")
 
 
 class RoadSegment(BaseModel):

@@ -44,9 +44,7 @@ def get_request_id(request: Request) -> Union[str, None]:
     return getattr(request.state, "request_id", None)
 
 
-async def entmoot_exception_handler(
-    request: Request, exc: EntmootException
-) -> JSONResponse:
+async def entmoot_exception_handler(request: Request, exc: EntmootException) -> JSONResponse:
     """
     Handle EntmootException and its subclasses.
 

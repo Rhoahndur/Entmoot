@@ -102,6 +102,7 @@ class FEMAResponseParser:
                 holes = rings[1:] if len(rings) > 1 else []
 
                 from shapely.geometry import Polygon
+
                 geom = Polygon(exterior, holes)
 
                 # Validate geometry
@@ -221,7 +222,9 @@ class FEMAResponseParser:
 
             # Parse BFE (Base Flood Elevation)
             bfe = self._parse_bfe(
-                attributes.get("STATIC_BFE") or attributes.get("BFE_REVERT") or attributes.get("V_DATUM")
+                attributes.get("STATIC_BFE")
+                or attributes.get("BFE_REVERT")
+                or attributes.get("V_DATUM")
             )
 
             # Parse depth (for AO zones)
@@ -246,7 +249,9 @@ class FEMAResponseParser:
 
             # Source citation
             source_citation = (
-                attributes.get("SOURCE_CIT") or attributes.get("FIRM_PAN") or attributes.get("DFIRM_ID")
+                attributes.get("SOURCE_CIT")
+                or attributes.get("FIRM_PAN")
+                or attributes.get("DFIRM_ID")
             )
 
             # Vertical datum
@@ -256,6 +261,7 @@ class FEMAResponseParser:
             area_sqm = None
             try:
                 from shapely import wkt
+
                 geom = wkt.loads(geometry_wkt)
                 if isinstance(geom, ShapelyPolygon):
                     # Convert to appropriate projection for area calculation

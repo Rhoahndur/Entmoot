@@ -606,9 +606,7 @@ class BoundaryExtractionService:
 
         return perimeter_deg
 
-    def _extract_metadata(
-        self, placemark: Placemark, source: BoundarySource
-    ) -> BoundaryMetadata:
+    def _extract_metadata(self, placemark: Placemark, source: BoundarySource) -> BoundaryMetadata:
         """
         Extract boundary metadata from placemark.
 
@@ -629,9 +627,7 @@ class BoundaryExtractionService:
                 key_lower = key.lower()
                 if "address" in key_lower or "location" in key_lower:
                     address = str(value)
-                elif any(
-                    k in key_lower for k in ["apn", "parcel_id", "parcel", "lot_number"]
-                ):
+                elif any(k in key_lower for k in ["apn", "parcel_id", "parcel", "lot_number"]):
                     parcel_id = str(value)
 
         # Try to extract from description

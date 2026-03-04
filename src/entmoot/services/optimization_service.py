@@ -13,8 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-import numpy as np
-from shapely.geometry import Polygon as ShapelyPolygon, box, shape
+from shapely.geometry import box, shape
 
 from entmoot.core.redis_storage import get_storage
 from entmoot.models.project import (
@@ -56,12 +55,8 @@ async def generate_layout_async(
             storage.set_project(project_id, project)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(
-                run_optimization_sync, project_id, config, current_assets
-            )
-            results = await asyncio.get_event_loop().run_in_executor(
-                None, future.result
-            )
+            future = executor.submit(run_optimization_sync, project_id, config, current_assets)
+            results = await asyncio.get_event_loop().run_in_executor(None, future.result)
 
         storage.set_results(project_id, results.model_dump())
 
@@ -75,9 +70,7 @@ async def generate_layout_async(
         logger.info(f"Layout generation completed for project {project_id}")
 
     except Exception as e:
-        logger.error(
-            f"Error generating layout for project {project_id}: {e}", exc_info=True
-        )
+        logger.error(f"Error generating layout for project {project_id}: {e}", exc_info=True)
         project = storage.get_project(project_id)
         if project:
             project["status"] = ProjectStatus.FAILED
@@ -85,7 +78,7 @@ async def generate_layout_async(
             storage.set_project(project_id, project)
 
 
-def run_optimization_sync(
+def run_optimization_sync(  # noqa: C901
     project_id: str,
     config: ProjectConfig,
     current_assets: Optional[List[Dict]] = None,
@@ -178,9 +171,7 @@ def run_optimization_sync(
 
         if polygons:
             raw_boundary = polygons[0]
-            logger.info(
-                f"Found {len(polygons)} polygon(s) in GeoJSON, using first as boundary"
-            )
+            logger.info(f"Found {len(polygons)} polygon(s) in GeoJSON, using first as boundary")
         else:
             logger.warning("No polygons found in GeoJSON")
     else:
@@ -216,9 +207,7 @@ def run_optimization_sync(
     inverse_transformer = None
 
     if not raw_boundary:
-        logger.warning(
-            "No property boundary found in file, using default 500x500 ft boundary"
-        )
+        logger.warning("No property boundary found in file, using default 500x500 ft boundary")
         site_boundary = box(0, 0, 500 * 0.3048, 500 * 0.3048)
     else:
         from entmoot.core.crs.detector import detect_crs_from_kml, detect_crs_from_geojson
@@ -268,14 +257,10 @@ def run_optimization_sync(
                 raw_boundary.centroid.x,
                 raw_boundary.centroid.y,
             )
-            logger.info(
-                f"Boundary center: lon={center_lon:.6f}, lat={center_lat:.6f}"
-            )
+            logger.info(f"Boundary center: lon={center_lon:.6f}, lat={center_lat:.6f}")
 
             target_crs = get_utm_crs_info(center_lon, center_lat)
-            logger.info(
-                f"Transforming to {target_crs.name} for accurate measurements"
-            )
+            logger.info(f"Transforming to {target_crs.name} for accurate measurements")
 
             transformer = CRSTransformer(source_crs, target_crs)
             inverse_transformer = CRSTransformer(target_crs, source_crs)
@@ -430,24 +415,16 @@ def run_optimization_sync(
             for asset_data_item, asset in zip(current_assets, assets):
                 asset_copy = asset.model_copy(deep=True)
                 asset_copy.set_position(
-                    asset_data_item.get("position", {}).get(
-                        "longitude", asset.position[0]
-                    ),
-                    asset_data_item.get("position", {}).get(
-                        "latitude", asset.position[1]
-                    ),
+                    asset_data_item.get("position", {}).get("longitude", asset.position[0]),
+                    asset_data_item.get("position", {}).get("latitude", asset.position[1]),
                 )
                 asset_copy.set_rotation(asset_data_item.get("rotation", 0))
                 seed_assets.append(asset_copy)
 
             seed_solution = PlacementSolution(assets=seed_assets)
-            logger.info(
-                "Using current asset positions as seed solution for optimization"
-            )
+            logger.info("Using current asset positions as seed solution for optimization")
         except Exception as e:
-            logger.warning(
-                f"Failed to create seed solution from current assets: {e}"
-            )
+            logger.warning(f"Failed to create seed solution from current assets: {e}")
             seed_solution = None
 
     result = optimizer.optimize(
@@ -481,14 +458,10 @@ def run_optimization_sync(
 
     placed_assets = []
     for asset in result.best_solution.assets:
-        project_asset_type = asset_type_mapping.get(
-            asset.asset_type, AssetType.BUILDINGS
-        )
+        project_asset_type = asset_type_mapping.get(asset.asset_type, AssetType.BUILDINGS)
 
         if inverse_transformer:
-            lon, lat = inverse_transformer.transform(
-                asset.position[0], asset.position[1]
-            )
+            lon, lat = inverse_transformer.transform(asset.position[0], asset.position[1])
             logger.debug(
                 f"Transformed asset position: "
                 f"UTM({asset.position[0]:.2f}, {asset.position[1]:.2f}) -> "
@@ -497,14 +470,11 @@ def run_optimization_sync(
         else:
             lon, lat = asset.position[0], asset.position[1]
             logger.warning(
-                f"No inverse transformer available! "
-                f"Using coordinates as-is: ({lon}, {lat})"
+                f"No inverse transformer available! " f"Using coordinates as-is: ({lon}, {lat})"
             )
 
         # Compute footprint polygon (resolves TODO: polygon=[])
-        footprint_coords = _compute_asset_footprint(
-            asset, lon, lat, inverse_transformer
-        )
+        footprint_coords = _compute_asset_footprint(asset, lon, lat, inverse_transformer)
 
         placed_asset = PlacedAsset(
             id=asset.id,

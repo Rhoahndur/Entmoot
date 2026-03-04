@@ -9,11 +9,12 @@ import math
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from shapely.geometry import Polygon as ShapelyPolygon, Point
+from shapely.geometry import Polygon as ShapelyPolygon
 
 from entmoot.models.project import (
     Bounds,
     BuildableArea,
+    ConstraintType,
     Coordinate,
     ConstraintViolation,
     CostBreakdown,
@@ -65,16 +66,12 @@ class ProjectService:
     ) -> OptimizationResults:
         """Assemble the full ``OptimizationResults`` response from stored data."""
 
-        property_boundary_coords: List[Dict[str, float]] = project.get(
-            "property_boundary", []
-        )
+        property_boundary_coords: List[Dict[str, float]] = project.get("property_boundary", [])
         bounds_data: Dict[str, float] = project.get("bounds", {})
 
         # Road network
         total_road_length = sum(seg.length for seg in layout_results.road_network)
-        intersections = ProjectService._compute_road_intersections(
-            layout_results.road_network
-        )
+        intersections = ProjectService._compute_road_intersections(layout_results.road_network)
         road_network = RoadNetwork(
             segments=layout_results.road_network,
             total_length=total_road_length,
@@ -89,15 +86,11 @@ class ProjectService:
         # Constraint / buildable zones
         constraint_zones = ProjectService._compute_constraint_zones(
             property_boundary_coords,
-            setback_ft=project.get("config", {})
-            .get("constraints", {})
-            .get("setback_distance", 20),
+            setback_ft=project.get("config", {}).get("constraints", {}).get("setback_distance", 20),
         )
         buildable_areas = ProjectService._compute_buildable_areas(
             property_boundary_coords,
-            setback_ft=project.get("config", {})
-            .get("constraints", {})
-            .get("setback_distance", 20),
+            setback_ft=project.get("config", {}).get("constraints", {}).get("setback_distance", 20),
         )
 
         # Metrics
@@ -151,14 +144,17 @@ class ProjectService:
             created_at=project.get("created_at", datetime.utcnow().isoformat()),
         )
 
+        boundary_as_coords = [
+            Coordinate(latitude=p["latitude"], longitude=p["longitude"])
+            for p in property_boundary_coords
+        ]
+
         return OptimizationResults(
             project_id=project_id,
             project_name=project.get("project_name", "Unnamed Project"),
-            property_boundary=property_boundary_coords,
+            property_boundary=boundary_as_coords,
             bounds=(
-                Bounds(**bounds_data)
-                if bounds_data
-                else Bounds(north=0, south=0, east=0, west=0)
+                Bounds(**bounds_data) if bounds_data else Bounds(north=0, south=0, east=0, west=0)
             ),
             alternatives=[alternative],
             selected_alternative_id="alt-1",
@@ -193,12 +189,13 @@ class ProjectService:
                     violations.append(
                         ConstraintViolation(
                             asset_id=asset.id,
-                            constraint_type="setback",
+                            constraint_type=ConstraintType.SETBACK,
                             severity="error",
                             message=(
                                 f"Asset overlaps with another asset "
                                 f"(overlap: {overlap_sqft:.0f} sq ft)"
                             ),
+                            location=None,
                         )
                     )
 
@@ -206,10 +203,7 @@ class ProjectService:
             if property_boundary_coords:
                 try:
                     boundary_poly = ShapelyPolygon(
-                        [
-                            (p["longitude"], p["latitude"])
-                            for p in property_boundary_coords
-                        ]
+                        [(p["longitude"], p["latitude"]) for p in property_boundary_coords]
                     )
                     if not boundary_poly.contains(asset_poly):
                         if asset_poly.intersects(boundary_poly):
@@ -218,21 +212,23 @@ class ProjectService:
                             violations.append(
                                 ConstraintViolation(
                                     asset_id=asset.id,
-                                    constraint_type="property_line",
+                                    constraint_type=ConstraintType.PROPERTY_LINE,
                                     severity="error",
                                     message=(
                                         f"Asset extends {outside_sqft:.0f} sq ft "
                                         f"beyond property boundary"
                                     ),
+                                    location=None,
                                 )
                             )
                         else:
                             violations.append(
                                 ConstraintViolation(
                                     asset_id=asset.id,
-                                    constraint_type="property_line",
+                                    constraint_type=ConstraintType.PROPERTY_LINE,
                                     severity="error",
                                     message="Asset is completely outside property boundary",
+                                    location=None,
                                 )
                             )
                 except Exception as e:
@@ -283,16 +279,11 @@ class ProjectService:
             )
             # Approximate setback in degrees
             setback_deg = setback_ft * LNG_PER_FOOT
-            setback_zone = boundary_poly.difference(
-                boundary_poly.buffer(-setback_deg)
-            )
+            setback_zone = boundary_poly.difference(boundary_poly.buffer(-setback_deg))
             if setback_zone.is_empty:
                 return []
 
-            coords = [
-                {"latitude": y, "longitude": x}
-                for x, y in setback_zone.exterior.coords[:-1]
-            ]
+            coords = [{"latitude": y, "longitude": x} for x, y in setback_zone.exterior.coords[:-1]]
             return [
                 {
                     "type": "setback",
@@ -327,15 +318,13 @@ class ProjectService:
                 return []
 
             coords = [
-                {"latitude": y, "longitude": x}
-                for x, y in buildable.exterior.coords[:-1]
+                Coordinate(latitude=y, longitude=x) for x, y in buildable.exterior.coords[:-1]
             ]
             return [
                 BuildableArea(
-                    id="buildable-1",
-                    name="Primary buildable area",
-                    coordinates=coords,
-                    area_sqft=buildable.area / (LAT_PER_FOOT * LNG_PER_FOOT),
+                    polygon=coords,
+                    area=buildable.area / (LAT_PER_FOOT * LNG_PER_FOOT),
+                    usable=True,
                 ).model_dump()
             ]
         except Exception as e:
@@ -367,8 +356,6 @@ class ProjectService:
         for x, y in corners:
             rot_x = x * cos_r - y * sin_r
             rot_y = x * sin_r + y * cos_r
-            rotated.append(
-                (asset.position.longitude + rot_x, asset.position.latitude + rot_y)
-            )
+            rotated.append((asset.position.longitude + rot_x, asset.position.latitude + rot_y))
 
         return ShapelyPolygon(rotated)

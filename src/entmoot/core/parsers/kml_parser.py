@@ -114,9 +114,7 @@ class ParsedKML:
 
     def get_placemarks_by_type(self, geometry_type: GeometryType) -> List[Placemark]:
         """Get placemarks filtered by geometry type."""
-        return [
-            p for p in self.placemarks if p.geometry_type == geometry_type
-        ]
+        return [p for p in self.placemarks if p.geometry_type == geometry_type]
 
     def get_contours(self) -> List[Placemark]:
         """Get all contour line placemarks."""
@@ -291,9 +289,7 @@ class KMLParser:
         else:
             self._parse_element_placemarks(element, folder_path)
 
-    def _parse_element_placemarks(
-        self, element: ET.Element, folder_path: List[str]
-    ) -> None:
+    def _parse_element_placemarks(self, element: ET.Element, folder_path: List[str]) -> None:
         """
         Recursively parse Placemarks from element and its folders.
 
@@ -322,9 +318,7 @@ class KMLParser:
             self.result.folders.append("/".join(folder_path + [folder_name]))
             self._parse_element_placemarks(folder, folder_path + [folder_name])
 
-    def _parse_placemark(
-        self, element: ET.Element, folder_path: List[str]
-    ) -> Optional[Placemark]:
+    def _parse_placemark(self, element: ET.Element, folder_path: List[str]) -> Optional[Placemark]:
         """
         Parse a single Placemark element.
 
@@ -366,9 +360,7 @@ class KMLParser:
 
             # Check if this is a contour line
             if placemark.geometry_type == GeometryType.LINE_STRING:
-                placemark.is_contour = is_contour_line(
-                    placemark.name, placemark.description
-                )
+                placemark.is_contour = is_contour_line(placemark.name, placemark.description)
                 if placemark.is_contour:
                     # Extract elevation
                     elevation = extract_elevation_from_text(
@@ -414,17 +406,13 @@ class KMLParser:
                 coords_elem = element.find(f"{self.namespace}coordinates")
                 if coords_elem is not None and coords_elem.text:
                     geometry = kml_to_shapely("Point", coords_elem.text.strip())
-                    return ParsedGeometry(
-                        geometry=geometry, geometry_type=GeometryType.POINT
-                    )
+                    return ParsedGeometry(geometry=geometry, geometry_type=GeometryType.POINT)
 
             elif geom_type == "LineString":
                 coords_elem = element.find(f"{self.namespace}coordinates")
                 if coords_elem is not None and coords_elem.text:
                     geometry = kml_to_shapely("LineString", coords_elem.text.strip())
-                    return ParsedGeometry(
-                        geometry=geometry, geometry_type=GeometryType.LINE_STRING
-                    )
+                    return ParsedGeometry(geometry=geometry, geometry_type=GeometryType.LINE_STRING)
 
             elif geom_type == "Polygon":
                 # Parse outer boundary
@@ -436,18 +424,12 @@ class KMLParser:
                         if outer_coords is not None and outer_coords.text:
                             # Parse inner boundaries (holes)
                             inner_boundaries = []
-                            for inner in element.findall(
-                                f"{self.namespace}innerBoundaryIs"
-                            ):
+                            for inner in element.findall(f"{self.namespace}innerBoundaryIs"):
                                 inner_ring = inner.find(f"{self.namespace}LinearRing")
                                 if inner_ring is not None:
-                                    inner_coords = inner_ring.find(
-                                        f"{self.namespace}coordinates"
-                                    )
+                                    inner_coords = inner_ring.find(f"{self.namespace}coordinates")
                                     if inner_coords is not None and inner_coords.text:
-                                        inner_boundaries.append(
-                                            inner_coords.text.strip()
-                                        )
+                                        inner_boundaries.append(inner_coords.text.strip())
 
                             geometry = kml_to_shapely(
                                 "Polygon",
@@ -473,9 +455,7 @@ class KMLParser:
             logger.error(f"Failed to parse {geom_type}: {e}")
             return None
 
-    def _parse_extended_data(
-        self, element: ET.Element, properties: Dict[str, Any]
-    ) -> None:
+    def _parse_extended_data(self, element: ET.Element, properties: Dict[str, Any]) -> None:
         """
         Parse ExtendedData elements and add to properties.
 
@@ -494,9 +474,7 @@ class KMLParser:
 
             # Parse SchemaData
             for schema_data in extended_data.findall(f"{self.namespace}SchemaData"):
-                for simple_data in schema_data.findall(
-                    f"{self.namespace}SimpleData"
-                ):
+                for simple_data in schema_data.findall(f"{self.namespace}SimpleData"):
                     name = simple_data.get("name")
                     if name and simple_data.text:
                         properties[name] = simple_data.text.strip()

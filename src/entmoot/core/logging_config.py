@@ -188,20 +188,12 @@ def setup_logging(
 
         if settings.environment == "development":
             # Colored output for development
-            console_format = (
-                "%(levelname)s | %(asctime)s | %(name)s:%(lineno)d | %(message)s"
-            )
-            console_formatter = ColoredFormatter(
-                console_format, datefmt="%Y-%m-%d %H:%M:%S"
-            )
+            console_format = "%(levelname)s | %(asctime)s | %(name)s:%(lineno)d | %(message)s"
+            console_formatter = ColoredFormatter(console_format, datefmt="%Y-%m-%d %H:%M:%S")
         else:
             # Plain format for production
-            console_format = (
-                "%(levelname)s - %(asctime)s - %(name)s - %(message)s"
-            )
-            console_formatter = logging.Formatter(
-                console_format, datefmt="%Y-%m-%d %H:%M:%S"
-            )
+            console_format = "%(levelname)s - %(asctime)s - %(name)s - %(message)s"
+            console_formatter = logging.Formatter(console_format, datefmt="%Y-%m-%d %H:%M:%S")
 
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
@@ -228,9 +220,7 @@ def setup_logging(
                 "%(asctime)s - %(levelname)s - %(name)s - "
                 "%(module)s:%(funcName)s:%(lineno)d - %(message)s"
             )
-            file_formatter = logging.Formatter(
-                file_format, datefmt="%Y-%m-%d %H:%M:%S"
-            )
+            file_formatter = logging.Formatter(file_format, datefmt="%Y-%m-%d %H:%M:%S")
 
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)

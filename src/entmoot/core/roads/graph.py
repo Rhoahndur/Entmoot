@@ -17,8 +17,7 @@ try:
     import networkx as nx
 except ImportError:
     raise ImportError(
-        "NetworkX is required for road network generation. "
-        "Install it with: pip install networkx"
+        "NetworkX is required for road network generation. " "Install it with: pip install networkx"
     )
 
 
@@ -356,12 +355,7 @@ class NavigationGraph:
         row, col = int(row), int(col)
 
         # Check bounds
-        if (
-            row < 0
-            or row >= self.slope_data.shape[0]
-            or col < 0
-            or col >= self.slope_data.shape[1]
-        ):
+        if row < 0 or row >= self.slope_data.shape[0] or col < 0 or col >= self.slope_data.shape[1]:
             return 0.0
 
         return float(self.slope_data[row, col])
@@ -442,9 +436,11 @@ class NavigationGraph:
             "num_edges": self.graph.number_of_edges(),
             "is_connected": nx.is_connected(self.graph),
             "num_components": nx.number_connected_components(self.graph),
-            "avg_degree": sum(dict(self.graph.degree()).values()) / self.graph.number_of_nodes()
-            if self.graph.number_of_nodes() > 0
-            else 0.0,
+            "avg_degree": (
+                sum(dict(self.graph.degree()).values()) / self.graph.number_of_nodes()
+                if self.graph.number_of_nodes() > 0
+                else 0.0
+            ),
             "asset_nodes": sum(1 for n in self.nodes.values() if n.is_asset),
             "entrance_nodes": sum(1 for n in self.nodes.values() if n.is_entrance),
         }
@@ -489,7 +485,10 @@ class NavigationGraph:
             features.append(
                 {
                     "type": "Feature",
-                    "geometry": {"type": "Point", "coordinates": [node.position[0], node.position[1]]},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [node.position[0], node.position[1]],
+                    },
                     "properties": {
                         "id": node.id,
                         "elevation": node.elevation,

@@ -33,8 +33,7 @@ class ConstraintAggregator:
 
     @staticmethod
     def aggregate_geometries(
-        constraints: List[Constraint],
-        mode: AggregationMode = AggregationMode.UNION
+        constraints: List[Constraint], mode: AggregationMode = AggregationMode.UNION
     ) -> Optional[BaseGeometry]:
         """
         Aggregate constraint geometries.
@@ -73,7 +72,7 @@ class ConstraintAggregator:
     def create_composite_constraint_map(
         constraints: List[Constraint],
         filter_severity: Optional[List[ConstraintSeverity]] = None,
-        filter_types: Optional[List[ConstraintType]] = None
+        filter_types: Optional[List[ConstraintType]] = None,
     ) -> Optional[BaseGeometry]:
         """
         Create a composite constraint map from multiple constraints.
@@ -98,16 +97,11 @@ class ConstraintAggregator:
             filtered = [c for c in filtered if c.constraint_type in type_set]
 
         # Aggregate
-        return ConstraintAggregator.aggregate_geometries(
-            filtered,
-            mode=AggregationMode.UNION
-        )
+        return ConstraintAggregator.aggregate_geometries(filtered, mode=AggregationMode.UNION)
 
     @staticmethod
     def calculate_available_area(
-        site_boundary: BaseGeometry,
-        constraints: List[Constraint],
-        only_blocking: bool = True
+        site_boundary: BaseGeometry, constraints: List[Constraint], only_blocking: bool = True
     ) -> Tuple[BaseGeometry, float, float]:
         """
         Calculate the available (unconstrained) area on a site.
@@ -122,19 +116,14 @@ class ConstraintAggregator:
         """
         # Filter to blocking constraints if requested
         if only_blocking:
-            constraints = [
-                c for c in constraints
-                if c.severity == ConstraintSeverity.BLOCKING
-            ]
+            constraints = [c for c in constraints if c.severity == ConstraintSeverity.BLOCKING]
 
         if not constraints:
             area_sqm = site_boundary.area
             return (site_boundary, area_sqm, area_sqm * 0.000247105)
 
         # Create composite constraint map
-        constrained_area = ConstraintAggregator.create_composite_constraint_map(
-            constraints
-        )
+        constrained_area = ConstraintAggregator.create_composite_constraint_map(constraints)
 
         if constrained_area is None or constrained_area.is_empty:
             area_sqm = site_boundary.area
@@ -152,7 +141,7 @@ class ConstraintAggregator:
         site_boundary: BaseGeometry,
         constraints: List[Constraint],
         by_type: bool = False,
-        by_severity: bool = False
+        by_severity: bool = False,
     ) -> Dict[str, Any]:
         """
         Calculate constraint coverage statistics.
@@ -175,9 +164,7 @@ class ConstraintAggregator:
         }
 
         # Calculate total constrained area
-        all_constrained = ConstraintAggregator.create_composite_constraint_map(
-            constraints
-        )
+        all_constrained = ConstraintAggregator.create_composite_constraint_map(constraints)
 
         if all_constrained and not all_constrained.is_empty:
             constrained_area = all_constrained.intersection(site_boundary).area
@@ -207,9 +194,7 @@ class ConstraintAggregator:
 
             for ctype in constraint_types:
                 type_constraints = [c for c in constraints if c.constraint_type == ctype]
-                type_geom = ConstraintAggregator.create_composite_constraint_map(
-                    type_constraints
-                )
+                type_geom = ConstraintAggregator.create_composite_constraint_map(type_constraints)
 
                 if type_geom and not type_geom.is_empty:
                     type_area = type_geom.intersection(site_boundary).area
@@ -248,8 +233,7 @@ class ConstraintAggregator:
 
     @staticmethod
     def identify_overlapping_constraints(
-        constraints: List[Constraint],
-        min_overlap_sqm: float = 1.0
+        constraints: List[Constraint], min_overlap_sqm: float = 1.0
     ) -> List[Dict[str, Any]]:
         """
         Identify pairs of overlapping constraints.
@@ -266,7 +250,7 @@ class ConstraintAggregator:
         for i, c1 in enumerate(constraints):
             geom1 = c1.get_geometry()
 
-            for c2 in constraints[i + 1:]:
+            for c2 in constraints[i + 1 :]:
                 geom2 = c2.get_geometry()
 
                 if geom1.intersects(geom2):
@@ -274,26 +258,27 @@ class ConstraintAggregator:
                     overlap_area = intersection.area
 
                     if overlap_area >= min_overlap_sqm:
-                        overlaps.append({
-                            "constraint_1_id": c1.id,
-                            "constraint_1_name": c1.name,
-                            "constraint_1_type": c1.constraint_type,
-                            "constraint_1_severity": c1.severity,
-                            "constraint_2_id": c2.id,
-                            "constraint_2_name": c2.name,
-                            "constraint_2_type": c2.constraint_type,
-                            "constraint_2_severity": c2.severity,
-                            "overlap_area_sqm": overlap_area,
-                            "overlap_area_acres": overlap_area * 0.000247105,
-                            "overlap_geometry_wkt": intersection.wkt,
-                        })
+                        overlaps.append(
+                            {
+                                "constraint_1_id": c1.id,
+                                "constraint_1_name": c1.name,
+                                "constraint_1_type": c1.constraint_type,
+                                "constraint_1_severity": c1.severity,
+                                "constraint_2_id": c2.id,
+                                "constraint_2_name": c2.name,
+                                "constraint_2_type": c2.constraint_type,
+                                "constraint_2_severity": c2.severity,
+                                "overlap_area_sqm": overlap_area,
+                                "overlap_area_acres": overlap_area * 0.000247105,
+                                "overlap_geometry_wkt": intersection.wkt,
+                            }
+                        )
 
         return overlaps
 
     @staticmethod
     def generate_constraint_summary(
-        site_boundary: BaseGeometry,
-        constraints: List[Constraint]
+        site_boundary: BaseGeometry, constraints: List[Constraint]
     ) -> Dict[str, Any]:
         """
         Generate a comprehensive summary of constraints.
@@ -338,17 +323,13 @@ class ConstraintAggregator:
 
         # Calculate coverage
         coverage = ConstraintAggregator.calculate_constraint_coverage(
-            site_boundary,
-            constraints,
-            by_type=True,
-            by_severity=True
+            site_boundary, constraints, by_type=True, by_severity=True
         )
         summary["coverage"] = coverage
 
         # Find overlaps
         overlaps = ConstraintAggregator.identify_overlapping_constraints(
-            constraints,
-            min_overlap_sqm=1.0
+            constraints, min_overlap_sqm=1.0
         )
         summary["overlaps"] = {
             "count": len(overlaps),
@@ -359,9 +340,7 @@ class ConstraintAggregator:
 
     @staticmethod
     def export_constraint_layers(
-        constraints: List[Constraint],
-        by_type: bool = True,
-        by_severity: bool = True
+        constraints: List[Constraint], by_type: bool = True, by_severity: bool = True
     ) -> Dict[str, Any]:
         """
         Export constraints organized into layers for visualization.
@@ -382,9 +361,7 @@ class ConstraintAggregator:
 
             for ctype in constraint_types:
                 type_constraints = [c for c in constraints if c.constraint_type == ctype]
-                type_geom = ConstraintAggregator.create_composite_constraint_map(
-                    type_constraints
-                )
+                type_geom = ConstraintAggregator.create_composite_constraint_map(type_constraints)
 
                 if type_geom and not type_geom.is_empty:
                     layers["by_type"][ctype] = {
@@ -399,9 +376,7 @@ class ConstraintAggregator:
 
             for severity in severities:
                 sev_constraints = [c for c in constraints if c.severity == severity]
-                sev_geom = ConstraintAggregator.create_composite_constraint_map(
-                    sev_constraints
-                )
+                sev_geom = ConstraintAggregator.create_composite_constraint_map(sev_constraints)
 
                 if sev_geom and not sev_geom.is_empty:
                     layers["by_severity"][severity] = {

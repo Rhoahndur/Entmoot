@@ -88,9 +88,7 @@ class DEMValidator:
 
         return result
 
-    def _validate_metadata(
-        self, metadata: DEMMetadata, result: DEMValidationResult
-    ) -> None:
+    def _validate_metadata(self, metadata: DEMMetadata, result: DEMValidationResult) -> None:
         """
         Validate DEM metadata.
 
@@ -112,13 +110,9 @@ class DEMValidator:
 
         # Warn about very small DEMs
         if metadata.width < 10 or metadata.height < 10:
-            result.add_warning(
-                f"Very small DEM: {metadata.width}x{metadata.height} pixels"
-            )
+            result.add_warning(f"Very small DEM: {metadata.width}x{metadata.height} pixels")
 
-    def _validate_elevation_data(
-        self, dem_data: DEMData, result: DEMValidationResult
-    ) -> None:
+    def _validate_elevation_data(self, dem_data: DEMData, result: DEMValidationResult) -> None:
         """
         Validate elevation data array.
 
@@ -145,13 +139,9 @@ class DEMValidator:
 
         # Check data type
         if not np.issubdtype(elevation.dtype, np.floating):
-            result.add_warning(
-                f"Elevation data type {elevation.dtype} is not floating-point"
-            )
+            result.add_warning(f"Elevation data type {elevation.dtype} is not floating-point")
 
-    def _validate_resolution(
-        self, metadata: DEMMetadata, result: DEMValidationResult
-    ) -> None:
+    def _validate_resolution(self, metadata: DEMMetadata, result: DEMValidationResult) -> None:
         """
         Validate resolution consistency.
 
@@ -182,9 +172,7 @@ class DEMValidator:
                 "May require significant processing resources."
             )
 
-    def _validate_bounds(
-        self, metadata: DEMMetadata, result: DEMValidationResult
-    ) -> None:
+    def _validate_bounds(self, metadata: DEMMetadata, result: DEMValidationResult) -> None:
         """
         Validate bounds are reasonable.
 
@@ -215,13 +203,10 @@ class DEMValidator:
             # Projected coordinates - check for huge extents
             if width > 1_000_000 or height > 1_000_000:
                 result.add_warning(
-                    f"Very large extent: {width:.0f}x{height:.0f}. "
-                    "Verify CRS is correct."
+                    f"Very large extent: {width:.0f}x{height:.0f}. " "Verify CRS is correct."
                 )
 
-    def _validate_crs(
-        self, metadata: DEMMetadata, result: DEMValidationResult
-    ) -> None:
+    def _validate_crs(self, metadata: DEMMetadata, result: DEMValidationResult) -> None:
         """
         Validate CRS information.
 
@@ -231,8 +216,7 @@ class DEMValidator:
         """
         if metadata.crs is None:
             result.add_warning(
-                "No CRS information available. "
-                "Spatial operations may not work correctly."
+                "No CRS information available. " "Spatial operations may not work correctly."
             )
             return
 
@@ -243,9 +227,7 @@ class DEMValidator:
                 "Consider reprojecting to projected CRS for accurate distance calculations."
             )
 
-    def _check_no_data_percentage(
-        self, dem_data: DEMData, result: DEMValidationResult
-    ) -> None:
+    def _check_no_data_percentage(self, dem_data: DEMData, result: DEMValidationResult) -> None:
         """
         Check percentage of no-data values.
 
@@ -268,9 +250,7 @@ class DEMValidator:
                 "Consider interpolation or using a different DEM source."
             )
 
-    def _check_elevation_range(
-        self, dem_data: DEMData, result: DEMValidationResult
-    ) -> None:
+    def _check_elevation_range(self, dem_data: DEMData, result: DEMValidationResult) -> None:
         """
         Check if elevation values are reasonable.
 
@@ -307,9 +287,7 @@ class DEMValidator:
                 "Verify DEM quality."
             )
 
-    def _check_for_spikes(
-        self, dem_data: DEMData, result: DEMValidationResult
-    ) -> None:
+    def _check_for_spikes(self, dem_data: DEMData, result: DEMValidationResult) -> None:
         """
         Check for elevation spikes (outliers).
 
@@ -418,8 +396,7 @@ class DEMValidator:
 
         if res_diff_x > 0.01 or res_diff_y > 0.01:
             result.add_warning(
-                f"Resolution mismatch: {res1} vs {res2}. "
-                "Resampling may be required."
+                f"Resolution mismatch: {res1} vs {res2}. " "Resampling may be required."
             )
 
         # Check bounds overlap
@@ -439,8 +416,7 @@ class DEMValidator:
         return result
 
     def _bounds_overlap(
-        self, bounds1: Tuple[float, float, float, float],
-        bounds2: Tuple[float, float, float, float]
+        self, bounds1: Tuple[float, float, float, float], bounds2: Tuple[float, float, float, float]
     ) -> bool:
         """
         Check if two bounds overlap.

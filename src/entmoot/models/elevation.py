@@ -85,9 +85,7 @@ class ElevationPoint(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude (WGS84)")
     elevation: Optional[float] = Field(None, description="Elevation value")
     unit: ElevationUnit = Field(default=ElevationUnit.METERS, description="Elevation unit")
-    datum: ElevationDatum = Field(
-        default=ElevationDatum.NAVD88, description="Vertical datum"
-    )
+    datum: ElevationDatum = Field(default=ElevationDatum.NAVD88, description="Vertical datum")
     resolution: Optional[float] = Field(None, description="Data resolution in arc-seconds")
     data_source: ElevationDataSource = Field(
         default=ElevationDataSource.UNKNOWN, description="Source dataset"
@@ -189,9 +187,7 @@ class DEMTileMetadata(BaseModel):
     max_lat: float = Field(..., ge=-90, le=90, description="Maximum latitude")
     resolution: float = Field(..., gt=0, description="Resolution in arc-seconds")
     unit: ElevationUnit = Field(default=ElevationUnit.METERS, description="Elevation unit")
-    datum: ElevationDatum = Field(
-        default=ElevationDatum.NAVD88, description="Vertical datum"
-    )
+    datum: ElevationDatum = Field(default=ElevationDatum.NAVD88, description="Vertical datum")
     data_source: ElevationDataSource = Field(
         default=ElevationDataSource.USGS_3DEP_1ARC, description="Source dataset"
     )

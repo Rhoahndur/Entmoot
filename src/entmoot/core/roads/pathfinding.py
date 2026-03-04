@@ -334,7 +334,9 @@ class AStarPathfinder:
         avg_grade = np.mean(grades) if grades else 0.0
 
         # Detect switchbacks
-        has_switchbacks = self._detect_switchbacks(nodes) if self.config.switchback_detection else False
+        has_switchbacks = (
+            self._detect_switchbacks(nodes) if self.config.switchback_detection else False
+        )
 
         # Create path
         path = Path(

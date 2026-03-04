@@ -19,6 +19,7 @@ try:
     import rasterio
     from rasterio.transform import from_bounds
     from rasterio.warp import reproject, Resampling as RioResampling
+
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
@@ -49,8 +50,7 @@ class DEMProcessor:
         """Initialize DEM processor."""
         if not RASTERIO_AVAILABLE:
             raise ImportError(
-                "rasterio is required for DEM processing. "
-                "Install with: pip install rasterio"
+                "rasterio is required for DEM processing. " "Install with: pip install rasterio"
             )
 
     def resample(
@@ -104,9 +104,7 @@ class DEMProcessor:
                 source=dem_data.elevation,
                 destination=resampled,
                 src_transform=rasterio.transform.from_bounds(
-                    *bounds,
-                    dem_data.metadata.width,
-                    dem_data.metadata.height
+                    *bounds, dem_data.metadata.width, dem_data.metadata.height
                 ),
                 src_crs=dem_data.metadata.crs,
                 dst_transform=transform,
@@ -184,13 +182,8 @@ class DEMProcessor:
         )
 
         # Check if bounds overlap
-        if (
-            crop_bounds[0] >= crop_bounds[2]
-            or crop_bounds[1] >= crop_bounds[3]
-        ):
-            raise ValidationError(
-                "Crop bounds do not overlap with DEM extent"
-            )
+        if crop_bounds[0] >= crop_bounds[2] or crop_bounds[1] >= crop_bounds[3]:
+            raise ValidationError("Crop bounds do not overlap with DEM extent")
 
         # Calculate pixel indices
         resolution = dem_data.metadata.resolution
@@ -228,9 +221,7 @@ class DEMProcessor:
             dtype=str(cropped_elevation.dtype),
         )
 
-        logger.info(
-            f"Cropped to {new_metadata.width}x{new_metadata.height} pixels"
-        )
+        logger.info(f"Cropped to {new_metadata.width}x{new_metadata.height} pixels")
 
         return DEMData(elevation=cropped_elevation, metadata=new_metadata)
 
@@ -276,9 +267,7 @@ class DEMProcessor:
 
         # Filter large gaps if requested
         if max_gap_size is not None:
-            gap_points = self._filter_large_gaps(
-                gap_points, valid_mask, max_gap_size
-            )
+            gap_points = self._filter_large_gaps(gap_points, valid_mask, max_gap_size)
 
         if len(gap_points) == 0:
             logger.info("No gaps within size threshold")
@@ -287,17 +276,11 @@ class DEMProcessor:
         try:
             # Perform interpolation
             if method == InterpolationMethod.NEAREST:
-                interpolated = self._interpolate_nearest(
-                    valid_points, valid_values, gap_points
-                )
+                interpolated = self._interpolate_nearest(valid_points, valid_values, gap_points)
             elif method == InterpolationMethod.LINEAR:
-                interpolated = self._interpolate_linear(
-                    valid_points, valid_values, gap_points
-                )
+                interpolated = self._interpolate_linear(valid_points, valid_values, gap_points)
             elif method == InterpolationMethod.CUBIC:
-                interpolated = self._interpolate_cubic(
-                    elevation, valid_mask
-                )
+                interpolated = self._interpolate_cubic(elevation, valid_mask)
                 # For cubic, return directly as it operates on full grid
                 return DEMData(elevation=interpolated, metadata=dem_data.metadata)
             else:
@@ -337,9 +320,7 @@ class DEMProcessor:
 
         if not preserve_edges:
             # Simple Gaussian smoothing
-            smoothed = ndimage.gaussian_filter(
-                elevation, sigma=sigma, mode='reflect'
-            )
+            smoothed = ndimage.gaussian_filter(elevation, sigma=sigma, mode="reflect")
             # Restore no-data values
             smoothed[~valid_mask] = np.nan
         else:
@@ -454,9 +435,7 @@ class DEMProcessor:
 
         return interpolated
 
-    def _interpolate_cubic(
-        self, elevation: np.ndarray, valid_mask: np.ndarray
-    ) -> np.ndarray:
+    def _interpolate_cubic(self, elevation: np.ndarray, valid_mask: np.ndarray) -> np.ndarray:
         """Cubic interpolation using inpainting."""
         # Use scipy's interpolation for cubic
         filled = elevation.copy()
@@ -469,13 +448,15 @@ class DEMProcessor:
         if len(valid_points) < 16:  # Need enough points for cubic
             logger.warning("Not enough points for cubic interpolation, using linear")
             return self._interpolate_linear(
-                valid_points, valid_values,
-                np.column_stack((rows[~valid_mask].flatten(), cols[~valid_mask].flatten()))
+                valid_points,
+                valid_values,
+                np.column_stack((rows[~valid_mask].flatten(), cols[~valid_mask].flatten())),
             )
 
         # Use RBF interpolation for smooth results
         from scipy.interpolate import Rbf
-        rbf = Rbf(valid_points[:, 0], valid_points[:, 1], valid_values, function='cubic', smooth=1)
+
+        rbf = Rbf(valid_points[:, 0], valid_points[:, 1], valid_values, function="cubic", smooth=1)
 
         # Interpolate gaps
         gap_points = np.column_stack((rows[~valid_mask], cols[~valid_mask]))
@@ -498,10 +479,10 @@ class DEMProcessor:
 
         # Create edge-aware weights
         edge_threshold = np.nanpercentile(gradient_mag[valid_mask], 75)
-        edge_weight = np.exp(-(gradient_mag / edge_threshold)**2)
+        edge_weight = np.exp(-((gradient_mag / edge_threshold) ** 2))
 
         # Apply weighted Gaussian smoothing
-        smoothed = ndimage.gaussian_filter(elevation, sigma=sigma_spatial, mode='reflect')
+        smoothed = ndimage.gaussian_filter(elevation, sigma=sigma_spatial, mode="reflect")
 
         # Blend based on edge weight
         result = edge_weight * elevation + (1 - edge_weight) * smoothed

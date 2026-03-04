@@ -102,9 +102,7 @@ class KMZParser:
         """
         try:
             with zipfile.ZipFile(kmz_path, "r") as zf:
-                kml_files = [
-                    name for name in zf.namelist() if name.lower().endswith(".kml")
-                ]
+                kml_files = [name for name in zf.namelist() if name.lower().endswith(".kml")]
 
                 if not kml_files:
                     logger.error("No KML files found in KMZ archive")
@@ -120,9 +118,7 @@ class KMZParser:
                 # If no doc.kml, use first KML file
                 if main_kml is None:
                     main_kml = kml_files[0]
-                    logger.info(
-                        f"No doc.kml found, using first KML file: {main_kml}"
-                    )
+                    logger.info(f"No doc.kml found, using first KML file: {main_kml}")
 
                 # Extract and read KML
                 logger.info(f"Extracting KML file: {main_kml}")
@@ -136,9 +132,7 @@ class KMZParser:
             logger.error(f"Failed to extract KML from KMZ: {e}")
             raise
 
-    def extract_all(
-        self, kmz_path: Union[str, Path], output_dir: Union[str, Path]
-    ) -> Path:
+    def extract_all(self, kmz_path: Union[str, Path], output_dir: Union[str, Path]) -> Path:
         """
         Extract all contents of KMZ to output directory.
 
@@ -220,17 +214,11 @@ class KMZParser:
                     contents["total_size"] += file_size
 
                     if extension == ".kml":
-                        contents["kml_files"].append(
-                            {"name": filename, "size": file_size}
-                        )
+                        contents["kml_files"].append({"name": filename, "size": file_size})
                     elif extension in {".jpg", ".jpeg", ".png", ".gif", ".bmp"}:
-                        contents["image_files"].append(
-                            {"name": filename, "size": file_size}
-                        )
+                        contents["image_files"].append({"name": filename, "size": file_size})
                     else:
-                        contents["other_files"].append(
-                            {"name": filename, "size": file_size}
-                        )
+                        contents["other_files"].append({"name": filename, "size": file_size})
 
             return contents
 

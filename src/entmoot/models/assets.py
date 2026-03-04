@@ -71,9 +71,7 @@ class Asset(BaseModel, ABC):
     min_spacing_m: float = Field(
         default=3.0, description="Minimum spacing from other assets (meters)", ge=0
     )
-    max_slope_percent: float = Field(
-        default=15.0, description="Maximum allowable slope (%)", ge=0
-    )
+    max_slope_percent: float = Field(default=15.0, description="Maximum allowable slope (%)", ge=0)
     min_road_distance_m: float = Field(
         default=0.0, description="Minimum distance to road (meters)", ge=0
     )
@@ -264,9 +262,7 @@ class BuildingAsset(Asset):
 
         # Buildings need relatively flat ground
         if self.max_slope_percent > 10.0:
-            errors.append(
-                f"Building max slope {self.max_slope_percent}% exceeds recommended 10%"
-            )
+            errors.append(f"Building max slope {self.max_slope_percent}% exceeds recommended 10%")
 
         # Check height vs stories
         min_height = self.num_stories * 2.5  # Minimum ~8ft per story
@@ -459,7 +455,9 @@ class StorageTankAsset(Asset):
 
         # Tanks need flat ground
         if self.max_slope_percent > 5.0:
-            errors.append(f"Storage tank max slope {self.max_slope_percent}% exceeds recommended 5%")
+            errors.append(
+                f"Storage tank max slope {self.max_slope_percent}% exceeds recommended 5%"
+            )
 
         # Check if dimensions match expected tank size
         # Assume cylindrical: area ≈ π * r^2, but footprint includes containment

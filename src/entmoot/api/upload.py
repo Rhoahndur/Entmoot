@@ -83,7 +83,7 @@ async def upload_file(
             detail=ErrorResponse(
                 error_code="INVALID_REQUEST",
                 message="Filename is required",
-            ).model_dump(mode='json'),
+            ).model_dump(mode="json"),
         )
 
     try:
@@ -116,7 +116,7 @@ async def upload_file(
                         "file_size": file_size,
                         "max_size": settings.max_upload_size_bytes,
                     },
-                ).model_dump(mode='json'),
+                ).model_dump(mode="json"),
             )
 
         # 5. Validate magic number (file signature)
@@ -147,7 +147,7 @@ async def upload_file(
                             error_code="VIRUS_DETECTED",
                             message="File failed virus scan",
                             details={"virus_result": virus_result},
-                        ).model_dump(mode='json'),
+                        ).model_dump(mode="json"),
                     )
 
         # 8. Return success response
@@ -165,7 +165,7 @@ async def upload_file(
             detail=ErrorResponse(
                 error_code="VALIDATION_ERROR",
                 message=str(e),
-            ).model_dump(mode='json'),
+            ).model_dump(mode="json"),
         )
 
     except HTTPException:
@@ -180,7 +180,7 @@ async def upload_file(
                 error_code="INTERNAL_ERROR",
                 message="An error occurred while processing the upload",
                 details={"error": str(e)} if settings.environment == "development" else None,
-            ).model_dump(mode='json'),
+            ).model_dump(mode="json"),
         )
 
 

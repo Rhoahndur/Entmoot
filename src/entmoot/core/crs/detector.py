@@ -13,6 +13,7 @@ from typing import Optional, Union
 
 try:
     from osgeo import gdal, osr
+
     GDAL_AVAILABLE = True
 except ImportError:
     GDAL_AVAILABLE = False
@@ -24,6 +25,7 @@ from entmoot.models.crs import CRSInfo, CoordinateOrder, DistanceUnit
 
 class CRSDetectionError(Exception):
     """Raised when CRS cannot be detected from a file."""
+
     pass
 
 
@@ -51,13 +53,13 @@ def detect_crs_from_file(file_path: Union[str, Path]) -> CRSInfo:
     # Determine file type by extension
     suffix = file_path.suffix.lower()
 
-    if suffix in ['.kml', '.kmz']:
+    if suffix in [".kml", ".kmz"]:
         return detect_crs_from_kml(file_path)
-    elif suffix in ['.tif', '.tiff', '.geotiff']:
+    elif suffix in [".tif", ".tiff", ".geotiff"]:
         return detect_crs_from_geotiff(file_path)
-    elif suffix in ['.json', '.geojson']:
+    elif suffix in [".json", ".geojson"]:
         return detect_crs_from_geojson(file_path)
-    elif suffix in ['.shp', '.gpkg']:
+    elif suffix in [".shp", ".gpkg"]:
         return detect_crs_from_ogr(file_path)
     else:
         raise CRSDetectionError(f"Unsupported file format: {suffix}")
@@ -84,20 +86,21 @@ def detect_crs_from_kml(file_path: Union[str, Path]) -> CRSInfo:
     try:
         # Handle KMZ files (ZIP archives containing KML)
         kml_content = None
-        is_kmz = file_path.suffix.lower() == '.kmz'
+        is_kmz = file_path.suffix.lower() == ".kmz"
 
         # Also check file signature for ZIP files
         if not is_kmz:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 header = f.read(2)
-                if header == b'PK':
+                if header == b"PK":
                     is_kmz = True
 
         if is_kmz:
             import zipfile
-            with zipfile.ZipFile(file_path, 'r') as zf:
+
+            with zipfile.ZipFile(file_path, "r") as zf:
                 # Find KML file in archive
-                kml_files = [n for n in zf.namelist() if n.lower().endswith('.kml')]
+                kml_files = [n for n in zf.namelist() if n.lower().endswith(".kml")]
                 if not kml_files:
                     # No KML found, assume WGS84 default
                     return CRSInfo(
@@ -110,7 +113,9 @@ def detect_crs_from_kml(file_path: Union[str, Path]) -> CRSInfo:
                         code="4326",
                     )
                 # Prefer doc.kml, otherwise first KML
-                main_kml = next((n for n in kml_files if n.lower().endswith('doc.kml')), kml_files[0])
+                main_kml = next(
+                    (n for n in kml_files if n.lower().endswith("doc.kml")), kml_files[0]
+                )
                 kml_content = zf.read(main_kml)
             root = ET.fromstring(kml_content)
         else:
@@ -118,14 +123,14 @@ def detect_crs_from_kml(file_path: Union[str, Path]) -> CRSInfo:
             root = tree.getroot()
 
         # Check for namespace
-        namespace = {'kml': 'http://www.opengis.net/kml/2.2'}
+        namespace = {"kml": "http://www.opengis.net/kml/2.2"}
 
         # Look for SRS or CRS elements (non-standard but sometimes present)
-        srs_elem = root.find('.//kml:srs', namespace)
+        srs_elem = root.find(".//kml:srs", namespace)
         if srs_elem is not None and srs_elem.text:
             return parse_crs_string(srs_elem.text)
 
-        crs_elem = root.find('.//kml:crs', namespace)
+        crs_elem = root.find(".//kml:crs", namespace)
         if crs_elem is not None and crs_elem.text:
             return parse_crs_string(crs_elem.text)
 
@@ -202,21 +207,21 @@ def detect_crs_from_geojson(file_path: Union[str, Path]) -> CRSInfo:
     file_path = Path(file_path)
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # Check for explicit CRS property (legacy)
-        if 'crs' in data:
-            crs_obj = data['crs']
+        if "crs" in data:
+            crs_obj = data["crs"]
 
             # Named CRS
-            if crs_obj.get('type') == 'name':
-                crs_name = crs_obj.get('properties', {}).get('name', '')
+            if crs_obj.get("type") == "name":
+                crs_name = crs_obj.get("properties", {}).get("name", "")
                 return parse_crs_string(crs_name)
 
             # Linked CRS
-            elif crs_obj.get('type') == 'link':
-                href = crs_obj.get('properties', {}).get('href', '')
+            elif crs_obj.get("type") == "link":
+                href = crs_obj.get("properties", {}).get("href", "")
                 return parse_crs_string(href)
 
         # RFC 7946 default: WGS84
@@ -258,7 +263,7 @@ def detect_crs_from_ogr(file_path: Union[str, Path]) -> CRSInfo:
     try:
         from osgeo import ogr
 
-        driver = ogr.GetDriverByName('ESRI Shapefile' if file_path.suffix == '.shp' else 'GPKG')
+        driver = ogr.GetDriverByName("ESRI Shapefile" if file_path.suffix == ".shp" else "GPKG")
         dataset = driver.Open(str(file_path), 0)
 
         if dataset is None:
@@ -303,27 +308,27 @@ def parse_crs_string(crs_string: str) -> CRSInfo:
 
     try:
         # Try EPSG code patterns
-        epsg_match = re.search(r'EPSG[:\s]*(\d+)', crs_string, re.IGNORECASE)
+        epsg_match = re.search(r"EPSG[:\s]*(\d+)", crs_string, re.IGNORECASE)
         if epsg_match:
             epsg = int(epsg_match.group(1))
             crs = CRS.from_epsg(epsg)
             return crs_to_info(crs)
 
         # Try URN format
-        urn_match = re.search(r'urn:ogc:def:crs:(\w+)::(\d+)', crs_string, re.IGNORECASE)
+        urn_match = re.search(r"urn:ogc:def:crs:(\w+)::(\d+)", crs_string, re.IGNORECASE)
         if urn_match:
             authority = urn_match.group(1).upper()
             code = urn_match.group(2)
-            if authority == 'EPSG':
+            if authority == "EPSG":
                 crs = CRS.from_epsg(int(code))
                 return crs_to_info(crs)
 
         # Try URL format
-        url_match = re.search(r'/crs/(\w+)/\d+/(\d+)', crs_string, re.IGNORECASE)
+        url_match = re.search(r"/crs/(\w+)/\d+/(\d+)", crs_string, re.IGNORECASE)
         if url_match:
             authority = url_match.group(1).upper()
             code = url_match.group(2)
-            if authority == 'EPSG':
+            if authority == "EPSG":
                 crs = CRS.from_epsg(int(code))
                 return crs_to_info(crs)
 
@@ -333,12 +338,12 @@ def parse_crs_string(crs_string: str) -> CRSInfo:
             return crs_to_info(crs)
 
         # Try PROJ4 string
-        if crs_string.startswith('+proj'):
+        if crs_string.startswith("+proj"):
             crs = CRS.from_proj4(crs_string)
             return crs_to_info(crs)
 
         # Try WKT
-        if 'PROJCS' in crs_string or 'GEOGCS' in crs_string:
+        if "PROJCS" in crs_string or "GEOGCS" in crs_string:
             crs = CRS.from_wkt(crs_string)
             return crs_to_info(crs)
 
@@ -385,9 +390,9 @@ def crs_to_info(crs: CRS) -> CRSInfo:
         units = DistanceUnit.DEGREES
     elif crs.axis_info:
         unit_name = crs.axis_info[0].unit_name.lower()
-        if 'foot' in unit_name or 'feet' in unit_name:
+        if "foot" in unit_name or "feet" in unit_name:
             units = DistanceUnit.FEET
-        elif 'meter' in unit_name or 'metre' in unit_name:
+        elif "meter" in unit_name or "metre" in unit_name:
             units = DistanceUnit.METERS
 
     # Determine coordinate order
@@ -396,7 +401,7 @@ def crs_to_info(crs: CRS) -> CRSInfo:
         # Check if lat comes first
         if crs.axis_info and len(crs.axis_info) >= 2:
             first_axis = crs.axis_info[0].direction.lower()
-            if 'north' in first_axis or 'south' in first_axis:
+            if "north" in first_axis or "south" in first_axis:
                 coord_order = CoordinateOrder.LAT_LON
     else:
         coord_order = CoordinateOrder.XY
@@ -430,7 +435,7 @@ def detect_crs_from_prj(file_path: Union[str, Path]) -> CRSInfo:
     file_path = Path(file_path)
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             wkt = f.read().strip()
 
         crs = CRS.from_wkt(wkt)

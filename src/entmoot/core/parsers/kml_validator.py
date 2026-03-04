@@ -188,9 +188,7 @@ class KMLValidator:
         placemarks = root.findall(f".//{ns}Placemark")
 
         if not document and not folders and not placemarks:
-            self.result.add_error(
-                "No Document, Folder, or Placemark elements found in KML"
-            )
+            self.result.add_error("No Document, Folder, or Placemark elements found in KML")
             return
 
         # Check for placemarks
@@ -220,9 +218,7 @@ class KMLValidator:
         self.result.geometry_count = geometry_count
         self.result.has_geometries = geometry_count > 0
 
-    def _validate_geometry_element(
-        self, element: ET.Element, geom_type: str
-    ) -> None:
+    def _validate_geometry_element(self, element: ET.Element, geom_type: str) -> None:
         """
         Validate individual geometry element.
 
@@ -236,9 +232,7 @@ class KMLValidator:
         if geom_type in {"Point", "LineString", "LinearRing"}:
             coords = element.find(f"{ns}coordinates")
             if coords is None:
-                self.result.add_error(
-                    f"{geom_type} missing required 'coordinates' element"
-                )
+                self.result.add_error(f"{geom_type} missing required 'coordinates' element")
             elif not coords.text or not coords.text.strip():
                 self.result.add_error(f"{geom_type} has empty coordinates")
 
@@ -249,15 +243,11 @@ class KMLValidator:
             else:
                 linear_ring = outer.find(f"{ns}LinearRing")
                 if linear_ring is None:
-                    self.result.add_error(
-                        "Polygon outerBoundaryIs missing LinearRing"
-                    )
+                    self.result.add_error("Polygon outerBoundaryIs missing LinearRing")
                 else:
                     coords = linear_ring.find(f"{ns}coordinates")
                     if coords is None:
-                        self.result.add_error(
-                            "Polygon LinearRing missing coordinates"
-                        )
+                        self.result.add_error("Polygon LinearRing missing coordinates")
                     elif not coords.text or not coords.text.strip():
                         self.result.add_error("Polygon has empty coordinates")
 

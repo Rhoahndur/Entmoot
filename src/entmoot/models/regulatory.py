@@ -81,9 +81,7 @@ class FloodZone(BaseModel):
     base_flood_elevation: Optional[float] = Field(
         None, description="Base Flood Elevation in feet", ge=-100, le=30000
     )
-    static_bfe: Optional[float] = Field(
-        None, description="Static BFE value", ge=-100, le=30000
-    )
+    static_bfe: Optional[float] = Field(None, description="Static BFE value", ge=-100, le=30000)
     depth: Optional[float] = Field(None, description="Flood depth in feet (AO zones)", ge=0)
     velocity: Optional[float] = Field(None, description="Velocity in fps", ge=0)
     floodway: bool = Field(default=False, description="In regulatory floodway")

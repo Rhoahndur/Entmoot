@@ -145,9 +145,7 @@ class RedisCache(CacheBackend):
             logger.info(f"Initialized Redis cache backend at {redis_url}")
 
         except ImportError:
-            raise ImportError(
-                "Redis package not installed. Install with: pip install redis"
-            )
+            raise ImportError("Redis package not installed. Install with: pip install redis")
         except Exception as e:
             raise ConnectionError(f"Failed to connect to Redis: {e}")
 

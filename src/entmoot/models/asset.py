@@ -47,27 +47,14 @@ class PlacedAsset(BaseModel):
     name: str = Field(..., description="Asset name", min_length=1)
     asset_type: AssetType = Field(..., description="Type of asset")
     geometry_wkt: str = Field(..., description="WKT representation of asset footprint")
-    rotation: float = Field(
-        default=0.0,
-        description="Rotation angle in degrees",
-        ge=0.0,
-        lt=360.0
-    )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional metadata"
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Creation timestamp"
-    )
+    rotation: float = Field(default=0.0, description="Rotation angle in degrees", ge=0.0, lt=360.0)
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     min_spacing_m: float = Field(
-        default=0.0,
-        description="Minimum spacing required from other assets",
-        ge=0.0
+        default=0.0, description="Minimum spacing required from other assets", ge=0.0
     )
 
-    @field_validator('geometry_wkt')
+    @field_validator("geometry_wkt")
     @classmethod
     def validate_geometry(cls, v: str) -> str:
         """Validate that geometry WKT is valid."""
@@ -91,7 +78,7 @@ class PlacedAsset(BaseModel):
     def get_area_sqm(self) -> float:
         """Calculate area in square meters."""
         geom = self.get_geometry()
-        if hasattr(geom, 'area'):
+        if hasattr(geom, "area"):
             return geom.area
         return 0.0
 
@@ -145,7 +132,7 @@ DEFAULT_SPACING_RULES: Dict[tuple[AssetType, AssetType], float] = {
 def get_required_spacing(
     asset1_type: AssetType,
     asset2_type: AssetType,
-    custom_rules: Optional[Dict[tuple[AssetType, AssetType], float]] = None
+    custom_rules: Optional[Dict[tuple[AssetType, AssetType], float]] = None,
 ) -> float:
     """
     Get required spacing between two asset types.

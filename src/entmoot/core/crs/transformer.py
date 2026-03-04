@@ -20,6 +20,7 @@ from entmoot.models.crs import (
 
 class TransformationError(Exception):
     """Raised when coordinate transformation fails."""
+
     pass
 
 
@@ -384,7 +385,7 @@ def validate_transformation_accuracy(
             error_x = abs(x - x_back)
             error_y = abs(y - y_back)
 
-        total_error = (error_x ** 2 + error_y ** 2) ** 0.5
+        total_error = (error_x**2 + error_y**2) ** 0.5
 
         return total_error <= max_error_meters
 

@@ -19,8 +19,7 @@ try:
     import networkx as nx
 except ImportError:
     raise ImportError(
-        "NetworkX is required for road network generation. "
-        "Install it with: pip install networkx"
+        "NetworkX is required for road network generation. " "Install it with: pip install networkx"
     )
 
 from entmoot.core.roads.graph import NavigationGraph
@@ -312,9 +311,7 @@ class RoadNetwork:
 
         return True
 
-    def _classify_road_type(
-        self, node1: str, node2: str, asset_node_ids: List[str]
-    ) -> RoadType:
+    def _classify_road_type(self, node1: str, node2: str, asset_node_ids: List[str]) -> RoadType:
         """
         Classify road type based on network position.
 
@@ -560,9 +557,9 @@ class RoadNetwork:
                 "total_length_m": sum(s.length_m for s in segments_by_type[RoadType.ACCESS]),
             },
             "max_grade_pct": max((s.max_grade for s in self.segments.values()), default=0.0),
-            "avg_grade_pct": np.mean([s.avg_grade for s in self.segments.values()])
-            if self.segments
-            else 0.0,
+            "avg_grade_pct": (
+                np.mean([s.avg_grade for s in self.segments.values()]) if self.segments else 0.0
+            ),
         }
 
     def export_to_geojson(self) -> Dict[str, Any]:

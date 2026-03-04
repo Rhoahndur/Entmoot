@@ -85,7 +85,7 @@ class RequestCorrelationMiddleware(BaseHTTPMiddleware):
             logger.error(
                 f"Request failed: {request.method} {request.url.path} "
                 f"- Error: {type(e).__name__} - Duration: {duration_ms:.2f}ms",
-                exc_info=True
+                exc_info=True,
             )
 
             # Re-raise exception to be handled by error handlers
@@ -121,11 +121,11 @@ class LoggingContextMiddleware(BaseHTTPMiddleware):
             record = old_factory(*args, **kwargs)
             # Only set attributes if they don't already exist (to avoid overwriting extra={} params)
             # Use custom attribute names to avoid conflicts with LogRecord built-in attributes
-            if request_id and not hasattr(record, 'request_id'):
+            if request_id and not hasattr(record, "request_id"):
                 record.request_id = request_id
-            if not hasattr(record, 'http_method'):
+            if not hasattr(record, "http_method"):
                 record.http_method = request.method
-            if not hasattr(record, 'request_path'):
+            if not hasattr(record, "request_path"):
                 record.request_path = request.url.path
             return record
 

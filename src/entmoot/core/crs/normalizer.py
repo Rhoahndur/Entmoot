@@ -18,6 +18,7 @@ from entmoot.core.crs.utm import get_utm_crs_info
 
 class NormalizationError(Exception):
     """Raised when CRS normalization fails."""
+
     pass
 
 
@@ -246,7 +247,7 @@ class CRSNormalizer:
                 error_x = abs(x - x_back)
                 error_y = abs(y - y_back)
 
-            error = (error_x ** 2 + error_y ** 2) ** 0.5
+            error = (error_x**2 + error_y**2) ** 0.5
             max_error = max(max_error, error)
 
         if max_error > max_error_meters:

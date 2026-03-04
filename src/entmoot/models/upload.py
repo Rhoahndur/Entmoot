@@ -50,9 +50,7 @@ class UploadMetadata(BaseModel):
     file_size: int = Field(..., description="File size in bytes", gt=0)
     content_type: str = Field(..., description="MIME type of the file")
     upload_time: datetime = Field(default_factory=datetime.utcnow, description="Upload timestamp")
-    status: UploadStatus = Field(
-        default=UploadStatus.PENDING, description="Processing status"
-    )
+    status: UploadStatus = Field(default=UploadStatus.PENDING, description="Processing status")
     error_message: Optional[str] = Field(None, description="Error message if failed")
 
     model_config = ConfigDict(

@@ -31,7 +31,6 @@ from entmoot.models.constraints import (
     ConstraintPriority,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -107,32 +106,32 @@ class BufferConfig:
 # Standard buffer distances (in meters) for various features
 PROPERTY_LINE_SETBACK = {
     "default": 7.62,  # 25 feet
-    "front": 7.62,    # 25 feet
-    "side": 4.57,     # 15 feet
-    "rear": 6.10,     # 20 feet
+    "front": 7.62,  # 25 feet
+    "side": 4.57,  # 15 feet
+    "rear": 6.10,  # 20 feet
 }
 
 ROAD_SETBACK = {
-    RoadType.MAJOR: 30.48,      # 100 feet
+    RoadType.MAJOR: 30.48,  # 100 feet
     RoadType.COLLECTOR: 22.86,  # 75 feet
-    RoadType.LOCAL: 15.24,      # 50 feet
-    RoadType.DRIVEWAY: 7.62,    # 25 feet
+    RoadType.LOCAL: 15.24,  # 50 feet
+    RoadType.DRIVEWAY: 7.62,  # 25 feet
 }
 
 WATER_FEATURE_SETBACK = {
-    WaterFeatureType.STREAM: 30.48,   # 100 feet (federal requirement)
-    WaterFeatureType.RIVER: 45.72,    # 150 feet
-    WaterFeatureType.POND: 15.24,     # 50 feet
-    WaterFeatureType.LAKE: 30.48,     # 100 feet
+    WaterFeatureType.STREAM: 30.48,  # 100 feet (federal requirement)
+    WaterFeatureType.RIVER: 45.72,  # 150 feet
+    WaterFeatureType.POND: 15.24,  # 50 feet
+    WaterFeatureType.LAKE: 30.48,  # 100 feet
     WaterFeatureType.WETLAND: 15.24,  # 50 feet
 }
 
 UTILITY_SETBACK = {
-    "power_line": 15.24,     # 50 feet
-    "high_voltage": 30.48,   # 100 feet
-    "pipeline": 12.19,       # 40 feet
-    "gas_line": 9.14,        # 30 feet
-    "default": 9.14,         # 30 feet
+    "power_line": 15.24,  # 50 feet
+    "high_voltage": 30.48,  # 100 feet
+    "pipeline": 12.19,  # 40 feet
+    "gas_line": 9.14,  # 30 feet
+    "default": 9.14,  # 30 feet
 }
 
 
@@ -211,10 +210,7 @@ class BufferGenerator:
 
             # Simplify if requested
             if config.simplify_tolerance > 0:
-                buffered = buffered.simplify(
-                    config.simplify_tolerance,
-                    preserve_topology=True
-                )
+                buffered = buffered.simplify(config.simplify_tolerance, preserve_topology=True)
 
             # Validate result
             if self.auto_validate:
@@ -230,7 +226,7 @@ class BufferGenerator:
                     raise ValueError("Buffer operation resulted in empty geometry")
 
                 # Warn about unusual results
-                if buffered.area == 0 and hasattr(buffered, 'area'):
+                if buffered.area == 0 and hasattr(buffered, "area"):
                     logger.warning("Buffer has zero area")
 
             return buffered
@@ -312,7 +308,7 @@ class BufferGenerator:
         constraint_id: str,
         setback_distance: Optional[float] = None,
         setback_type: str = "default",
-        **kwargs
+        **kwargs,
     ) -> SetbackConstraint:
         """
         Create property line setback constraint.
@@ -328,8 +324,7 @@ class BufferGenerator:
             Configured SetbackConstraint
         """
         distance = setback_distance or PROPERTY_LINE_SETBACK.get(
-            setback_type,
-            PROPERTY_LINE_SETBACK["default"]
+            setback_type, PROPERTY_LINE_SETBACK["default"]
         )
 
         config = BufferConfig(
@@ -352,7 +347,7 @@ class BufferGenerator:
             source_feature_wkt=property_boundary.wkt,
             setback_distance_m=distance,
             buffer_type=config.style.value,
-            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority"]}
+            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority"]},
         )
 
     def create_road_setback(
@@ -361,7 +356,7 @@ class BufferGenerator:
         constraint_id: str,
         road_type: RoadType = RoadType.LOCAL,
         setback_distance: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ) -> SetbackConstraint:
         """
         Create road setback constraint.
@@ -397,7 +392,7 @@ class BufferGenerator:
             setback_distance_m=distance,
             buffer_type=config.style.value,
             metadata={"road_type": road_type.value, **kwargs.get("metadata", {})},
-            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority", "metadata"]}
+            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority", "metadata"]},
         )
 
     def create_water_feature_setback(
@@ -407,7 +402,7 @@ class BufferGenerator:
         feature_type: WaterFeatureType = WaterFeatureType.STREAM,
         setback_distance: Optional[float] = None,
         regulatory_info: Optional[Dict[str, str]] = None,
-        **kwargs
+        **kwargs,
     ) -> RegulatoryConstraint:
         """
         Create water feature setback constraint.
@@ -438,8 +433,7 @@ class BufferGenerator:
         # Default regulatory information
         reg_info = regulatory_info or {}
         regulation_name = reg_info.get(
-            "regulation_name",
-            "Clean Water Act - Riparian Buffer Requirements"
+            "regulation_name", "Clean Water Act - Riparian Buffer Requirements"
         )
         authority = reg_info.get("authority", "Federal (EPA)")
         regulation_code = reg_info.get("regulation_code", "33 USC 1344")
@@ -463,7 +457,7 @@ class BufferGenerator:
                 "source_feature_wkt": water_geometry.wkt,
                 **kwargs.get("metadata", {}),
             },
-            **{k: v for k, v in kwargs.items() if k not in ["metadata"]}
+            **{k: v for k, v in kwargs.items() if k not in ["metadata"]},
         )
 
     def create_utility_setback(
@@ -472,7 +466,7 @@ class BufferGenerator:
         constraint_id: str,
         utility_type: str = "default",
         setback_distance: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ) -> SetbackConstraint:
         """
         Create utility corridor setback constraint.
@@ -487,10 +481,7 @@ class BufferGenerator:
         Returns:
             Configured SetbackConstraint
         """
-        distance = setback_distance or UTILITY_SETBACK.get(
-            utility_type,
-            UTILITY_SETBACK["default"]
-        )
+        distance = setback_distance or UTILITY_SETBACK.get(utility_type, UTILITY_SETBACK["default"])
 
         config = BufferConfig(
             distance_m=distance,
@@ -512,7 +503,7 @@ class BufferGenerator:
             setback_distance_m=distance,
             buffer_type=config.style.value,
             metadata={"utility_type": utility_type, **kwargs.get("metadata", {})},
-            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority", "metadata"]}
+            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority", "metadata"]},
         )
 
     def validate_buffer(
@@ -556,16 +547,20 @@ class BufferGenerator:
                 issues.append("Buffer does not intersect source geometry")
 
         # Warn about unusual buffer sizes
-        if hasattr(buffer_geometry, 'area') and hasattr(source_geometry, 'area'):
+        if hasattr(buffer_geometry, "area") and hasattr(source_geometry, "area"):
             source_area = source_geometry.area
             buffer_area = buffer_geometry.area
 
             if source_area > 0:
                 ratio = buffer_area / source_area
                 if ratio > 100:
-                    issues.append(f"Buffer area is {ratio:.1f}x larger than source (unusually large)")
+                    issues.append(
+                        f"Buffer area is {ratio:.1f}x larger than source (unusually large)"
+                    )
                 elif ratio < 1.1 and expected_distance > 1:
-                    issues.append("Buffer area is only slightly larger than source (may be too small)")
+                    issues.append(
+                        "Buffer area is only slightly larger than source (may be too small)"
+                    )
 
         is_valid = len([i for i in issues if "invalid" in i.lower() or "empty" in i.lower()]) == 0
         return (is_valid, issues)
@@ -576,7 +571,7 @@ def create_buffer_from_config(
     distance_m: float,
     style: str = "round",
     simplify_tolerance: float = 0.0,
-    **kwargs
+    **kwargs,
 ) -> BaseGeometry:
     """
     Convenience function to create a buffer from simple parameters.
@@ -595,7 +590,7 @@ def create_buffer_from_config(
         distance_m=distance_m,
         style=BufferStyle(style),
         simplify_tolerance=simplify_tolerance,
-        **kwargs
+        **kwargs,
     )
 
     generator = BufferGenerator()

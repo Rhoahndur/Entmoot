@@ -104,8 +104,7 @@ class KMZValidator:
 
             if file_size > self.MAX_ARCHIVE_SIZE:
                 self.result.add_error(
-                    f"KMZ file too large: {file_size} bytes "
-                    f"(max {self.MAX_ARCHIVE_SIZE} bytes)"
+                    f"KMZ file too large: {file_size} bytes " f"(max {self.MAX_ARCHIVE_SIZE} bytes)"
                 )
                 return self.result
 
@@ -145,9 +144,7 @@ class KMZValidator:
                 # Test ZIP integrity
                 bad_file = zf.testzip()
                 if bad_file is not None:
-                    self.result.add_error(
-                        f"Corrupt file in archive: {bad_file}"
-                    )
+                    self.result.add_error(f"Corrupt file in archive: {bad_file}")
                     return False
 
                 # Get file count
@@ -201,9 +198,7 @@ class KMZValidator:
 
                         # Validate KML file is not empty
                         if file_info.file_size == 0:
-                            self.result.add_warning(
-                                f"KML file is empty: {filename}"
-                            )
+                            self.result.add_warning(f"KML file is empty: {filename}")
 
                     # Check for image files
                     elif extension in self.SUPPORTED_IMAGE_EXTENSIONS:
@@ -212,9 +207,7 @@ class KMZValidator:
 
                     # Check for suspicious files
                     elif extension in {".exe", ".bat", ".sh", ".cmd"}:
-                        self.result.add_warning(
-                            f"Potentially dangerous file found: {filename}"
-                        )
+                        self.result.add_warning(f"Potentially dangerous file found: {filename}")
 
                 # Warn about multiple KML files
                 if len(self.result.kml_files) > 1:

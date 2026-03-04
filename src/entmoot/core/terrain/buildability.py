@@ -219,9 +219,7 @@ class BuildabilityAnalyzer:
             raise ValueError("Aspect array must have same shape as slope/elevation")
 
         # Step 1: Create buildable mask
-        buildable_mask = self.create_buildable_mask(
-            slope_percent, elevation, aspect, property_mask
-        )
+        buildable_mask = self.create_buildable_mask(slope_percent, elevation, aspect, property_mask)
 
         # Step 2: Calculate total area
         pixel_area_sqm = self.cell_size * self.cell_size
@@ -450,6 +448,7 @@ class BuildabilityAnalyzer:
         # Create identity transform if none provided (pixel coordinates)
         if transform is None:
             from rasterio.transform import Affine
+
             transform = Affine.identity()
 
         # Extract shapes (polygons) from raster
@@ -617,9 +616,7 @@ class BuildabilityAnalyzer:
         avg_buildable_slope = float(np.mean(buildable_slopes))
         slope_score = max(0, (1 - avg_buildable_slope / 25.0)) * 20.0
 
-        total_score = (
-            percentage_score + zone_quality_score + consolidation_score + slope_score
-        )
+        total_score = percentage_score + zone_quality_score + consolidation_score + slope_score
         return min(total_score, 100.0)
 
     def _calculate_additional_metrics(

@@ -81,10 +81,10 @@ class ErrorResponse(BaseModel):
         description="Detailed field-level errors (for validation)",
     )
 
-    @field_serializer('timestamp')
+    @field_serializer("timestamp")
     def serialize_timestamp(self, timestamp: datetime, _info) -> str:
         """Serialize timestamp to ISO format string."""
-        return timestamp.isoformat() + 'Z' if timestamp.tzinfo is None else timestamp.isoformat()
+        return timestamp.isoformat() + "Z" if timestamp.tzinfo is None else timestamp.isoformat()
 
     model_config = ConfigDict(
         json_schema_extra={

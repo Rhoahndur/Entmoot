@@ -8,7 +8,7 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -51,13 +51,15 @@ async def get_all_projects() -> list[dict[str, Any]]:
     all_project_data = storage.get_all_projects()
 
     for project_data in all_project_data:
-        projects.append({
-            "id": project_data.get("project_id"),
-            "name": project_data.get("project_name", "Unnamed Project"),
-            "status": project_data.get("status", "unknown"),
-            "created_at": project_data.get("created_at"),
-            "progress": project_data.get("progress", 0),
-        })
+        projects.append(
+            {
+                "id": project_data.get("project_id"),
+                "name": project_data.get("project_name", "Unnamed Project"),
+                "status": project_data.get("status", "unknown"),
+                "created_at": project_data.get("created_at"),
+                "progress": project_data.get("progress", 0),
+            }
+        )
 
     # Sort by created_at descending (newest first)
     projects.sort(key=lambda x: x.get("created_at", ""), reverse=True)
@@ -235,7 +237,11 @@ async def reoptimize_project(
         if config_updates:
             config_dict = existing_config.model_dump()
             for key, value in config_updates.items():
-                if key in config_dict and isinstance(config_dict[key], dict) and isinstance(value, dict):
+                if (
+                    key in config_dict
+                    and isinstance(config_dict[key], dict)
+                    and isinstance(value, dict)
+                ):
                     config_dict[key].update(value)
                 else:
                     config_dict[key] = value
@@ -262,13 +268,15 @@ async def reoptimize_project(
             )
 
         updated_at_iso = datetime.utcnow().isoformat()
-        project.update({
-            "config": updated_config.model_dump(),
-            "status": ProjectStatus.PROCESSING,
-            "updated_at": updated_at_iso,
-            "progress": 0,
-            "error": None,
-        })
+        project.update(
+            {
+                "config": updated_config.model_dump(),
+                "status": ProjectStatus.PROCESSING,
+                "updated_at": updated_at_iso,
+                "progress": 0,
+                "error": None,
+            }
+        )
         storage.set_project(project_id, project)
 
         logger.info(f"Re-optimizing project {project_id}: {updated_config.project_name}")
@@ -277,7 +285,9 @@ async def reoptimize_project(
         results_data = storage.get_results(project_id)
         if results_data and results_data.get("placed_assets"):
             current_assets = results_data["placed_assets"]
-            logger.info(f"Re-optimization will start from {len(current_assets)} current asset positions")
+            logger.info(
+                f"Re-optimization will start from {len(current_assets)} current asset positions"
+            )
 
         asyncio.create_task(generate_layout_async(project_id, updated_config, current_assets))
 
@@ -350,11 +360,11 @@ async def update_alternative(
                 ).model_dump(mode="json"),
             )
 
-        if 'assets' in update_data:
+        if "assets" in update_data:
             from entmoot.models.project import PlacedAsset
 
-            updated_assets = [PlacedAsset(**asset) for asset in update_data['assets']]
-            results_data['placed_assets'] = [asset.model_dump() for asset in updated_assets]
+            updated_assets = [PlacedAsset(**asset) for asset in update_data["assets"]]
+            results_data["placed_assets"] = [asset.model_dump() for asset in updated_assets]
             storage.set_results(project_id, results_data)
 
             project["updated_at"] = datetime.utcnow().isoformat()
@@ -430,9 +440,7 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
 
     layout_results = LayoutResults(**results_data)
 
-    return ProjectService.build_optimization_results(
-        project, layout_results, project_id
-    )
+    return ProjectService.build_optimization_results(project, layout_results, project_id)
 
 
 @router.get(

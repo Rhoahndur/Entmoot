@@ -186,9 +186,7 @@ def is_in_utm_zone(longitude: float, latitude: float, zone_number: int) -> bool:
         return False
 
 
-def calculate_scale_factor(
-    longitude: float, latitude: float, zone_number: int
-) -> float:
+def calculate_scale_factor(longitude: float, latitude: float, zone_number: int) -> float:
     """
     Calculate the scale factor at a point in a UTM zone.
 
@@ -218,7 +216,7 @@ def calculate_scale_factor(
 
     # Simplified scale factor calculation
     # Full calculation would involve more complex geodetic formulas
-    scale = k0 * (1 + (delta_lon ** 2) * (math.cos(lat_rad) ** 2) / 2)
+    scale = k0 * (1 + (delta_lon**2) * (math.cos(lat_rad) ** 2) / 2)
 
     return scale
 
@@ -254,8 +252,9 @@ def get_utm_letter_designator(latitude: float) -> str:
     return bands[index]
 
 
-def format_utm_zone(zone_number: int, is_northern: bool, include_band: bool = False,
-                    latitude: float = 0.0) -> str:
+def format_utm_zone(
+    zone_number: int, is_northern: bool, include_band: bool = False, latitude: float = 0.0
+) -> str:
     """
     Format UTM zone as a string.
 

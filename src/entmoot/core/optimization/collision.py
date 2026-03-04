@@ -104,10 +104,7 @@ class CollisionDetector:
         spacing_rules: Custom spacing rules
     """
 
-    def __init__(
-        self,
-        spacing_rules: Optional[Dict[Tuple[AssetType, AssetType], float]] = None
-    ):
+    def __init__(self, spacing_rules: Optional[Dict[Tuple[AssetType, AssetType], float]] = None):
         """
         Initialize collision detector.
 
@@ -177,11 +174,7 @@ class CollisionDetector:
 
         self._needs_rebuild = False
 
-    def check_bounding_box_collision(
-        self,
-        asset1: PlacedAsset,
-        asset2: PlacedAsset
-    ) -> bool:
+    def check_bounding_box_collision(self, asset1: PlacedAsset, asset2: PlacedAsset) -> bool:
         """
         Fast bounding box collision check.
 
@@ -199,17 +192,13 @@ class CollisionDetector:
         # bounds format: (minx, miny, maxx, maxy)
         # Use <= to handle touching edges as not colliding
         return not (
-            bounds1[2] <= bounds2[0] or  # asset1 is left of asset2
-            bounds1[0] >= bounds2[2] or  # asset1 is right of asset2
-            bounds1[3] <= bounds2[1] or  # asset1 is below asset2
-            bounds1[1] >= bounds2[3]     # asset1 is above asset2
+            bounds1[2] <= bounds2[0]  # asset1 is left of asset2
+            or bounds1[0] >= bounds2[2]  # asset1 is right of asset2
+            or bounds1[3] <= bounds2[1]  # asset1 is below asset2
+            or bounds1[1] >= bounds2[3]  # asset1 is above asset2
         )
 
-    def check_precise_collision(
-        self,
-        asset1: PlacedAsset,
-        asset2: PlacedAsset
-    ) -> bool:
+    def check_precise_collision(self, asset1: PlacedAsset, asset2: PlacedAsset) -> bool:
         """
         Precise polygon-polygon collision check using Shapely.
 
@@ -224,11 +213,7 @@ class CollisionDetector:
         geom2 = asset2.get_geometry()
         return geom1.intersects(geom2)
 
-    def check_spacing(
-        self,
-        asset1: PlacedAsset,
-        asset2: PlacedAsset
-    ) -> Tuple[bool, float, float]:
+    def check_spacing(self, asset1: PlacedAsset, asset2: PlacedAsset) -> Tuple[bool, float, float]:
         """
         Check if spacing between assets is sufficient.
 
@@ -241,17 +226,11 @@ class CollisionDetector:
         """
         # Get required spacing
         required_spacing = get_required_spacing(
-            asset1.asset_type,
-            asset2.asset_type,
-            self.spacing_rules
+            asset1.asset_type, asset2.asset_type, self.spacing_rules
         )
 
         # Also consider asset-specific minimum spacing
-        required_spacing = max(
-            required_spacing,
-            asset1.min_spacing_m,
-            asset2.min_spacing_m
-        )
+        required_spacing = max(required_spacing, asset1.min_spacing_m, asset2.min_spacing_m)
 
         if required_spacing == 0:
             return (True, 0.0, 0.0)
@@ -266,9 +245,7 @@ class CollisionDetector:
         return (is_valid, actual_distance, required_spacing)
 
     def check_collision_with_asset(
-        self,
-        new_asset: PlacedAsset,
-        existing_asset: PlacedAsset
+        self, new_asset: PlacedAsset, existing_asset: PlacedAsset
     ) -> Optional[Violation]:
         """
         Check collision between new asset and existing asset.
@@ -293,9 +270,7 @@ class CollisionDetector:
                 )
 
         # Always check spacing requirements (even if no overlap)
-        is_valid, actual_dist, required_dist = self.check_spacing(
-            new_asset, existing_asset
-        )
+        is_valid, actual_dist, required_dist = self.check_spacing(new_asset, existing_asset)
 
         if not is_valid:
             return Violation(
@@ -314,9 +289,7 @@ class CollisionDetector:
         return None
 
     def find_potential_collisions(
-        self,
-        asset: PlacedAsset,
-        buffer_distance: float = 0.0
+        self, asset: PlacedAsset, buffer_distance: float = 0.0
     ) -> List[PlacedAsset]:
         """
         Find assets that potentially collide with given asset using spatial index.
@@ -355,9 +328,7 @@ class CollisionDetector:
         return candidates
 
     def check_collisions(
-        self,
-        asset: PlacedAsset,
-        exclude_ids: Optional[Set[str]] = None
+        self, asset: PlacedAsset, exclude_ids: Optional[Set[str]] = None
     ) -> List[Violation]:
         """
         Check for collisions between asset and all existing assets.
@@ -378,7 +349,8 @@ class CollisionDetector:
                 get_required_spacing(asset.asset_type, other.asset_type, self.spacing_rules)
                 for other in self.assets.values()
                 if other.id not in exclude_ids and other.id != asset.id
-            ] + [asset.min_spacing_m, 0.0]
+            ]
+            + [asset.min_spacing_m, 0.0]
         )
 
         # Find potential collisions using spatial index
@@ -536,11 +508,7 @@ class CollisionDetector:
 
         return results
 
-    def get_clearance_zone(
-        self,
-        asset: PlacedAsset,
-        clearance_distance: float
-    ) -> BaseGeometry:
+    def get_clearance_zone(self, asset: PlacedAsset, clearance_distance: float) -> BaseGeometry:
         """
         Get clearance zone around an asset.
 
@@ -565,10 +533,8 @@ class CollisionDetector:
 
         # Check each pair of assets
         for i, asset1 in enumerate(asset_list):
-            for asset2 in asset_list[i + 1:]:
-                is_valid, actual_dist, required_dist = self.check_spacing(
-                    asset1, asset2
-                )
+            for asset2 in asset_list[i + 1 :]:
+                is_valid, actual_dist, required_dist = self.check_spacing(asset1, asset2)
 
                 if not is_valid:
                     violations.append(
