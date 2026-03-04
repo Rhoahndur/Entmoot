@@ -131,7 +131,6 @@ export const ResultsPage: React.FC = () => {
   }, [editMode]);
 
   // Helper function to recalculate violations
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const recalculateViolations = () => {
     if (!currentAlternative || !results) {
       setLocalViolations([]);

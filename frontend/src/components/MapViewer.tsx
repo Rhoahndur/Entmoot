@@ -632,9 +632,8 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       const data = (source as any)._data;
         if (data?.features) {
           // Find the feature for this asset and update its geometry
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const featureIndex = data.features.findIndex(
-            (f: any) => f.properties.id === dragStateRef.current!.assetId
+            (f: { properties: { id: string } }) => f.properties.id === dragStateRef.current!.assetId
           );
           if (featureIndex !== -1) {
             const asset = assets.find(a => a.id === dragStateRef.current!.assetId);

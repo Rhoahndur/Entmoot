@@ -38,8 +38,8 @@ def main() -> None:
         if not output_path.exists():
             print(f"ERROR: {output_path} does not exist. Run this script without --check first.")
             sys.exit(1)
-        existing = output_path.read_text()
-        if existing != generated:
+        existing_schema = yaml.safe_load(output_path.read_text())
+        if existing_schema != schema:
             print(f"ERROR: {output_path} is out of date. Regenerate with:")
             print(f"  python {Path(__file__).name}")
             sys.exit(1)
