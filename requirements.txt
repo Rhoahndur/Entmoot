@@ -1,34 +1,166 @@
-# Core dependencies
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-shapely>=2.0.0
-geopandas>=0.14.0
-pyproj>=3.6.0
-python-multipart>=0.0.6
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-rasterio>=1.3.0
-numpy>=1.24.0
-scipy>=1.10.0
-networkx>=3.0
-
-# Visualization dependencies
-matplotlib>=3.7.0
-plotly>=5.14.0
-
-# HTTP client for API integrations
-httpx>=0.25.0
-
-# Redis for production data persistence
-redis>=5.0.0
-
-# Report generation
-reportlab>=4.0.0
-pillow>=10.0.0
-
-# Export formats
-ezdxf>=1.1.0
-simplekml>=1.3.6
-
-# YAML (OpenAPI schema)
-pyyaml>=6.0
+affine==2.4.0
+    # via rasterio
+annotated-doc==0.0.4
+    # via fastapi
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.12.1
+    # via
+    #   httpx
+    #   starlette
+    #   watchfiles
+attrs==25.4.0
+    # via rasterio
+certifi==2026.2.25
+    # via
+    #   httpcore
+    #   httpx
+    #   pyogrio
+    #   pyproj
+    #   rasterio
+charset-normalizer==3.4.4
+    # via reportlab
+click==8.3.1
+    # via
+    #   cligj
+    #   rasterio
+    #   uvicorn
+cligj==0.7.2
+    # via rasterio
+contourpy==1.3.3
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
+ezdxf==1.4.3
+    # via -r requirements.in
+fastapi==0.135.1
+    # via -r requirements.in
+fonttools==4.61.1
+    # via
+    #   ezdxf
+    #   matplotlib
+geopandas==1.1.2
+    # via -r requirements.in
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via httpx
+httptools==0.7.1
+    # via uvicorn
+httpx==0.28.1
+    # via -r requirements.in
+idna==3.11
+    # via
+    #   anyio
+    #   httpx
+kiwisolver==1.4.9
+    # via matplotlib
+matplotlib==3.10.8
+    # via -r requirements.in
+narwhals==2.17.0
+    # via plotly
+networkx==3.6.1
+    # via -r requirements.in
+numpy==2.4.2
+    # via
+    #   -r requirements.in
+    #   contourpy
+    #   ezdxf
+    #   geopandas
+    #   matplotlib
+    #   pandas
+    #   pyogrio
+    #   rasterio
+    #   scipy
+    #   shapely
+packaging==26.0
+    # via
+    #   geopandas
+    #   matplotlib
+    #   plotly
+    #   pyogrio
+pandas==3.0.1
+    # via geopandas
+pillow==12.1.1
+    # via
+    #   -r requirements.in
+    #   matplotlib
+    #   reportlab
+plotly==6.6.0
+    # via -r requirements.in
+pydantic==2.12.5
+    # via
+    #   -r requirements.in
+    #   fastapi
+    #   pydantic-settings
+pydantic-core==2.41.5
+    # via pydantic
+pydantic-settings==2.13.1
+    # via -r requirements.in
+pyogrio==0.12.1
+    # via geopandas
+pyparsing==3.3.2
+    # via
+    #   ezdxf
+    #   matplotlib
+    #   rasterio
+pyproj==3.7.2
+    # via
+    #   -r requirements.in
+    #   geopandas
+python-dateutil==2.9.0.post0
+    # via
+    #   matplotlib
+    #   pandas
+python-dotenv==1.2.2
+    # via
+    #   pydantic-settings
+    #   uvicorn
+python-multipart==0.0.22
+    # via -r requirements.in
+pyyaml==6.0.3
+    # via
+    #   -r requirements.in
+    #   uvicorn
+rasterio==1.5.0
+    # via -r requirements.in
+redis==7.2.1
+    # via -r requirements.in
+reportlab==4.4.10
+    # via -r requirements.in
+scipy==1.17.1
+    # via -r requirements.in
+shapely==2.1.2
+    # via
+    #   -r requirements.in
+    #   geopandas
+simplekml==1.3.6
+    # via -r requirements.in
+six==1.17.0
+    # via python-dateutil
+starlette==0.52.1
+    # via fastapi
+typing-extensions==4.15.0
+    # via
+    #   anyio
+    #   ezdxf
+    #   fastapi
+    #   pydantic
+    #   pydantic-core
+    #   starlette
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via
+    #   fastapi
+    #   pydantic
+    #   pydantic-settings
+uvicorn[standard]==0.41.0
+    # via -r requirements.in
+uvloop==0.22.1
+    # via uvicorn
+watchfiles==1.1.1
+    # via uvicorn
+websockets==16.0
+    # via uvicorn
