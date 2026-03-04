@@ -54,6 +54,8 @@ dev = [
     "mypy>=1.6.0",
     "pre-commit>=3.5.0",
     "types-requests>=2.31.0",
+    "pip-tools>=7.3.0",
+    "pyyaml>=6.0",
 ]
 
 [project.urls]
@@ -108,6 +110,7 @@ markers = [
     "integration: Integration tests",
     "slow: Slow running tests",
     "asyncio: Async tests",
+    "e2e: End-to-end tests",
 ]
 
 # Coverage configuration
@@ -136,7 +139,7 @@ fail_under = 85
 
 # Mypy configuration
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
