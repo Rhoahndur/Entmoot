@@ -7,10 +7,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from entmoot import __version__
+from entmoot.api.auth import verify_api_key
 from entmoot.api.error_handlers import register_error_handlers
 from entmoot.api.middleware import (
     LoggingContextMiddleware,
@@ -83,9 +84,17 @@ app.add_middleware(RequestCorrelationMiddleware)
 # Register error handlers
 register_error_handlers(app)
 
-# Include routers
-app.include_router(upload_router, prefix=settings.api_v1_prefix)
-app.include_router(projects_router, prefix=settings.api_v1_prefix)
+# Include routers (protected by API key authentication)
+app.include_router(
+    upload_router,
+    prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_api_key)],
+)
+app.include_router(
+    projects_router,
+    prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @app.get("/")
