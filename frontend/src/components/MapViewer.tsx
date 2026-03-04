@@ -629,11 +629,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       const source = map.current?.getSource('asset-polygons') as maplibregl.GeoJSONSource;
       if (source) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = (source as any)._data as { features?: Array<{ properties: { id: string }; geometry: { coordinates: number[][][] } }> };
+      const data = (source as any)._data;
         if (data?.features) {
           // Find the feature for this asset and update its geometry
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const featureIndex = data.features.findIndex(
-            (f) => f.properties.id === dragStateRef.current!.assetId
+            (f: any) => f.properties.id === dragStateRef.current!.assetId
           );
           if (featureIndex !== -1) {
             const asset = assets.find(a => a.id === dragStateRef.current!.assetId);
@@ -861,7 +862,8 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     if (!measuring || measurementPoints.length === 0) return;
 
     // Create line features
-    const features: Array<{ type: string; properties: Record<string, unknown>; geometry: { type: string; coordinates: number[] | number[][] } }> = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const features: any[] = [];
 
     // Add points
     measurementPoints.forEach((point, index) => {

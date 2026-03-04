@@ -177,7 +177,8 @@ export const exportToGeoJSON = async (
   propertyBoundary: Array<{ latitude: number; longitude: number }>,
   projectName: string
 ): Promise<void> => {
-  const features: Array<{ type: string; properties: Record<string, unknown>; geometry: { type: string; coordinates: number[][] | number[][][] } }> = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const features: any[] = [];
 
   // Validate property boundary
   if (!propertyBoundary || propertyBoundary.length === 0) {
