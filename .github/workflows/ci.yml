@@ -37,7 +37,6 @@ jobs:
 
       - name: Run MyPy (type checking)
         run: mypy src/
-        continue-on-error: true  # Type checking warnings shouldn't fail the build
 
   test:
     name: Unit Tests
@@ -204,3 +203,30 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build
+
+  openapi-check:
+    name: OpenAPI Schema Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev gdal-bin
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Verify OpenAPI schema is current
+        run: python scripts/generate_openapi.py --check
