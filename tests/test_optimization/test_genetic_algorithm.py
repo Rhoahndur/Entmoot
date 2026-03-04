@@ -200,14 +200,25 @@ class TestGeneticOptimizer:
             assets=[asset.model_copy(deep=True) for asset in sample_assets]
         )
 
-        original_position = solution.assets[0].position
+        # Place assets far apart so moves don't get rejected due to overlap
+        solution.assets[0].set_position(50.0, 50.0)
+        solution.assets[1].set_position(150.0, 150.0)
 
-        # Mutate
-        mutated = optimizer._mutate_move(solution)
+        # Mutation is probabilistic (random asset chosen, random direction).
+        # Retry several times to confirm at least one move succeeds.
+        moved = False
+        for _ in range(20):
+            trial = PlacementSolution(
+                assets=[asset.model_copy(deep=True) for asset in solution.assets]
+            )
+            original_positions = [a.position for a in trial.assets]
+            mutated = optimizer._mutate_move(trial)
+            new_positions = [a.position for a in mutated.assets]
+            if new_positions != original_positions:
+                moved = True
+                break
 
-        # Position should have changed
-        new_position = mutated.assets[0].position
-        assert new_position != original_position
+        assert moved, "Expected at least one mutation move to change a position"
 
     def test_mutation_rotate(self, optimizer, sample_assets):
         """Test rotate mutation operator."""

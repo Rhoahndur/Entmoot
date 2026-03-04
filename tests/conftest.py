@@ -2,10 +2,35 @@
 Shared test fixtures and configuration.
 """
 
+import zipfile
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
 from entmoot.api.main import app
+
+
+def pytest_configure(config):
+    """Generate binary fixture files (e.g., KMZ) that cannot be checked in as text."""
+    fixtures_dir = Path(__file__).parent / "fixtures"
+    _generate_kmz_fixtures(fixtures_dir)
+
+
+def _generate_kmz_fixtures(fixtures_dir: Path) -> None:
+    """Create KMZ fixture files from existing KML fixtures.
+
+    KMZ files are ZIP archives containing KML. Since they are binary, we
+    generate them from the KML source files so we don't need to commit
+    binary blobs to the repository.
+    """
+    simple_kml_path = fixtures_dir / "simple.kml"
+    simple_kmz_path = fixtures_dir / "simple.kmz"
+
+    if simple_kml_path.exists():
+        kml_content = simple_kml_path.read_text()
+        with zipfile.ZipFile(simple_kmz_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("doc.kml", kml_content)
 
 
 @pytest.fixture

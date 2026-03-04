@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Complex Property Map</name>
+    <description>A complex property map with multiple features</description>
+
+    <!-- Style definitions -->
+    <Style id="propertyStyle">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>7f00ff00</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+
+    <Style id="contourStyle">
+      <LineStyle>
+        <color>ff00aaff</color>
+        <width>1</width>
+      </LineStyle>
+    </Style>
+
+    <Style id="pointStyle">
+      <IconStyle>
+        <color>ff0000ff</color>
+        <scale>1.0</scale>
+      </IconStyle>
+    </Style>
+
+    <!-- Folder: Property Boundaries -->
+    <Folder>
+      <name>Property Boundaries</name>
+
+      <!-- Parcel 1: Polygon with a hole and extended data -->
+      <Placemark id="parcel1">
+        <name>Parcel 1</name>
+        <description>Main parcel with pond exclusion</description>
+        <styleUrl>#propertyStyle</styleUrl>
+        <ExtendedData>
+          <Data name="parcel_id">
+            <value>123-456-789</value>
+          </Data>
+          <Data name="area_acres">
+            <value>5.0</value>
+          </Data>
+          <Data name="owner">
+            <value>John Doe</value>
+          </Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -105.0,40.0,0
+                -105.005,40.0,0
+                -105.005,40.005,0
+                -105.0,40.005,0
+                -105.0,40.0,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+          <innerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -105.002,40.002,0
+                -105.003,40.002,0
+                -105.003,40.003,0
+                -105.002,40.003,0
+                -105.002,40.002,0
+              </coordinates>
+            </LinearRing>
+          </innerBoundaryIs>
+        </Polygon>
+      </Placemark>
+
+      <!-- Parcel 2: Simple polygon -->
+      <Placemark id="parcel2">
+        <name>Parcel 2</name>
+        <description>Adjacent parcel</description>
+        <styleUrl>#propertyStyle</styleUrl>
+        <ExtendedData>
+          <Data name="parcel_id">
+            <value>123-456-790</value>
+          </Data>
+          <Data name="area_acres">
+            <value>3.2</value>
+          </Data>
+          <Data name="owner">
+            <value>Jane Smith</value>
+          </Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -105.005,40.0,0
+                -105.009,40.0,0
+                -105.009,40.005,0
+                -105.005,40.005,0
+                -105.005,40.0,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+    </Folder>
+
+    <!-- Folder: Topography -->
+    <Folder>
+      <name>Topography</name>
+
+      <!-- Folder: Contour Lines (nested) -->
+      <Folder>
+        <name>Contour Lines</name>
+
+        <!-- Contour line at 1200 ft -->
+        <Placemark id="contour1200">
+          <name>Contour 1200 ft</name>
+          <description>Elevation contour at 1200 feet</description>
+          <styleUrl>#contourStyle</styleUrl>
+          <ExtendedData>
+            <Data name="elevation">
+              <value>1200.0</value>
+            </Data>
+          </ExtendedData>
+          <LineString>
+            <coordinates>
+              -105.0,40.001,1200
+              -105.002,40.0015,1200
+              -105.004,40.001,1200
+              -105.006,40.0012,1200
+              -105.009,40.001,1200
+            </coordinates>
+          </LineString>
+        </Placemark>
+
+        <!-- Contour line at 1250 ft -->
+        <Placemark id="contour1250">
+          <name>Contour 1250 ft</name>
+          <description>Elevation contour at 1250 feet</description>
+          <styleUrl>#contourStyle</styleUrl>
+          <ExtendedData>
+            <Data name="elevation">
+              <value>1250.0</value>
+            </Data>
+          </ExtendedData>
+          <LineString>
+            <coordinates>
+              -105.0,40.003,1250
+              -105.002,40.0035,1250
+              -105.004,40.003,1250
+              -105.006,40.0032,1250
+              -105.009,40.003,1250
+            </coordinates>
+          </LineString>
+        </Placemark>
+      </Folder>
+    </Folder>
+
+    <!-- Folder: Infrastructure -->
+    <Folder>
+      <name>Infrastructure</name>
+
+      <!-- Access Road -->
+      <Placemark id="access_road">
+        <name>Access Road</name>
+        <description>Main access road to property</description>
+        <LineString>
+          <coordinates>
+            -104.998,40.002,0
+            -105.0,40.002,0
+            -105.002,40.0025,0
+            -105.004,40.003,0
+          </coordinates>
+        </LineString>
+      </Placemark>
+    </Folder>
+
+    <!-- Folder: Points of Interest -->
+    <Folder>
+      <name>Points of Interest</name>
+
+      <!-- Well point -->
+      <Placemark id="well">
+        <name>Well</name>
+        <description>Water well location</description>
+        <styleUrl>#pointStyle</styleUrl>
+        <Point>
+          <coordinates>-105.003,40.004,0</coordinates>
+        </Point>
+      </Placemark>
+
+      <!-- Barn point -->
+      <Placemark id="barn">
+        <name>Barn</name>
+        <description>Main barn structure</description>
+        <styleUrl>#pointStyle</styleUrl>
+        <Point>
+          <coordinates>-105.001,40.003,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+
+  </Document>
+</kml>
