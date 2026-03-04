@@ -58,10 +58,11 @@ async def entmoot_exception_handler(request: Request, exc: EntmootException) -> 
     request_id = get_request_id(request)
 
     # Log the error with context
+    # Note: request_id is already added by LoggingContextMiddleware's record factory,
+    # so we must not pass it in extra to avoid KeyError from duplicate attributes.
     logger.error(
         f"EntmootException: {exc.error_code} - {exc.message}",
         extra={
-            "request_id": request_id,
             "error_code": exc.error_code,
             "status_code": exc.status_code,
             "path": request.url.path,
@@ -113,10 +114,11 @@ async def validation_error_handler(
         )
 
     # Log the validation error
+    # Note: request_id is already added by LoggingContextMiddleware's record factory,
+    # so we must not pass it in extra to avoid KeyError from duplicate attributes.
     logger.warning(
         f"Validation error: {len(errors)} field(s) failed validation",
         extra={
-            "request_id": request_id,
             "error_count": len(errors),
             "path": request.url.path,
             "method": request.method,

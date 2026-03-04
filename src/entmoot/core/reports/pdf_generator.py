@@ -136,10 +136,53 @@ class PDFReportGenerator:
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
 
+    def _add_or_update_style(self, style: ParagraphStyle) -> None:
+        """Add a style to the stylesheet, or update it if it already exists.
+
+        Args:
+            style: The ParagraphStyle to add or update.
+        """
+        name = style.name
+        if name in self.styles.byName:
+            # Update the existing style's attributes in place
+            existing = self.styles[name]
+            for attr in (
+                "fontName",
+                "fontSize",
+                "leading",
+                "leftIndent",
+                "rightIndent",
+                "firstLineIndent",
+                "alignment",
+                "spaceBefore",
+                "spaceAfter",
+                "bulletFontName",
+                "bulletFontSize",
+                "bulletIndent",
+                "textColor",
+                "backColor",
+                "wordWrap",
+                "borderWidth",
+                "borderPadding",
+                "borderColor",
+                "borderRadius",
+                "allowWidows",
+                "allowOrphans",
+                "textTransform",
+                "endDots",
+                "splitLongWords",
+                "underlineProportion",
+                "parent",
+            ):
+                if hasattr(style, attr):
+                    setattr(existing, attr, getattr(style, attr))
+        else:
+            self.styles.add(style)
+
     def _setup_custom_styles(self) -> None:
         """Setup custom paragraph styles."""
         # Title style
-        self.styles.add(
+        self._add_or_update_style(
             ParagraphStyle(
                 name="CustomTitle",
                 parent=self.styles["Title"],
@@ -151,7 +194,7 @@ class PDFReportGenerator:
         )
 
         # Heading styles
-        self.styles.add(
+        self._add_or_update_style(
             ParagraphStyle(
                 name="Heading1",
                 parent=self.styles["Heading1"],
@@ -162,7 +205,7 @@ class PDFReportGenerator:
             )
         )
 
-        self.styles.add(
+        self._add_or_update_style(
             ParagraphStyle(
                 name="Heading2",
                 parent=self.styles["Heading2"],
@@ -174,7 +217,7 @@ class PDFReportGenerator:
         )
 
         # Body text
-        self.styles.add(
+        self._add_or_update_style(
             ParagraphStyle(
                 name="CustomBody",
                 parent=self.styles["BodyText"],
@@ -185,7 +228,7 @@ class PDFReportGenerator:
         )
 
         # Caption style
-        self.styles.add(
+        self._add_or_update_style(
             ParagraphStyle(
                 name="Caption",
                 parent=self.styles["BodyText"],

@@ -106,6 +106,9 @@ site/
 *.tif
 *.tiff
 
+# Allow KML test fixtures (generated KMZ files are still ignored)
+!tests/fixtures/*.kml
+
 # Exclude large data directories
 data/raw/
 data/processed/

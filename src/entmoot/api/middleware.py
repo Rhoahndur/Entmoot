@@ -119,8 +119,12 @@ class LoggingContextMiddleware(BaseHTTPMiddleware):
 
         def record_factory(*args, **kwargs):
             record = old_factory(*args, **kwargs)
-            # Only set attributes if they don't already exist (to avoid overwriting extra={} params)
-            # Use custom attribute names to avoid conflicts with LogRecord built-in attributes
+            # Set request context on log records. We use setattr with hasattr
+            # guards to avoid overwriting attributes that may be set later by
+            # Logger.makeRecord from extra={} parameters.  Since makeRecord
+            # applies extra AFTER the factory, we store context under prefixed
+            # names that won't collide with caller-supplied extra keys, while
+            # also setting the canonical names only if absent.
             if request_id and not hasattr(record, "request_id"):
                 record.request_id = request_id
             if not hasattr(record, "http_method"):
