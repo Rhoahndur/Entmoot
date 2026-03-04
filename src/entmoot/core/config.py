@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # Security settings
     virus_scan_enabled: bool = False
+    api_keys: str = ""
+    auth_enabled: bool = True
 
     # API settings
     api_v1_prefix: str = "/api/v1"
@@ -50,8 +52,18 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        """Get CORS origins as a list."""
-        return [origin.strip() for origin in self.cors_origins.split(",")]
+        """Get CORS origins as a list.
+
+        Raises:
+            ValueError: If wildcard ``*`` is used in production.
+        """
+        origins = [origin.strip() for origin in self.cors_origins.split(",")]
+        if self.environment == "production" and "*" in origins:
+            raise ValueError(
+                "Wildcard '*' CORS origin is not allowed in production. "
+                "Set ENTMOOT_CORS_ORIGINS to explicit allowed origins."
+            )
+        return origins
 
     @property
     def max_upload_size_bytes(self) -> int:
