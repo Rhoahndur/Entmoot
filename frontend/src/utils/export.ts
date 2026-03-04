@@ -163,8 +163,10 @@ export const exportToPDF = async (
 /**
  * Validate coordinate has required properties
  */
-const validateCoordinate = (coord: any): coord is { latitude: number; longitude: number } => {
-  return coord && typeof coord.latitude === 'number' && typeof coord.longitude === 'number';
+const validateCoordinate = (coord: unknown): coord is { latitude: number; longitude: number } => {
+  if (typeof coord !== 'object' || coord === null) return false;
+  const c = coord as Record<string, unknown>;
+  return typeof c.latitude === 'number' && typeof c.longitude === 'number';
 };
 
 /**
@@ -175,7 +177,7 @@ export const exportToGeoJSON = async (
   propertyBoundary: Array<{ latitude: number; longitude: number }>,
   projectName: string
 ): Promise<void> => {
-  const features: any[] = [];
+  const features: Array<{ type: string; properties: Record<string, unknown>; geometry: { type: string; coordinates: number[][] | number[][][] } }> = [];
 
   // Validate property boundary
   if (!propertyBoundary || propertyBoundary.length === 0) {

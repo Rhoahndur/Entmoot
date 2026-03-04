@@ -32,7 +32,7 @@ export interface PlacedAsset {
   length: number;
   height?: number;
   polygon: Coordinate[]; // footprint corners
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 // Road network types
