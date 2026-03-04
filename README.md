@@ -1,410 +1,285 @@
-# Entmoot 
+# Entmoot
 
 AI-driven site layout automation for real estate due diligence.
 
 ## Overview
 
-Entmoot is a geospatial analysis platform designed to automate site layout generation and feasibility analysis for real estate development projects. The system combines geospatial processing, regulatory compliance checking, and AI-driven optimization to streamline the due diligence process.
+Entmoot is a full-stack geospatial platform that automates site layout generation and feasibility analysis for real estate development. Upload a property boundary (KML/KMZ/GeoJSON), configure assets and constraints, and receive an optimized site plan produced by a genetic algorithm — complete with road networks, earthwork estimates, and exportable deliverables for CAD and GIS tools.
 
 ## Features
 
-- Automated site boundary detection and analysis
-- Setback and zoning compliance verification
-- Building footprint optimization
-- Parking layout generation
-- Access and circulation planning
-- Multi-unit site layout automation
+- **Site boundary parsing** — KML, KMZ, GeoJSON, and GeoTIFF input with automatic CRS detection and UTM projection
+- **Genetic algorithm optimization** — multi-objective placement of buildings, parking lots, equipment yards, and storage tanks with configurable weights (cost, buildable area, accessibility, environmental impact, aesthetics)
+- **Constraint enforcement** — setback distances, property-line compliance, exclusion zones, wetland buffers, slope limits, and inter-asset spacing
+- **Road network generation** — A\* pathfinding with grade constraints and turning-radius awareness
+- **Earthwork estimation** — cut/fill volume calculations with cost projections
+- **Terrain analysis** — DEM loading, slope/aspect computation, solar/wind exposure, and buildability scoring
+- **Regulatory data** — FEMA flood zone queries and USGS 3DEP elevation lookups via rate-limited async clients
+- **Export** — KMZ (Google Earth), GeoJSON (QGIS), DXF (AutoCAD), and PDF site reports
+- **Interactive frontend** — drag-and-drop upload, configuration wizard, MapLibre GL map viewer, and layout editor
+- **API key authentication** — optional `X-API-Key` header protection for all `/api/v1` routes
 
 ## Technology Stack
 
-- **Backend**: FastAPI (Python 3.10+)
-- **Frontend**: React 19 with TypeScript, Vite, TailwindCSS
-- **Geospatial**: GDAL, Shapely, GeoPandas, PyProj, MapLibre GL
-- **Database**: PostGIS (PostgreSQL with spatial extensions)
-- **Cache**: Redis
-- **Testing**: pytest with coverage reporting
-- **Code Quality**: black, flake8, mypy, pre-commit hooks
-- **Containerization**: Docker, Docker Compose
-- **CI/CD**: GitHub Actions
+| Layer | Tools |
+|---|---|
+| **Backend** | Python 3.10+, FastAPI, Pydantic v2, Uvicorn |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, MapLibre GL |
+| **Geospatial** | Shapely, GeoPandas, PyProj, GDAL/Rasterio, simplekml, ezdxf |
+| **Optimization** | Custom genetic algorithm (population-based, multi-objective) |
+| **Storage** | Redis (project/result persistence), optional PostgreSQL + PostGIS |
+| **Testing** | pytest (unit/integration/e2e markers, 85 % coverage target) |
+| **Code quality** | Black, Flake8, mypy (enforced in CI), pre-commit hooks |
+| **Infrastructure** | Docker multi-stage builds, Docker Compose, GitHub Actions CI/CD |
 
 ## Prerequisites
 
-### For Docker (Recommended)
+### Docker (recommended)
+
 - Docker 20.10+
 - Docker Compose v2.0+
 
-### For Local Development
-- Python 3.10 or higher
+### Local development
+
+- Python 3.10+
 - Node.js 18+
-- pip (Python package manager)
-- npm or yarn
+- pip, npm
 - Git
-- (Optional) PostgreSQL with PostGIS extension
-- (Optional) Redis
+- System libraries: `libgdal-dev`, `libproj-dev`, `libgeos-dev`
+- (Optional) PostgreSQL with PostGIS, Redis
 
-## Quick Start with Docker
+## Quick Start
 
-The easiest way to run Entmoot is using Docker Compose. This will start all services (backend, frontend, database, cache) with a single command.
-
-### 1. Clone and Configure
+### With Docker
 
 ```bash
 git clone <repository-url>
 cd Entmoot
+cp .env.example .env   # edit passwords and secrets
 
-# Copy environment configuration
-cp .env.example .env
-
-# Edit .env file with your settings (use secure passwords in production!)
-```
-
-### 2. Start Services
-
-```bash
-# Production mode
+# Production
 docker compose up -d
 
-# Development mode (with hot reload)
+# Development (hot reload)
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### 3. Access the Application
-
-- Frontend: http://localhost
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
-
-### 4. Stop Services
+| Service | URL |
+|---|---|
+| Frontend | http://localhost |
+| Backend API | http://localhost:8000 |
+| API docs (Swagger) | http://localhost:8000/docs |
+| ReDoc | http://localhost:8000/redoc |
 
 ```bash
-docker compose down
-
-# Remove volumes (WARNING: deletes all data)
-docker compose down -v
+docker compose down       # stop
+docker compose down -v    # stop + delete volumes
 ```
 
-## Local Development Setup
-
-For local development without Docker:
-
-### 1. Clone the Repository
+### Local development
 
 ```bash
-git clone <repository-url>
-cd Entmoot
-```
+# Backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements-dev.txt   # or: pip install -e ".[dev]"
+pre-commit install                    # optional
+uvicorn entmoot.api.main:app --reload
 
-### 2. Backend Setup
-
-#### Create a Virtual Environment
-
-```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-```
-
-#### Install Backend Dependencies
-
-```bash
-# Install production dependencies
-pip install -r requirements.txt
-
-# Install development dependencies (for contributors)
-pip install -r requirements-dev.txt
-
-# Or install the package in editable mode with dev dependencies
-pip install -e ".[dev]"
-```
-
-#### Install Pre-commit Hooks (Optional, for Contributors)
-
-```bash
-pre-commit install
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-```
-
-### 4. Database Setup (Optional)
-
-If using PostgreSQL locally:
-
-```bash
-# Create database
-createdb entmoot
-
-# Enable PostGIS extension
-psql -d entmoot -c "CREATE EXTENSION postgis;"
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev
+# → http://localhost:5173
 ```
 
 ## Project Structure
 
 ```
 Entmoot/
-├── src/
-│   └── entmoot/              # Main application package
-│       ├── api/              # FastAPI endpoints
-│       ├── core/             # Core business logic
-│       ├── models/           # Data models and schemas
-│       ├── integrations/     # External API integrations
-│       └── utils/            # Utility functions
-├── frontend/                 # React frontend application
-│   ├── src/                  # Frontend source code
-│   ├── public/               # Static assets
-│   ├── Dockerfile            # Frontend Docker image
-│   └── nginx.conf            # Nginx configuration
-├── tests/                    # Backend test suite
-├── docs/                     # Documentation
-├── .github/
-│   └── workflows/            # CI/CD pipelines
-│       ├── ci.yml            # Continuous Integration
-│       └── deploy.yml        # Deployment workflow
-├── Dockerfile                # Backend Docker image
-├── docker-compose.yml        # Production Docker setup
-├── docker-compose.dev.yml    # Development Docker setup
-├── .dockerignore            # Docker ignore rules
-├── .env.example             # Environment variables template
-├── pyproject.toml           # Project configuration
-├── requirements.txt         # Production dependencies
-├── requirements-dev.txt     # Development dependencies
-├── .gitignore               # Git ignore rules
-├── .flake8                  # Flake8 configuration
-├── .pre-commit-config.yaml  # Pre-commit hooks
-└── README.md                # This file
+├── src/entmoot/
+│   ├── api/                  # FastAPI route handlers
+│   │   ├── main.py           #   app factory, CORS, lifespan, health check
+│   │   ├── projects.py       #   project CRUD & results (thin, delegates to services)
+│   │   ├── upload.py         #   file upload endpoint
+│   │   ├── auth.py           #   API key authentication dependency
+│   │   ├── error_handlers.py #   custom exception handlers
+│   │   └── middleware.py     #   logging context & request correlation
+│   ├── services/             # Business logic layer
+│   │   ├── project_service.py      # validation, result assembly, violation detection
+│   │   └── optimization_service.py # layout generation & genetic algorithm orchestration
+│   ├── core/                 # Domain modules
+│   │   ├── constraints/      #   setbacks, buffers, exclusion zones
+│   │   ├── crs/              #   CRS detection, normalization, UTM projection
+│   │   ├── earthwork/        #   cut/fill volume & cost estimation
+│   │   ├── export/           #   KMZ, GeoJSON, DXF exporters
+│   │   ├── optimization/     #   genetic algorithm, collision detection, problem defs
+│   │   ├── parsers/          #   KML / KMZ parsers & validators
+│   │   ├── reports/          #   PDF report generation
+│   │   ├── roads/            #   road graph, A* pathfinding, network generation
+│   │   ├── terrain/          #   DEM loading, slope, aspect, buildability
+│   │   ├── visualization/    #   2D / 3D map rendering
+│   │   ├── config.py         #   pydantic-settings configuration
+│   │   ├── redis_storage.py  #   Redis-backed project/result store
+│   │   └── cleanup.py        #   upload retention / cleanup service
+│   ├── integrations/         # External API clients
+│   │   ├── rate_limiter.py   #   shared token-bucket rate limiter
+│   │   ├── fema/             #   FEMA NFHL flood zone queries
+│   │   └── usgs/             #   USGS 3DEP elevation queries & DEM tiles
+│   ├── models/               # Pydantic data models
+│   └── utils/                # Logging, versioning helpers
+├── frontend/
+│   └── src/
+│       ├── pages/            # UploadPage, ConfigPage, ResultsPage, ProjectsListPage
+│       ├── components/       # FileDropzone, MapViewer, LayoutEditor, ResultsDashboard
+│       ├── hooks/            # useFileUpload
+│       ├── api/              # Axios API client (with API key interceptor)
+│       └── types/            # TypeScript type definitions
+├── tests/                    # pytest suite (57 test files)
+│   ├── conftest.py           #   shared fixtures, auto-assigned markers
+│   ├── test_constraints/     test_crs/       test_earthwork/
+│   ├── test_export/          test_integrations/  test_optimization/
+│   ├── test_reports/         test_roads/     test_terrain/
+│   └── test_visualization/
+├── scripts/
+│   └── generate_openapi.py   # generates docs/openapi.yaml
+├── docs/
+│   └── openapi.yaml          # versioned OpenAPI schema (CI-checked)
+├── .github/workflows/
+│   ├── ci.yml                # lint, test, security, build, openapi-check
+│   └── deploy.yml            # staging & production deployment
+├── Dockerfile                # multi-stage backend image
+├── docker-compose.yml        # production stack
+├── docker-compose.dev.yml    # development stack
+├── pyproject.toml            # project metadata, tool configs
+├── requirements.in           # unpinned runtime deps (pip-compile input)
+├── requirements-dev.in       # unpinned dev deps
+├── requirements.txt          # pinned runtime deps
+├── requirements-dev.txt      # pinned dev deps
+└── LICENSE                   # MIT
 ```
+
+## Configuration
+
+All settings use the `ENTMOOT_` prefix and can be set via environment variables or a `.env` file. Key options:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ENTMOOT_ENVIRONMENT` | `development` | `development`, `staging`, or `production` |
+| `ENTMOOT_CORS_ORIGINS` | `http://localhost:5173,...` | Comma-separated origins (wildcard `*` rejected in production) |
+| `ENTMOOT_AUTH_ENABLED` | `true` | Enable API key authentication |
+| `ENTMOOT_API_KEYS` | *(empty)* | Comma-separated valid API keys (empty = auth disabled) |
+| `ENTMOOT_MAX_UPLOAD_SIZE_MB` | `50` | Maximum upload file size |
+| `ENTMOOT_UPLOADS_DIR` | `./data/uploads` | Upload storage directory |
+
+See [`.env.example`](.env.example) for the full list.
 
 ## Development
 
-### Running Tests
+### Running tests
 
 ```bash
-# Run all tests
-pytest
-
-# Run tests with coverage report
-pytest --cov=src/entmoot --cov-report=html
-
-# Run specific test file
-pytest tests/test_sample.py
-
-# Run tests with specific marker
-pytest -m unit
+pytest                        # all tests (markers auto-assigned by conftest.py)
+pytest -m unit                # unit tests only
+pytest -m integration         # integration tests only
+pytest -m "not slow"          # skip slow tests
+pytest --cov=src/entmoot --cov-report=html   # with HTML coverage report
 ```
 
-### Code Quality
+### Code quality
 
 ```bash
-# Format code with black
-black src/ tests/
-
-# Check code style with flake8
-flake8 src/ tests/
-
-# Type checking with mypy
-mypy src/
-
-# Run all pre-commit hooks
-pre-commit run --all-files
+black src/ tests/             # format
+flake8 src/ tests/            # lint
+mypy src/                     # type check (enforced in CI)
+pre-commit run --all-files    # all hooks at once
 ```
 
-### Running the Application
-
-#### With Docker (Recommended)
+### OpenAPI schema
 
 ```bash
-# Development mode with hot reload
-docker compose -f docker-compose.dev.yml up
-
-# Production mode
-docker compose up
+python scripts/generate_openapi.py          # regenerate docs/openapi.yaml
+python scripts/generate_openapi.py --check  # verify schema is current (CI uses this)
 ```
 
-#### Local Development
+### Dependency management
+
+Runtime and dev dependencies are declared in `requirements.in` / `requirements-dev.in`. Generate pinned lock files with:
 
 ```bash
-# Start backend
-uvicorn entmoot.api.main:app --reload
-
-# In a separate terminal, start frontend
-cd frontend
-npm run dev
-
-# The frontend will be available at http://localhost:5173
-# Backend API at http://localhost:8000
-# API documentation at http://localhost:8000/docs
+pip-compile requirements.in -o requirements.txt
+pip-compile requirements-dev.in -o requirements-dev.txt
 ```
 
-## Testing
+## API Overview
 
-The project uses pytest for testing with the following features:
+All `/api/v1` routes require an `X-API-Key` header when authentication is enabled.
 
-- Unit tests marked with `@pytest.mark.unit`
-- Integration tests marked with `@pytest.mark.integration`
-- Code coverage targeting 85%+ coverage
-- Coverage reports in HTML, XML, and terminal formats
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | API info (public) |
+| `GET` | `/health` | Health check (public) |
+| `POST` | `/api/v1/upload` | Upload KML/KMZ/GeoJSON/TIFF |
+| `GET` | `/api/v1/upload/health` | Upload service health |
+| `GET` | `/api/v1/projects` | List all projects |
+| `POST` | `/api/v1/projects` | Create project & start optimization |
+| `GET` | `/api/v1/projects/{id}/status` | Poll optimization progress |
+| `GET` | `/api/v1/projects/{id}/results` | Retrieve optimization results |
+| `POST` | `/api/v1/projects/{id}/reoptimize` | Re-run with updated config |
+| `PUT` | `/api/v1/projects/{id}/alternatives/{alt}/` | Save edited layout |
+| `GET` | `/api/v1/projects/{id}/alternatives/{alt}/export/{fmt}` | Export layout |
+| `DELETE` | `/api/v1/projects/{id}` | Delete project |
 
-### Test Organization
-
-- `tests/`: All test files
-- `tests/test_sample.py`: Sample tests demonstrating framework setup
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-### Development Workflow
-
-1. Create a feature branch from `main`
-   ```bash
-   git checkout -b feature/story-X.Y-description
-   ```
-
-2. Make your changes and ensure tests pass
-   ```bash
-   pytest
-   black src/ tests/
-   flake8 src/ tests/
-   ```
-
-3. Commit your changes
-   ```bash
-   git add .
-   git commit -m "feat: description of changes"
-   ```
-
-4. Push to your branch and create a pull request
-   ```bash
-   git push origin feature/story-X.Y-description
-   ```
-
-## Git Workflow
-
-- **main**: Production-ready code
-- **feature/story-X.Y-description**: Feature branches for development
-- **hotfix/description**: Emergency fixes for production issues
-
-All changes should go through pull request review before merging to main.
-
-## Docker
-
-### Docker Images
-
-The project includes optimized multi-stage Docker builds:
-
-- **Backend**: Python 3.10 slim with GDAL/PostGIS support (~400MB)
-- **Frontend**: Nginx-served React app (~50MB)
-
-### Docker Compose Services
-
-- **postgres**: PostgreSQL 15 with PostGIS 3.4
-- **redis**: Redis 7 for caching
-- **backend**: FastAPI application
-- **frontend**: React application with Nginx
-
-### Environment Variables
-
-See `.env.example` for all available configuration options:
-
-```bash
-cp .env.example .env
-# Edit .env with your settings
-```
-
-Important variables:
-- `POSTGRES_PASSWORD`: Database password (change in production!)
-- `REDIS_PASSWORD`: Redis password (change in production!)
-- `SECRET_KEY`: Application secret key (generate a strong random string)
-- `CORS_ORIGINS`: Allowed origins for CORS
-
-### Health Checks
-
-All services include health checks:
-
-```bash
-# Check service health
-docker compose ps
-
-# View logs
-docker compose logs -f backend
-docker compose logs -f frontend
-```
-
-### Data Persistence
-
-Volumes are used for data persistence:
-- `postgres_data`: Database files
-- `redis_data`: Redis persistence
-- `upload_data`: User uploads
-- `logs`: Application logs
+Interactive documentation is available at `/docs` (Swagger UI) and `/redoc`.
 
 ## CI/CD
 
-### GitHub Actions Workflows
+### CI Pipeline (`.github/workflows/ci.yml`)
 
-The project includes automated CI/CD pipelines:
+Runs on every push/PR to `main` and `develop`:
 
-#### CI Pipeline (`.github/workflows/ci.yml`)
-Runs on every push and pull request:
-- Code quality checks (Black, Flake8, MyPy)
-- Unit tests with coverage
-- Security scanning (Bandit, Safety)
-- Docker image builds
-- Frontend linting and build
+1. **Lint** — Black, Flake8, mypy (Python 3.10–3.12 matrix)
+2. **Test** — pytest with PostgreSQL + Redis services, coverage upload
+3. **Security** — Bandit (SAST) and Safety (dependency audit)
+4. **Build** — Docker image builds for backend and frontend
+5. **Frontend lint** — ESLint + production build
+6. **OpenAPI check** — verifies `docs/openapi.yaml` is current
 
-#### Deployment Pipeline (`.github/workflows/deploy.yml`)
-Runs on releases:
-- Builds and pushes Docker images to registry
-- Deploys to staging (on develop branch)
-- Deploys to production (on release tags)
+### Deployment Pipeline (`.github/workflows/deploy.yml`)
+
+- Staging deploys from `develop` branch
+- Production deploys from release tags
 - Automated rollback on failure
 
-### Required Secrets
+## Docker
 
-Configure these secrets in your GitHub repository:
-- `DOCKER_USERNAME`: Docker Hub username
-- `DOCKER_PASSWORD`: Docker Hub password/token
-- `STAGING_HOST`: Staging server hostname
-- `STAGING_USER`: SSH user for staging
-- `STAGING_SSH_KEY`: SSH private key for staging
-- `PRODUCTION_HOST`: Production server hostname
-- `PRODUCTION_USER`: SSH user for production
-- `PRODUCTION_SSH_KEY`: SSH private key for production
-- `SLACK_WEBHOOK`: (Optional) Slack webhook for notifications
+Multi-stage builds produce slim images:
+
+- **Backend** — Python 3.10-slim with GDAL runtime (~400 MB)
+- **Frontend** — Nginx-served React build (~50 MB)
+
+Docker Compose services: `postgres` (PostGIS 15), `redis` (7-alpine), `backend`, `frontend`.
+
+Persistent volumes: `postgres_data`, `redis_data`, `upload_data`, `logs`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards, branch naming, and PR workflow.
+
+```bash
+git checkout -b feature/story-X.Y-description
+# make changes, then:
+pytest && black src/ tests/ && flake8 src/ tests/ && mypy src/
+git commit -m "feat: description of changes"
+git push origin feature/story-X.Y-description
+```
 
 ## Documentation
 
-- [Development Guide](docs/development.md) - Detailed development instructions
-- [Execution Plan](docs/execution-plan.md) - Project roadmap and implementation plan
-- [Architecture](architecture.md) - System architecture overview
-- [Frontend Quickstart](QUICKSTART_FRONTEND.md) - Frontend development guide
+- [Architecture](architecture.md) — system architecture diagram
+- [Development Guide](docs/development.md) — detailed local setup
+- [Deployment Guide](docs/deployment.md) — production deployment
+- [Contributing](CONTRIBUTING.md) — contributor guidelines
+- [Frontend README](frontend/README.md) — frontend-specific docs
+- [FEMA Integration](src/entmoot/integrations/fema/QUICKSTART.md) — FEMA API quickstart
 
 ## License
 
-MIT License - See LICENSE file for details
-
-## Contact
-
-For questions or support, please open an issue on GitHub.
-
-## Acknowledgments
-
-- Built with FastAPI and modern Python geospatial tools
-- Inspired by the need to streamline real estate due diligence workflows
+MIT License — see [LICENSE](LICENSE) for details.
