@@ -10,14 +10,7 @@ import type { ProjectConfig } from '../types/config';
 // API base URL - can be configured via environment variable
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const API_V1_PREFIX = '/api/v1';
-
-// Debug logging
-console.log('Environment variables:', {
-  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-  API_BASE_URL,
-  MODE: import.meta.env.MODE,
-  PROD: import.meta.env.PROD,
-});
+const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 /**
  * Create configured Axios instance
@@ -31,9 +24,12 @@ const createApiClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor for logging
+  // Request interceptor — attach API key if configured
   client.interceptors.request.use(
     (config) => {
+      if (API_KEY) {
+        config.headers['X-API-Key'] = API_KEY;
+      }
       return config;
     },
     (error) => {

@@ -121,10 +121,7 @@ export const ConfigPage: React.FC = () => {
       setIsSubmitting(true);
       setError(null);
 
-      console.log('Submitting project configuration...', config);
       const response = await submitProjectConfig(config);
-
-      console.log('Project created:', response);
 
       // Navigate to results page with project ID
       navigate(`/results?project_id=${response.project_id}`);
