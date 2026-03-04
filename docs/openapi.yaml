@@ -1,0 +1,1390 @@
+openapi: 3.1.0
+info:
+  title: Entmoot API
+  description: AI-driven site layout automation for real estate due diligence
+  version: 0.1.0
+paths:
+  /api/v1/upload:
+    post:
+      tags:
+      - upload
+      summary: Upload a file
+      description: 'Upload a KMZ, KML, GeoJSON, or GeoTIFF file for processing. Maximum
+        file size: 50MB. Files are validated for type, size, and integrity.'
+      operationId: upload_file_api_v1_upload_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_file_api_v1_upload_post'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Invalid file or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/upload/health:
+    get:
+      tags:
+      - upload
+      summary: Upload service health check
+      description: Check if the upload service is operational
+      operationId: upload_health_check_api_v1_upload_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - APIKeyHeader: []
+  /api/v1/projects:
+    get:
+      tags:
+      - projects
+      summary: Get all projects
+      description: Retrieve a list of all projects
+      operationId: get_all_projects_api_v1_projects_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response Get All Projects Api V1 Projects Get
+      security:
+      - APIKeyHeader: []
+    post:
+      tags:
+      - projects
+      summary: Create a new project
+      description: Create a new project with configuration and start layout generation
+      operationId: create_project_api_v1_projects_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectConfig'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/projects/{project_id}/status:
+    get:
+      tags:
+      - projects
+      summary: Get project status
+      description: Check the status and progress of a layout generation project
+      operationId: get_project_status_api_v1_projects__project_id__status_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectStatusResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/projects/{project_id}/reoptimize:
+    post:
+      tags:
+      - projects
+      summary: Re-optimize a project
+      description: Re-run optimization with updated configuration parameters
+      operationId: reoptimize_project_api_v1_projects__project_id__reoptimize_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - type: object
+                additionalProperties: true
+              - type: 'null'
+              title: Config Updates
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/projects/{project_id}/alternatives/{alternative_id}:
+    put:
+      tags:
+      - projects
+      summary: Update alternative layout
+      description: Update the assets in an alternative layout
+      operationId: update_alternative_api_v1_projects__project_id__alternatives__alternative_id__put
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      - name: alternative_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Alternative Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              title: Update Data
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Update Alternative Api V1 Projects  Project Id  Alternatives  Alternative
+                  Id  Put
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/projects/{project_id}/results:
+    get:
+      tags:
+      - projects
+      summary: Get layout results
+      description: Retrieve the generated layout results for a completed project
+      operationId: get_layout_results_api_v1_projects__project_id__results_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResults'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Results not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/projects/{project_id}/alternatives/{alternative_id}/export/{export_format}:
+    get:
+      tags:
+      - projects
+      summary: Export layout
+      description: Export a layout alternative in the specified format
+      operationId: export_layout_api_v1_projects__project_id__alternatives__alternative_id__export__export_format__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      - name: alternative_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Alternative Id
+      - name: export_format
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Export Format
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/projects/{project_id}:
+    delete:
+      tags:
+      - projects
+      summary: Delete a project
+      description: Delete a project and its associated data
+      operationId: delete_project_api_v1_projects__project_id__delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Project Api V1 Projects  Project Id  Delete
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /:
+    get:
+      summary: Root
+      description: "Root endpoint returning API information.\n\nReturns:\n    dict[str,\
+        \ str]: API information including name and version."
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Root  Get
+  /health:
+    get:
+      summary: Health Check
+      description: "Health check endpoint.\n\nReturns:\n    dict[str, str]: Health\
+        \ status."
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Health Check Health Get
+components:
+  schemas:
+    AssetConfig:
+      properties:
+        type:
+          $ref: '#/components/schemas/AssetType'
+          description: Type of asset
+        quantity:
+          type: integer
+          minimum: 1.0
+          title: Quantity
+          description: Number of instances
+        width:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Width
+          description: Width in feet
+        length:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Length
+          description: Length in feet
+        height:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Height
+          description: Height in feet (optional)
+      type: object
+      required:
+      - type
+      - quantity
+      - width
+      - length
+      title: AssetConfig
+      description: Configuration for a single asset type.
+    AssetType:
+      type: string
+      enum:
+      - buildings
+      - equipment_yard
+      - parking_lot
+      - storage_tanks
+      title: AssetType
+      description: Asset types for site layout.
+    Body_upload_file_api_v1_upload_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+          description: 'File to upload. Supported types: .kmz, .kml, .geojson, .tif,
+            .tiff. Maximum size: 50MB.'
+      type: object
+      required:
+      - file
+      title: Body_upload_file_api_v1_upload_post
+    Bounds:
+      properties:
+        north:
+          type: number
+          title: North
+          description: Northern latitude bound
+        south:
+          type: number
+          title: South
+          description: Southern latitude bound
+        east:
+          type: number
+          title: East
+          description: Eastern longitude bound
+        west:
+          type: number
+          title: West
+          description: Western longitude bound
+      type: object
+      required:
+      - north
+      - south
+      - east
+      - west
+      title: Bounds
+      description: Map bounds for visualization.
+    BuildableArea:
+      properties:
+        polygon:
+          items:
+            $ref: '#/components/schemas/Coordinate'
+          type: array
+          title: Polygon
+          description: Area boundary coordinates
+        area:
+          type: number
+          title: Area
+          description: Area in square feet
+        usable:
+          type: boolean
+          title: Usable
+          description: Whether area is usable
+      type: object
+      required:
+      - polygon
+      - area
+      - usable
+      title: BuildableArea
+      description: Buildable area polygon.
+    ConstraintConfig:
+      properties:
+        setback_distance:
+          type: number
+          minimum: 0.0
+          title: Setback Distance
+          description: Setback distance in feet
+          default: 20
+        min_distance_between_assets:
+          type: number
+          minimum: 0.0
+          title: Min Distance Between Assets
+          description: Minimum distance between assets in feet
+          default: 10
+        exclusion_zones_enabled:
+          type: boolean
+          title: Exclusion Zones Enabled
+          description: Enable exclusion zones
+          default: true
+        respect_property_lines:
+          type: boolean
+          title: Respect Property Lines
+          description: Respect property boundaries
+          default: true
+        respect_easements:
+          type: boolean
+          title: Respect Easements
+          description: Respect easements
+          default: true
+        wetland_buffer:
+          type: number
+          minimum: 0.0
+          title: Wetland Buffer
+          description: Wetland buffer distance in feet
+          default: 50
+        slope_limit:
+          type: number
+          maximum: 30.0
+          minimum: 0.0
+          title: Slope Limit
+          description: Maximum buildable slope percentage
+          default: 15
+      type: object
+      title: ConstraintConfig
+      description: Constraint configuration for site layout.
+    ConstraintType:
+      type: string
+      enum:
+      - setback
+      - wetland
+      - slope
+      - easement
+      - exclusion
+      - property_line
+      title: ConstraintType
+      description: Types of constraints for site layout.
+    ConstraintViolation:
+      properties:
+        asset_id:
+          type: string
+          title: Asset Id
+          description: Asset that violates constraint
+        constraint_type:
+          $ref: '#/components/schemas/ConstraintType'
+          description: Type of constraint violated
+        severity:
+          type: string
+          title: Severity
+          description: Violation severity (warning, error)
+        message:
+          type: string
+          title: Message
+          description: Violation message
+        location:
+          anyOf:
+          - $ref: '#/components/schemas/Coordinate'
+          - type: 'null'
+          description: Violation location
+      type: object
+      required:
+      - asset_id
+      - constraint_type
+      - severity
+      - message
+      title: ConstraintViolation
+      description: Constraint violation record.
+    ConstraintZone:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Zone identifier
+        type:
+          $ref: '#/components/schemas/ConstraintType'
+          description: Constraint type
+        polygon:
+          items:
+            $ref: '#/components/schemas/Coordinate'
+          type: array
+          title: Polygon
+          description: Zone boundary coordinates
+        severity:
+          type: string
+          title: Severity
+          description: Constraint severity (low, medium, high)
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+          description: Zone description
+      type: object
+      required:
+      - id
+      - type
+      - polygon
+      - severity
+      title: ConstraintZone
+      description: Constraint zone polygon.
+    Coordinate:
+      properties:
+        latitude:
+          type: number
+          title: Latitude
+          description: Latitude in degrees
+        longitude:
+          type: number
+          title: Longitude
+          description: Longitude in degrees
+      type: object
+      required:
+      - latitude
+      - longitude
+      title: Coordinate
+      description: A geographic coordinate.
+    CostBreakdown:
+      properties:
+        earthwork:
+          type: number
+          title: Earthwork
+          description: Earthwork costs in USD
+        roads:
+          type: number
+          title: Roads
+          description: Road construction costs in USD
+        utilities:
+          type: number
+          title: Utilities
+          description: Utility costs in USD
+        drainage:
+          type: number
+          title: Drainage
+          description: Drainage costs in USD
+        landscaping:
+          type: number
+          title: Landscaping
+          description: Landscaping costs in USD
+        contingency:
+          type: number
+          title: Contingency
+          description: Contingency costs in USD
+        total:
+          type: number
+          title: Total
+          description: Total cost in USD
+      type: object
+      required:
+      - earthwork
+      - roads
+      - utilities
+      - drainage
+      - landscaping
+      - contingency
+      - total
+      title: CostBreakdown
+      description: Detailed cost breakdown.
+    EarthworkVolumes:
+      properties:
+        cut:
+          type: number
+          title: Cut
+          description: Cut volume in cubic yards
+        fill:
+          type: number
+          title: Fill
+          description: Fill volume in cubic yards
+        net:
+          type: number
+          title: Net
+          description: Net volume (fill - cut) in cubic yards
+        balance_ratio:
+          type: number
+          title: Balance Ratio
+          description: Cut/fill ratio
+      type: object
+      required:
+      - cut
+      - fill
+      - net
+      - balance_ratio
+      title: EarthworkVolumes
+      description: Earthwork volume calculations.
+    ErrorDetail:
+      properties:
+        field:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Field
+          description: Field name that caused the error
+        message:
+          type: string
+          title: Message
+          description: Error message for this field
+        code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Code
+          description: Error code for this specific issue
+      type: object
+      required:
+      - message
+      title: ErrorDetail
+      description: 'Detailed information about a specific error.
+
+
+        Used for validation errors with multiple field-level issues.'
+      example:
+        code: VALUE_TOO_LARGE
+        field: file_size
+        message: File size exceeds maximum allowed
+    ErrorResponse:
+      properties:
+        error_code:
+          type: string
+          title: Error Code
+          description: Machine-readable error code
+          examples:
+          - VALIDATION_ERROR
+          - PARSE_ERROR
+          - STORAGE_ERROR
+        message:
+          type: string
+          title: Message
+          description: Human-readable error message
+          examples:
+          - File validation failed
+          - Unable to parse KML file
+        details:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Details
+          description: Additional technical details about the error
+        timestamp:
+          type: string
+          title: Timestamp
+          description: When the error occurred (UTC)
+        request_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Request Id
+          description: Request correlation ID for tracing
+        suggestions:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Suggestions
+          description: Actionable suggestions for resolving the error
+        errors:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ErrorDetail'
+            type: array
+          - type: 'null'
+          title: Errors
+          description: Detailed field-level errors (for validation)
+      type: object
+      required:
+      - error_code
+      - message
+      title: ErrorResponse
+      description: "Standardized error response model for all API errors.\n\nThis\
+        \ model ensures consistent error formatting across the entire API,\nmaking\
+        \ it easier for clients to handle errors programmatically.\n\nAttributes:\n\
+        \    error_code: Machine-readable error identifier (e.g., 'VALIDATION_ERROR')\n\
+        \    message: Human-readable error message\n    details: Optional dictionary\
+        \ with additional technical details\n    timestamp: When the error occurred\
+        \ (UTC)\n    request_id: Optional request correlation ID for tracing\n   \
+        \ suggestions: Optional list of actionable suggestions for resolution\n  \
+        \  errors: Optional list of detailed field-level errors"
+      example:
+        details:
+          file_type: kml
+          validation_failed: magic_number
+        error_code: VALIDATION_ERROR
+        errors:
+        - code: INVALID_MAGIC_NUMBER
+          field: file_content
+          message: File signature does not match KML format
+        message: File validation failed
+        request_id: 550e8400-e29b-41d4-a716-446655440000
+        suggestions:
+        - Verify the file is a valid KML file
+        - Check for file corruption
+        timestamp: '2025-11-10T15:30:00Z'
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    LayoutAlternative:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Alternative identifier
+        name:
+          type: string
+          title: Name
+          description: Alternative name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+          description: Alternative description
+        metrics:
+          $ref: '#/components/schemas/LayoutMetrics'
+          description: Layout metrics
+        assets:
+          items:
+            $ref: '#/components/schemas/PlacedAsset'
+          type: array
+          title: Assets
+          description: Placed assets
+        road_network:
+          $ref: '#/components/schemas/RoadNetwork'
+          description: Road network
+        constraint_zones:
+          items:
+            $ref: '#/components/schemas/ConstraintZone'
+          type: array
+          title: Constraint Zones
+          description: Constraint zones
+        buildable_areas:
+          items:
+            $ref: '#/components/schemas/BuildableArea'
+          type: array
+          title: Buildable Areas
+          description: Buildable areas
+        earthwork_zones:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Earthwork Zones
+          description: Earthwork zones
+        violations:
+          items:
+            $ref: '#/components/schemas/ConstraintViolation'
+          type: array
+          title: Violations
+          description: Constraint violations
+        created_at:
+          type: string
+          title: Created At
+          description: Creation timestamp
+      type: object
+      required:
+      - id
+      - name
+      - metrics
+      - assets
+      - road_network
+      - constraint_zones
+      - buildable_areas
+      - violations
+      - created_at
+      title: LayoutAlternative
+      description: A layout alternative/option.
+    LayoutMetrics:
+      properties:
+        property_area:
+          type: number
+          title: Property Area
+          description: Total property area in square feet
+        buildable_area:
+          type: number
+          title: Buildable Area
+          description: Buildable area in square feet
+        buildable_percentage:
+          type: number
+          title: Buildable Percentage
+          description: Percentage of buildable area
+        assets_placed:
+          type: integer
+          title: Assets Placed
+          description: Number of assets placed
+        total_road_length:
+          type: number
+          title: Total Road Length
+          description: Total road length in feet
+        earthwork_volumes:
+          $ref: '#/components/schemas/EarthworkVolumes'
+          description: Earthwork volume summary
+        estimated_cost:
+          $ref: '#/components/schemas/CostBreakdown'
+          description: Cost breakdown
+        constraint_violations:
+          type: integer
+          title: Constraint Violations
+          description: Number of constraint violations
+        optimization_score:
+          type: number
+          title: Optimization Score
+          description: Optimization score (0-100)
+      type: object
+      required:
+      - property_area
+      - buildable_area
+      - buildable_percentage
+      - assets_placed
+      - total_road_length
+      - earthwork_volumes
+      - estimated_cost
+      - constraint_violations
+      - optimization_score
+      title: LayoutMetrics
+      description: Metrics for a layout alternative.
+    OptimizationResults:
+      properties:
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier
+        project_name:
+          type: string
+          title: Project Name
+          description: Project name
+        property_boundary:
+          items:
+            $ref: '#/components/schemas/Coordinate'
+          type: array
+          title: Property Boundary
+          description: Property boundary coordinates
+        bounds:
+          $ref: '#/components/schemas/Bounds'
+          description: Map bounds
+        alternatives:
+          items:
+            $ref: '#/components/schemas/LayoutAlternative'
+          type: array
+          title: Alternatives
+          description: Layout alternatives
+        selected_alternative_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Selected Alternative Id
+          description: Selected alternative ID
+        created_at:
+          type: string
+          title: Created At
+          description: Creation timestamp
+        updated_at:
+          type: string
+          title: Updated At
+          description: Last update timestamp
+      type: object
+      required:
+      - project_id
+      - project_name
+      - property_boundary
+      - bounds
+      - alternatives
+      - created_at
+      - updated_at
+      title: OptimizationResults
+      description: Complete optimization results response.
+    OptimizationWeights:
+      properties:
+        cost:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Cost
+          description: Weight for cost minimization
+          default: 40
+        buildable_area:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Buildable Area
+          description: Weight for buildable area maximization
+          default: 30
+        accessibility:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Accessibility
+          description: Weight for accessibility
+          default: 15
+        environmental_impact:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Environmental Impact
+          description: Weight for environmental impact
+          default: 10
+        aesthetics:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Aesthetics
+          description: Weight for aesthetics
+          default: 5
+      type: object
+      title: OptimizationWeights
+      description: Optimization weights for layout generation.
+    PlacedAsset:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Asset identifier
+        type:
+          $ref: '#/components/schemas/AssetType'
+          description: Asset type
+        position:
+          $ref: '#/components/schemas/Coordinate'
+          description: Asset centroid position
+        rotation:
+          type: number
+          exclusiveMaximum: 360.0
+          minimum: 0.0
+          title: Rotation
+          description: Rotation in degrees
+        width:
+          type: number
+          title: Width
+          description: Width in feet
+        length:
+          type: number
+          title: Length
+          description: Length in feet
+        height:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Height
+          description: Height in feet
+        polygon:
+          items:
+            $ref: '#/components/schemas/Coordinate'
+          type: array
+          title: Polygon
+          description: Footprint corners
+      type: object
+      required:
+      - id
+      - type
+      - position
+      - rotation
+      - width
+      - length
+      title: PlacedAsset
+      description: A placed asset in the generated layout.
+    ProjectConfig:
+      properties:
+        project_name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Project Name
+          description: Project name
+        upload_id:
+          type: string
+          title: Upload Id
+          description: Upload ID from file upload
+        assets:
+          items:
+            $ref: '#/components/schemas/AssetConfig'
+          type: array
+          minItems: 1
+          title: Assets
+          description: List of assets to place
+        constraints:
+          $ref: '#/components/schemas/ConstraintConfig'
+          description: Constraint configuration
+        road_design:
+          $ref: '#/components/schemas/RoadConfig'
+          description: Road design configuration
+        optimization_weights:
+          $ref: '#/components/schemas/OptimizationWeights'
+          description: Optimization weights
+      type: object
+      required:
+      - project_name
+      - upload_id
+      - assets
+      - constraints
+      - road_design
+      - optimization_weights
+      title: ProjectConfig
+      description: Complete project configuration.
+    ProjectResponse:
+      properties:
+        project_id:
+          type: string
+          title: Project Id
+          description: Unique project identifier
+        project_name:
+          type: string
+          title: Project Name
+          description: Project name
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+          description: Current project status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Project creation timestamp
+        message:
+          type: string
+          title: Message
+          description: Response message
+      type: object
+      required:
+      - project_id
+      - project_name
+      - status
+      - created_at
+      - message
+      title: ProjectResponse
+      description: Response model for project creation.
+    ProjectStatus:
+      type: string
+      enum:
+      - created
+      - processing
+      - completed
+      - failed
+      title: ProjectStatus
+      description: Project status enumeration.
+    ProjectStatusResponse:
+      properties:
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+          description: Current status
+        progress:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Progress
+          description: Progress percentage
+          default: 0
+        message:
+          type: string
+          title: Message
+          description: Status message
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+          description: Error message if failed
+      type: object
+      required:
+      - project_id
+      - status
+      - message
+      title: ProjectStatusResponse
+      description: Response model for project status check.
+    RoadConfig:
+      properties:
+        min_width:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Min Width
+          description: Minimum road width in feet
+          default: 24
+        max_grade:
+          type: number
+          maximum: 15.0
+          exclusiveMinimum: 0.0
+          title: Max Grade
+          description: Maximum road grade percentage
+          default: 8
+        turning_radius:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Turning Radius
+          description: Minimum turning radius in feet
+          default: 25
+        surface_type:
+          type: string
+          title: Surface Type
+          description: Road surface type
+          default: paved
+        include_sidewalks:
+          type: boolean
+          title: Include Sidewalks
+          description: Include sidewalks in road design
+          default: true
+      type: object
+      title: RoadConfig
+      description: Road design configuration.
+    RoadNetwork:
+      properties:
+        segments:
+          items:
+            $ref: '#/components/schemas/RoadSegment'
+          type: array
+          title: Segments
+          description: Road segments
+        total_length:
+          type: number
+          title: Total Length
+          description: Total road length in feet
+        intersections:
+          items:
+            $ref: '#/components/schemas/Coordinate'
+          type: array
+          title: Intersections
+          description: Intersection points
+      type: object
+      required:
+      - segments
+      - total_length
+      - intersections
+      title: RoadNetwork
+      description: Road network structure.
+    RoadSegment:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Segment identifier
+        points:
+          items:
+            $ref: '#/components/schemas/Coordinate'
+          type: array
+          title: Points
+          description: Road centerline points
+        width:
+          type: number
+          title: Width
+          description: Road width in feet
+        grade:
+          type: number
+          title: Grade
+          description: Road grade percentage
+        surface_type:
+          type: string
+          title: Surface Type
+          description: Road surface type
+          default: paved
+        length:
+          type: number
+          title: Length
+          description: Road length in feet
+      type: object
+      required:
+      - id
+      - points
+      - width
+      - grade
+      - length
+      title: RoadSegment
+      description: A road segment in the generated layout.
+    UploadResponse:
+      properties:
+        upload_id:
+          type: string
+          format: uuid
+          title: Upload Id
+          description: Unique identifier for the upload
+        filename:
+          type: string
+          title: Filename
+          description: Original filename
+        file_size:
+          type: integer
+          title: File Size
+          description: File size in bytes
+        message:
+          type: string
+          title: Message
+          description: Success message
+          default: File uploaded successfully
+      type: object
+      required:
+      - upload_id
+      - filename
+      - file_size
+      title: UploadResponse
+      description: "Response model for successful upload.\n\nAttributes:\n    upload_id:\
+        \ Unique identifier for the upload\n    filename: Original filename\n    file_size:\
+        \ Size in bytes\n    message: Success message"
+      example:
+        file_size: 1024000
+        filename: property_boundary.kmz
+        message: File uploaded successfully
+        upload_id: 550e8400-e29b-41d4-a716-446655440000
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
