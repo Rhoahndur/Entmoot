@@ -50,6 +50,16 @@ repos:
       - id: isort
         args: ["--profile", "black", "--line-length", "100"]
 
+  # OpenAPI schema freshness check
+  - repo: local
+    hooks:
+      - id: openapi-check
+        name: Check OpenAPI schema is current
+        entry: python scripts/generate_openapi.py --check
+        language: system
+        pass_filenames: false
+        files: ^src/entmoot/api/
+
   # Security checks
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
