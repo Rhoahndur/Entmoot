@@ -8,14 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from entmoot.api.main import app
 from entmoot.core.config import settings
-
-
-@pytest.fixture
-def client() -> TestClient:
-    """Create a test client for the FastAPI app."""
-    return TestClient(app)
 
 
 @pytest.fixture

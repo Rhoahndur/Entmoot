@@ -2,16 +2,9 @@
 Tests for main API endpoints and application lifecycle.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from entmoot.api.main import app
-
-
-@pytest.fixture
-def client() -> TestClient:
-    """Create a test client for the FastAPI app."""
-    return TestClient(app)
 
 
 class TestMainEndpoints:
