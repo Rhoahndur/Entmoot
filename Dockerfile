@@ -59,7 +59,10 @@ RUN mkdir -p /app/data/uploads/logs /app/data/temp
 ENV PYTHONUNBUFFERED=1
 ENV ENTMOOT_UPLOADS_DIR=/app/data/uploads
 ENV ENTMOOT_ENVIRONMENT=production
-ENV ENTMOOT_CORS_ORIGINS=*
+ENV ENTMOOT_AUTH_ENABLED=false
+# ENTMOOT_CORS_ORIGINS must be set at runtime with explicit allowed origins.
+# Do NOT use '*' in production.
+# Example: ENV ENTMOOT_CORS_ORIGINS=https://app.example.com,https://admin.example.com
 
 # Expose port
 EXPOSE 8000
