@@ -113,9 +113,7 @@ class TestCRSNormalizer:
         wgs84 = CRSInfo.from_epsg(4326)
         norm = normalizer.CRSNormalizer(target_crs=wgs84, auto_detect_utm=False)
 
-        bbox = BoundingBox(
-            min_x=-0.5, min_y=51.3, max_x=0.3, max_y=51.7, crs=wgs84
-        )
+        bbox = BoundingBox(min_x=-0.5, min_y=51.3, max_x=0.3, max_y=51.7, crs=wgs84)
 
         result = norm.normalize_bounding_box(bbox)
 
@@ -131,9 +129,7 @@ class TestCRSNormalizer:
 
         norm = normalizer.CRSNormalizer(target_crs=utm_31n, auto_detect_utm=False)
 
-        bbox = BoundingBox(
-            min_x=-0.5, min_y=51.3, max_x=0.3, max_y=51.7, crs=wgs84
-        )
+        bbox = BoundingBox(min_x=-0.5, min_y=51.3, max_x=0.3, max_y=51.7, crs=wgs84)
 
         result = norm.normalize_bounding_box(bbox)
 
@@ -146,9 +142,7 @@ class TestCRSNormalizer:
         wgs84 = CRSInfo.from_epsg(4326)
         norm = normalizer.CRSNormalizer(auto_detect_utm=True)
 
-        bbox = BoundingBox(
-            min_x=2.0, min_y=48.5, max_x=2.7, max_y=49.0, crs=wgs84
-        )
+        bbox = BoundingBox(min_x=2.0, min_y=48.5, max_x=2.7, max_y=49.0, crs=wgs84)
 
         result = norm.normalize_bounding_box(bbox)
 

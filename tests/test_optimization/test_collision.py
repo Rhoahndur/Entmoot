@@ -21,8 +21,8 @@ from entmoot.core.optimization.collision import (
     ValidationResult,
 )
 
-
 # Fixtures
+
 
 @pytest.fixture
 def simple_building():
@@ -104,14 +104,13 @@ def collision_detector():
 
 # Bounding Box Tests
 
+
 class TestBoundingBoxCollision:
     """Tests for bounding box collision detection."""
 
     def test_no_collision(self, collision_detector, simple_building, another_building):
         """Test bounding boxes that don't overlap."""
-        result = collision_detector.check_bounding_box_collision(
-            simple_building, another_building
-        )
+        result = collision_detector.check_bounding_box_collision(simple_building, another_building)
         assert result is False
 
     def test_collision(self, collision_detector, simple_building, overlapping_building):
@@ -131,30 +130,25 @@ class TestBoundingBoxCollision:
             asset_type=AssetType.BUILDING,
             geometry_wkt=adjacent_geom.wkt,
         )
-        result = collision_detector.check_bounding_box_collision(
-            simple_building, adjacent_building
-        )
+        result = collision_detector.check_bounding_box_collision(simple_building, adjacent_building)
         # Adjacent boxes should not be considered colliding
         assert result is False
 
 
 # Precise Collision Tests
 
+
 class TestPreciseCollision:
     """Tests for precise polygon-polygon collision detection."""
 
     def test_no_intersection(self, collision_detector, simple_building, another_building):
         """Test polygons that don't intersect."""
-        result = collision_detector.check_precise_collision(
-            simple_building, another_building
-        )
+        result = collision_detector.check_precise_collision(simple_building, another_building)
         assert result is False
 
     def test_intersection(self, collision_detector, simple_building, overlapping_building):
         """Test polygons that do intersect."""
-        result = collision_detector.check_precise_collision(
-            simple_building, overlapping_building
-        )
+        result = collision_detector.check_precise_collision(simple_building, overlapping_building)
         assert result is True
 
     def test_complete_overlap(self, collision_detector, simple_building):
@@ -167,18 +161,13 @@ class TestPreciseCollision:
             asset_type=AssetType.BUILDING,
             geometry_wkt=small_geom.wkt,
         )
-        result = collision_detector.check_precise_collision(
-            simple_building, small_building
-        )
+        result = collision_detector.check_precise_collision(simple_building, small_building)
         assert result is True
 
     def test_complex_polygon_intersection(self, collision_detector):
         """Test intersection with complex polygon shapes."""
         # L-shaped building
-        l_shape = Polygon([
-            (0, 0), (10, 0), (10, 5), (5, 5),
-            (5, 10), (0, 10), (0, 0)
-        ])
+        l_shape = Polygon([(0, 0), (10, 0), (10, 5), (5, 5), (5, 10), (0, 10), (0, 0)])
         l_building = PlacedAsset(
             id="l_building",
             name="L-Building",
@@ -195,13 +184,12 @@ class TestPreciseCollision:
             geometry_wkt=rect_geom.wkt,
         )
 
-        result = collision_detector.check_precise_collision(
-            l_building, rect_building
-        )
+        result = collision_detector.check_precise_collision(l_building, rect_building)
         assert result is True
 
 
 # Spacing Tests
+
 
 class TestSpacingEnforcement:
     """Tests for minimum spacing enforcement."""
@@ -218,9 +206,7 @@ class TestSpacingEnforcement:
 
     def test_get_required_spacing_yard_to_yard(self):
         """Test equipment yard to equipment yard spacing."""
-        spacing = get_required_spacing(
-            AssetType.EQUIPMENT_YARD, AssetType.EQUIPMENT_YARD
-        )
+        spacing = get_required_spacing(AssetType.EQUIPMENT_YARD, AssetType.EQUIPMENT_YARD)
         assert spacing == 20.0
 
     def test_check_spacing_sufficient(self, collision_detector, simple_building):
@@ -234,9 +220,7 @@ class TestSpacingEnforcement:
             geometry_wkt=far_geom.wkt,
         )
 
-        is_valid, actual, required = collision_detector.check_spacing(
-            simple_building, far_building
-        )
+        is_valid, actual, required = collision_detector.check_spacing(simple_building, far_building)
 
         assert is_valid is True
         assert actual >= required
@@ -265,9 +249,7 @@ class TestSpacingEnforcement:
     def test_custom_spacing_rules(self, collision_detector, simple_building):
         """Test custom spacing rules override defaults."""
         # Custom rule: buildings need 50m spacing
-        custom_rules = {
-            (AssetType.BUILDING, AssetType.BUILDING): 50.0
-        }
+        custom_rules = {(AssetType.BUILDING, AssetType.BUILDING): 50.0}
         detector = CollisionDetector(spacing_rules=custom_rules)
 
         # Building 40m away
@@ -279,9 +261,7 @@ class TestSpacingEnforcement:
             geometry_wkt=medium_geom.wkt,
         )
 
-        is_valid, actual, required = detector.check_spacing(
-            simple_building, medium_building
-        )
+        is_valid, actual, required = detector.check_spacing(simple_building, medium_building)
 
         assert is_valid is False  # 40m < 50m
         assert required == 50.0
@@ -304,15 +284,14 @@ class TestSpacingEnforcement:
             geometry_wkt=box(50, 0, 60, 10).wkt,
         )
 
-        is_valid, actual, required = collision_detector.check_spacing(
-            building1, building2
-        )
+        is_valid, actual, required = collision_detector.check_spacing(building1, building2)
 
         assert is_valid is False
         assert required == 60.0  # Asset-specific spacing is used
 
 
 # Collision Detection Tests
+
 
 class TestCollisionDetection:
     """Tests for full collision detection."""
@@ -403,8 +382,7 @@ class TestCollisionDetection:
 
         # Check with exclusion
         violations = collision_detector.check_collisions(
-            close_building,
-            exclude_ids={simple_building.id}
+            close_building, exclude_ids={simple_building.id}
         )
 
         assert len(violations) == 0
@@ -412,24 +390,18 @@ class TestCollisionDetection:
 
 # Constraint Validation Tests
 
+
 class TestConstraintValidation:
     """Tests for constraint validation."""
 
-    def test_validate_within_boundary(
-        self, collision_detector, simple_building, site_boundary
-    ):
+    def test_validate_within_boundary(self, collision_detector, simple_building, site_boundary):
         """Test asset within site boundary passes validation."""
-        result = collision_detector.validate_placement(
-            simple_building,
-            site_boundary=site_boundary
-        )
+        result = collision_detector.validate_placement(simple_building, site_boundary=site_boundary)
 
         assert result.is_valid is True
         assert len(result.violations) == 0
 
-    def test_validate_outside_boundary(
-        self, collision_detector, site_boundary
-    ):
+    def test_validate_outside_boundary(self, collision_detector, site_boundary):
         """Test asset outside site boundary fails validation."""
         # Building completely outside boundary
         outside_building = PlacedAsset(
@@ -440,17 +412,14 @@ class TestConstraintValidation:
         )
 
         result = collision_detector.validate_placement(
-            outside_building,
-            site_boundary=site_boundary
+            outside_building, site_boundary=site_boundary
         )
 
         assert result.is_valid is False
         assert len(result.violations) == 1
         assert result.violations[0].violation_type == ViolationType.OUT_OF_BOUNDS
 
-    def test_validate_partially_outside_boundary(
-        self, collision_detector, site_boundary
-    ):
+    def test_validate_partially_outside_boundary(self, collision_detector, site_boundary):
         """Test asset partially outside boundary."""
         # Building partially outside
         partial_building = PlacedAsset(
@@ -461,19 +430,13 @@ class TestConstraintValidation:
         )
 
         result = collision_detector.validate_placement(
-            partial_building,
-            site_boundary=site_boundary
+            partial_building, site_boundary=site_boundary
         )
 
         assert result.is_valid is False
-        assert any(
-            v.violation_type == ViolationType.OUT_OF_BOUNDS
-            for v in result.violations
-        )
+        assert any(v.violation_type == ViolationType.OUT_OF_BOUNDS for v in result.violations)
 
-    def test_validate_exclusion_zone(
-        self, collision_detector, site_boundary, exclusion_zone
-    ):
+    def test_validate_exclusion_zone(self, collision_detector, site_boundary, exclusion_zone):
         """Test asset in exclusion zone fails validation."""
         # Building in exclusion zone
         excluded_building = PlacedAsset(
@@ -484,20 +447,13 @@ class TestConstraintValidation:
         )
 
         result = collision_detector.validate_placement(
-            excluded_building,
-            site_boundary=site_boundary,
-            exclusion_zones=[exclusion_zone]
+            excluded_building, site_boundary=site_boundary, exclusion_zones=[exclusion_zone]
         )
 
         assert result.is_valid is False
-        assert any(
-            v.violation_type == ViolationType.EXCLUSION_ZONE
-            for v in result.violations
-        )
+        assert any(v.violation_type == ViolationType.EXCLUSION_ZONE for v in result.violations)
 
-    def test_validate_buildable_area(
-        self, collision_detector, site_boundary, buildable_area
-    ):
+    def test_validate_buildable_area(self, collision_detector, site_boundary, buildable_area):
         """Test asset must be in buildable area."""
         # Building outside buildable area but inside site
         setback_violation = PlacedAsset(
@@ -508,16 +464,11 @@ class TestConstraintValidation:
         )
 
         result = collision_detector.validate_placement(
-            setback_violation,
-            site_boundary=site_boundary,
-            buildable_area=buildable_area
+            setback_violation, site_boundary=site_boundary, buildable_area=buildable_area
         )
 
         assert result.is_valid is False
-        assert any(
-            v.violation_type == ViolationType.SETBACK_VIOLATION
-            for v in result.violations
-        )
+        assert any(v.violation_type == ViolationType.SETBACK_VIOLATION for v in result.violations)
 
     def test_validate_multiple_constraints(
         self, collision_detector, site_boundary, exclusion_zone, buildable_area
@@ -544,18 +495,16 @@ class TestConstraintValidation:
             problem_building,
             site_boundary=site_boundary,
             exclusion_zones=[exclusion_zone],
-            buildable_area=buildable_area
+            buildable_area=buildable_area,
         )
 
         # Should have spacing violation
         assert result.is_valid is False
-        assert any(
-            v.violation_type == ViolationType.SPACING_VIOLATION
-            for v in result.violations
-        )
+        assert any(v.violation_type == ViolationType.SPACING_VIOLATION for v in result.violations)
 
 
 # Spatial Indexing Tests
+
 
 class TestSpatialIndexing:
     """Tests for spatial index functionality."""
@@ -621,6 +570,7 @@ class TestSpatialIndexing:
 
         # Should complete quickly even with 100 assets
         import time
+
         start = time.time()
         candidates = collision_detector.find_potential_collisions(test_asset)
         elapsed = time.time() - start
@@ -631,12 +581,11 @@ class TestSpatialIndexing:
 
 # Multiple Asset Validation Tests
 
+
 class TestMultipleAssetValidation:
     """Tests for validating multiple assets."""
 
-    def test_validate_multiple_placements(
-        self, collision_detector, site_boundary
-    ):
+    def test_validate_multiple_placements(self, collision_detector, site_boundary):
         """Test validating multiple assets at once."""
         assets = [
             PlacedAsset(
@@ -649,8 +598,7 @@ class TestMultipleAssetValidation:
         ]
 
         results = collision_detector.validate_multiple_placements(
-            assets,
-            site_boundary=site_boundary
+            assets, site_boundary=site_boundary
         )
 
         assert len(results) == 3
@@ -678,13 +626,11 @@ class TestMultipleAssetValidation:
         violations = collision_detector.check_minimum_spacing_violations()
 
         assert len(violations) > 0
-        assert all(
-            v.violation_type == ViolationType.SPACING_VIOLATION
-            for v in violations
-        )
+        assert all(v.violation_type == ViolationType.SPACING_VIOLATION for v in violations)
 
 
 # Clearance Zone Tests
+
 
 class TestClearanceZones:
     """Tests for clearance zone functionality."""
@@ -724,6 +670,7 @@ class TestClearanceZones:
 
 
 # Edge Cases
+
 
 class TestEdgeCases:
     """Tests for edge cases and corner scenarios."""
@@ -774,11 +721,7 @@ class TestEdgeCases:
             severity="blocking",
         )
 
-        result = ValidationResult(
-            is_valid=False,
-            violations=[violation],
-            warnings=["Test warning"]
-        )
+        result = ValidationResult(is_valid=False, violations=[violation], warnings=["Test warning"])
 
         result_dict = result.to_dict()
 

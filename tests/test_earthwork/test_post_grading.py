@@ -12,6 +12,7 @@ from pyproj import CRS
 
 try:
     from shapely.geometry import Polygon, LineString, Point
+
     SHAPELY_AVAILABLE = True
 except ImportError:
     SHAPELY_AVAILABLE = False
@@ -56,8 +57,7 @@ class TestPostGradingModel:
         model = PostGradingModel(metadata, base_elevation=base_elevation)
 
         assert np.array_equal(
-            model.elevation[~np.isnan(model.elevation)],
-            base_elevation[~np.isnan(base_elevation)]
+            model.elevation[~np.isnan(model.elevation)], base_elevation[~np.isnan(base_elevation)]
         )
 
     def test_add_building_pad(self, metadata):
@@ -68,10 +68,7 @@ class TestPostGradingModel:
         pad = Polygon([(20, 20), (40, 20), (40, 40), (20, 40)])
 
         model.add_building_pad(
-            geometry=pad,
-            target_elevation=105.0,
-            transition_slope=3.0,
-            priority=10
+            geometry=pad, target_elevation=105.0, transition_slope=3.0, priority=10
         )
 
         assert len(model.grading_zones) == 1
@@ -86,11 +83,7 @@ class TestPostGradingModel:
         centerline = LineString([(10, 50), (90, 50)])
 
         model.add_road_corridor(
-            centerline=centerline,
-            width=24.0,
-            crown_height=0.5,
-            cross_slope=2.0,
-            priority=8
+            centerline=centerline, width=24.0, crown_height=0.5, cross_slope=2.0, priority=8
         )
 
         assert len(model.grading_zones) == 1
@@ -105,11 +98,7 @@ class TestPostGradingModel:
         centerline = LineString([(30, 10), (30, 90)])
 
         model.add_drainage_swale(
-            centerline=centerline,
-            width=10.0,
-            slope=2.0,
-            direction=0.0,
-            priority=5
+            centerline=centerline, width=10.0, slope=2.0, direction=0.0, priority=5
         )
 
         assert len(model.grading_zones) == 1
@@ -122,11 +111,7 @@ class TestPostGradingModel:
 
         # Add building pad
         pad = Polygon([(40, 40), (60, 40), (60, 60), (40, 60)])
-        model.add_building_pad(
-            geometry=pad,
-            target_elevation=110.0,
-            priority=10
-        )
+        model.add_building_pad(geometry=pad, target_elevation=110.0, priority=10)
 
         # Generate grading
         elevation = model.generate_grading()
@@ -277,7 +262,7 @@ class TestGradingZone:
             geometry=poly,
             target_elevation=100.0,
             transition_slope=3.0,
-            priority=10
+            priority=10,
         )
 
         assert zone.zone_type == GradingZoneType.BUILDING_PAD
@@ -293,7 +278,7 @@ class TestGradingZone:
             geometry=poly,
             crown_height=0.5,
             cross_slope=2.0,
-            priority=8
+            priority=8,
         )
 
         data = zone.to_dict()

@@ -23,13 +23,15 @@ from entmoot.core.optimization.genetic_algorithm import (
 @pytest.fixture
 def sample_site_boundary():
     """Create a sample site boundary."""
-    return ShapelyPolygon([
-        (0, 0),
-        (200, 0),
-        (200, 200),
-        (0, 200),
-        (0, 0),
-    ])
+    return ShapelyPolygon(
+        [
+            (0, 0),
+            (200, 0),
+            (200, 200),
+            (0, 200),
+            (0, 0),
+        ]
+    )
 
 
 @pytest.fixture
@@ -400,13 +402,15 @@ class TestGeneticOptimization:
     def test_optimization_with_constraints(self, sample_site_boundary, sample_assets):
         """Test optimization respects constraints."""
         # Create exclusion zone
-        exclusion = ShapelyPolygon([
-            (80, 80),
-            (120, 80),
-            (120, 120),
-            (80, 120),
-            (80, 80),
-        ])
+        exclusion = ShapelyPolygon(
+            [
+                (80, 80),
+                (120, 80),
+                (120, 120),
+                (80, 120),
+                (80, 80),
+            ]
+        )
 
         constraints = OptimizationConstraints(
             site_boundary=sample_site_boundary,

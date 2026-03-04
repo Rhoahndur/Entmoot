@@ -269,9 +269,7 @@ class TestAStarPathfinder:
         goal1 = navigation_graph.add_node((50.0, 50.0), node_id="goal1")
         goal2 = navigation_graph.add_node((80.0, 80.0), node_id="goal2")
 
-        paths = pathfinder.find_paths_to_multiple_goals(
-            "start", ["goal1", "goal2"]
-        )
+        paths = pathfinder.find_paths_to_multiple_goals("start", ["goal1", "goal2"])
 
         assert "goal1" in paths
         assert "goal2" in paths
@@ -329,10 +327,7 @@ class TestAStarPathfinder:
         # Create path with unnecessary waypoints
         nodes = []
         for i in range(5):
-            node = navigation_graph.add_node(
-                (float(i * 10), float(i * 10)),
-                node_id=f"node_{i}"
-            )
+            node = navigation_graph.add_node((float(i * 10), float(i * 10)), node_id=f"node_{i}")
             nodes.append(node)
 
         # Create original path

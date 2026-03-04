@@ -24,30 +24,18 @@ from entmoot.core.visualization.map_2d import (
 def sample_geometries():
     """Create sample geometries for testing."""
     # Boundary
-    boundary = Polygon([
-        (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-    ])
+    boundary = Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     # Buildings
-    building1 = Polygon([
-        (10, 10), (30, 10), (30, 30), (10, 30), (10, 10)
-    ])
-    building2 = Polygon([
-        (50, 50), (70, 50), (70, 70), (50, 70), (50, 50)
-    ])
+    building1 = Polygon([(10, 10), (30, 10), (30, 30), (10, 30), (10, 10)])
+    building2 = Polygon([(50, 50), (70, 50), (70, 70), (50, 70), (50, 50)])
 
     # Roads
-    road1 = LineString([
-        (0, 50), (50, 50), (50, 0)
-    ])
-    road2 = LineString([
-        (50, 50), (100, 50)
-    ])
+    road1 = LineString([(0, 50), (50, 50), (50, 0)])
+    road2 = LineString([(50, 50), (100, 50)])
 
     # Constraints
-    constraint = Polygon([
-        (20, 60), (40, 60), (40, 80), (20, 80), (20, 60)
-    ])
+    constraint = Polygon([(20, 60), (40, 60), (40, 80), (20, 80), (20, 60)])
 
     # Points
     point1 = Point(15, 15)
@@ -90,11 +78,7 @@ class TestStyleConfig:
     def test_custom_style(self):
         """Test custom style configuration."""
         style = StyleConfig(
-            color="#ff0000",
-            edge_color="#000000",
-            line_width=2.0,
-            alpha=0.5,
-            hatch="///"
+            color="#ff0000", edge_color="#000000", line_width=2.0, alpha=0.5, hatch="///"
         )
         assert style.color == "#ff0000"
         assert style.edge_color == "#000000"
@@ -370,10 +354,12 @@ class TestMap2DRenderer:
 
     def test_render_with_multipolygon(self, map_renderer, sample_geometries):
         """Test rendering with MultiPolygon."""
-        multi_poly = MultiPolygon([
-            sample_geometries["buildings"][0],
-            sample_geometries["buildings"][1],
-        ])
+        multi_poly = MultiPolygon(
+            [
+                sample_geometries["buildings"][0],
+                sample_geometries["buildings"][1],
+            ]
+        )
 
         map_renderer.add_layer(
             name="multi",

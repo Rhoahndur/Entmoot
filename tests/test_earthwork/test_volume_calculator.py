@@ -269,11 +269,7 @@ class TestVolumeCalculator:
         )
 
         # Cross-section from corner to corner
-        section = calc.generate_cross_section(
-            start=(10.0, 10.0),
-            end=(90.0, 90.0),
-            num_points=50
-        )
+        section = calc.generate_cross_section(start=(10.0, 10.0), end=(90.0, 90.0), num_points=50)
 
         assert len(section.distance) == 50
         assert len(section.pre_elevation) == 50
@@ -511,10 +507,6 @@ class TestVolumeCalculatorIntegration:
         assert result.fill_volume_cy > 0
 
         # Generate cross-section
-        section = calc.generate_cross_section(
-            start=(50.0, 10.0),
-            end=(50.0, 90.0),
-            num_points=80
-        )
+        section = calc.generate_cross_section(start=(50.0, 10.0), end=(50.0, 90.0), num_points=80)
 
         assert section.section_volume_cy > 0

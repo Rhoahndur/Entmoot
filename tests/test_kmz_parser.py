@@ -22,7 +22,6 @@ from entmoot.core.parsers import (
     GeometryType,
 )
 
-
 # Test fixtures path
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SIMPLE_KMZ = FIXTURES_DIR / "simple.kmz"

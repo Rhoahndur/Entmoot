@@ -257,10 +257,7 @@ class TestRoadNetwork:
             (160.0, 160.0),
         ]
 
-        success = road_network.generate_network(
-            asset_positions,
-            optimize=True
-        )
+        success = road_network.generate_network(asset_positions, optimize=True)
 
         if success:
             # Optimized network should minimize total length
@@ -273,10 +270,7 @@ class TestRoadNetwork:
             (120.0, 120.0),
         ]
 
-        success = road_network.generate_network(
-            asset_positions,
-            optimize=False
-        )
+        success = road_network.generate_network(asset_positions, optimize=False)
 
         if success:
             # Direct network connects each asset to entrance
@@ -380,7 +374,8 @@ class TestRoadNetwork:
         if len(road_network.segments) > 0:
             # Should have road segment features
             segment_features = [
-                f for f in geojson["features"]
+                f
+                for f in geojson["features"]
                 if f["properties"].get("feature_type") == "road_segment"
             ]
             assert len(segment_features) > 0
@@ -391,15 +386,11 @@ class TestRoadNetwork:
         asset_nodes = ["asset_1", "asset_2", "asset_3"]
 
         # Road connected to entrance should be primary
-        road_type = road_network._classify_road_type(
-            entrance_node, "asset_1", asset_nodes
-        )
+        road_type = road_network._classify_road_type(entrance_node, "asset_1", asset_nodes)
         assert road_type == RoadType.PRIMARY
 
         # Road between assets depends on downstream count
-        road_type = road_network._classify_road_type(
-            "asset_1", "asset_2", asset_nodes
-        )
+        road_type = road_network._classify_road_type("asset_1", "asset_2", asset_nodes)
         assert road_type in [RoadType.SECONDARY, RoadType.ACCESS]
 
     def test_cut_fill_estimation(self, road_network, navigation_graph):
@@ -445,9 +436,7 @@ class TestRoadNetwork:
             )
             road_network.segments[seg_id] = segment
 
-        intersection = road_network._create_intersection(
-            "node_center", position, segment_ids
-        )
+        intersection = road_network._create_intersection("node_center", position, segment_ids)
 
         assert intersection.id.startswith("intersection_")
         assert intersection.position == position
@@ -460,10 +449,7 @@ class TestRoadNetwork:
         asset_positions = [(100.0, 100.0), (150.0, 150.0)]
         asset_ids = ["building_1", "parking_1"]
 
-        success = road_network.generate_network(
-            asset_positions,
-            asset_ids=asset_ids
-        )
+        success = road_network.generate_network(asset_positions, asset_ids=asset_ids)
 
         if success:
             assert len(road_network.segments) > 0

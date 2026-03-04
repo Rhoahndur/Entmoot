@@ -30,13 +30,15 @@ from entmoot.core.export.geospatial import (
 @pytest.fixture
 def sample_boundary() -> Polygon:
     """Create sample site boundary."""
-    return Polygon([
-        (-122.4, 37.8),
-        (-122.3, 37.8),
-        (-122.3, 37.9),
-        (-122.4, 37.9),
-        (-122.4, 37.8),
-    ])
+    return Polygon(
+        [
+            (-122.4, 37.8),
+            (-122.3, 37.8),
+            (-122.3, 37.9),
+            (-122.4, 37.9),
+            (-122.4, 37.8),
+        ]
+    )
 
 
 @pytest.fixture
@@ -49,101 +51,78 @@ def sample_export_data(sample_boundary: Polygon) -> ExportData:
     )
 
     # Add buildable zone
-    buildable_zone = Polygon([
-        (-122.38, 37.82),
-        (-122.32, 37.82),
-        (-122.32, 37.88),
-        (-122.38, 37.88),
-        (-122.38, 37.82),
-    ])
-    data.add_buildable_zone(
-        buildable_zone,
-        "Buildable Area 1",
-        {"area_acres": 5.2, "zoning": "R1"}
+    buildable_zone = Polygon(
+        [
+            (-122.38, 37.82),
+            (-122.32, 37.82),
+            (-122.32, 37.88),
+            (-122.38, 37.88),
+            (-122.38, 37.82),
+        ]
     )
+    data.add_buildable_zone(buildable_zone, "Buildable Area 1", {"area_acres": 5.2, "zoning": "R1"})
 
     # Add constraints
-    wetland = Polygon([
-        (-122.39, 37.81),
-        (-122.37, 37.81),
-        (-122.37, 37.83),
-        (-122.39, 37.83),
-        (-122.39, 37.81),
-    ])
-    data.add_constraint(
-        wetland,
-        "Wetland Buffer",
-        "wetland",
-        {"buffer_ft": 50, "protected": True}
+    wetland = Polygon(
+        [
+            (-122.39, 37.81),
+            (-122.37, 37.81),
+            (-122.37, 37.83),
+            (-122.39, 37.83),
+            (-122.39, 37.81),
+        ]
     )
+    data.add_constraint(wetland, "Wetland Buffer", "wetland", {"buffer_ft": 50, "protected": True})
 
-    setback = Polygon([
-        (-122.395, 37.805),
-        (-122.385, 37.805),
-        (-122.385, 37.815),
-        (-122.395, 37.815),
-        (-122.395, 37.805),
-    ])
-    data.add_constraint(
-        setback,
-        "Property Line Setback",
-        "property_line",
-        {"setback_ft": 25}
+    setback = Polygon(
+        [
+            (-122.395, 37.805),
+            (-122.385, 37.805),
+            (-122.385, 37.815),
+            (-122.395, 37.815),
+            (-122.395, 37.805),
+        ]
     )
+    data.add_constraint(setback, "Property Line Setback", "property_line", {"setback_ft": 25})
 
     # Add assets as points
     building = Point(-122.35, 37.85)
-    data.add_asset(
-        building,
-        "Main Building",
-        "building",
-        {"area_sqft": 5000, "height_ft": 25}
-    )
+    data.add_asset(building, "Main Building", "building", {"area_sqft": 5000, "height_ft": 25})
 
     parking = Point(-122.36, 37.86)
-    data.add_asset(
-        parking,
-        "Parking Lot",
-        "parking_lot",
-        {"spaces": 50}
-    )
+    data.add_asset(parking, "Parking Lot", "parking_lot", {"spaces": 50})
 
     # Add assets as polygons
-    equipment_yard = Polygon([
-        (-122.34, 37.84),
-        (-122.33, 37.84),
-        (-122.33, 37.85),
-        (-122.34, 37.85),
-        (-122.34, 37.84),
-    ])
-    data.add_asset(
-        equipment_yard,
-        "Equipment Yard",
-        "equipment_yard",
-        {"area_sqft": 2000}
+    equipment_yard = Polygon(
+        [
+            (-122.34, 37.84),
+            (-122.33, 37.84),
+            (-122.33, 37.85),
+            (-122.34, 37.85),
+            (-122.34, 37.84),
+        ]
     )
+    data.add_asset(equipment_yard, "Equipment Yard", "equipment_yard", {"area_sqft": 2000})
 
     # Add roads
-    road1 = LineString([
-        (-122.395, 37.85),
-        (-122.35, 37.85),
-        (-122.35, 37.87),
-    ])
+    road1 = LineString(
+        [
+            (-122.395, 37.85),
+            (-122.35, 37.85),
+            (-122.35, 37.87),
+        ]
+    )
     data.add_road(
-        road1,
-        "Main Access Road",
-        {"length_ft": 500, "width_ft": 24, "surface": "asphalt"}
+        road1, "Main Access Road", {"length_ft": 500, "width_ft": 24, "surface": "asphalt"}
     )
 
-    road2 = LineString([
-        (-122.35, 37.85),
-        (-122.32, 37.85),
-    ])
-    data.add_road(
-        road2,
-        "Secondary Road",
-        {"length_ft": 300, "width_ft": 20, "surface": "gravel"}
+    road2 = LineString(
+        [
+            (-122.35, 37.85),
+            (-122.32, 37.85),
+        ]
     )
+    data.add_road(road2, "Secondary Road", {"length_ft": 300, "width_ft": 20, "surface": "gravel"})
 
     return data
 
@@ -172,20 +151,17 @@ class TestExportData:
         """Test adding constraint."""
         data = ExportData("Test", 4326, sample_boundary)
 
-        constraint_geom = Polygon([
-            (-122.4, 37.8),
-            (-122.35, 37.8),
-            (-122.35, 37.85),
-            (-122.4, 37.85),
-            (-122.4, 37.8),
-        ])
-
-        data.add_constraint(
-            constraint_geom,
-            "Test Constraint",
-            "wetland",
-            {"protected": True}
+        constraint_geom = Polygon(
+            [
+                (-122.4, 37.8),
+                (-122.35, 37.8),
+                (-122.35, 37.85),
+                (-122.4, 37.85),
+                (-122.4, 37.8),
+            ]
         )
+
+        data.add_constraint(constraint_geom, "Test Constraint", "wetland", {"protected": True})
 
         assert len(data.constraints) == 1
         assert data.constraints[0]["name"] == "Test Constraint"
@@ -197,12 +173,7 @@ class TestExportData:
         data = ExportData("Test", 4326, sample_boundary)
 
         asset_geom = Point(-122.35, 37.85)
-        data.add_asset(
-            asset_geom,
-            "Building 1",
-            "building",
-            {"area": 1000}
-        )
+        data.add_asset(asset_geom, "Building 1", "building", {"area": 1000})
 
         assert len(data.assets) == 1
         assert data.assets[0]["name"] == "Building 1"
@@ -213,11 +184,7 @@ class TestExportData:
         data = ExportData("Test", 4326, sample_boundary)
 
         road_geom = LineString([(-122.4, 37.8), (-122.3, 37.9)])
-        data.add_road(
-            road_geom,
-            "Main Road",
-            {"length": 500}
-        )
+        data.add_road(road_geom, "Main Road", {"length": 500})
 
         assert len(data.roads) == 1
         assert data.roads[0]["name"] == "Main Road"
@@ -226,18 +193,16 @@ class TestExportData:
         """Test adding buildable zone."""
         data = ExportData("Test", 4326, sample_boundary)
 
-        zone_geom = Polygon([
-            (-122.39, 37.81),
-            (-122.31, 37.81),
-            (-122.31, 37.89),
-            (-122.39, 37.89),
-            (-122.39, 37.81),
-        ])
-        data.add_buildable_zone(
-            zone_geom,
-            "Zone 1",
-            {"zoning": "R1"}
+        zone_geom = Polygon(
+            [
+                (-122.39, 37.81),
+                (-122.31, 37.81),
+                (-122.31, 37.89),
+                (-122.39, 37.89),
+                (-122.39, 37.81),
+            ]
         )
+        data.add_buildable_zone(zone_geom, "Zone 1", {"zoning": "R1"})
 
         assert len(data.buildable_zones) == 1
         assert data.buildable_zones[0]["name"] == "Zone 1"
@@ -280,14 +245,14 @@ class TestKMZExporter:
         exporter.export(sample_export_data, output_path)
 
         # Extract and verify KML
-        with zipfile.ZipFile(output_path, 'r') as kmz:
+        with zipfile.ZipFile(output_path, "r") as kmz:
             files = kmz.namelist()
             # Should contain doc.kml
-            assert any(f.endswith('.kml') for f in files)
+            assert any(f.endswith(".kml") for f in files)
 
             # Read KML content
-            kml_file = [f for f in files if f.endswith('.kml')][0]
-            kml_content = kmz.read(kml_file).decode('utf-8')
+            kml_file = [f for f in files if f.endswith(".kml")][0]
+            kml_content = kmz.read(kml_file).decode("utf-8")
 
             # Should be valid XML
             root = ET.fromstring(kml_content)
@@ -375,7 +340,7 @@ class TestGeoJSONExporter:
         exporter.export(sample_export_data, output_path)
 
         # Parse JSON
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             data = json.load(f)
 
         # Verify structure
@@ -393,7 +358,7 @@ class TestGeoJSONExporter:
         exporter = GeoJSONExporter()
         exporter.export(sample_export_data, output_path)
 
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             data = json.load(f)
 
         assert "crs" in data
@@ -409,7 +374,7 @@ class TestGeoJSONExporter:
         exporter = GeoJSONExporter()
         exporter.export(sample_export_data, output_path)
 
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             data = json.load(f)
 
         # Should have:
@@ -426,7 +391,7 @@ class TestGeoJSONExporter:
         exporter = GeoJSONExporter()
         exporter.export(sample_export_data, output_path)
 
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             data = json.load(f)
 
         # Check that features have properties
@@ -445,7 +410,7 @@ class TestGeoJSONExporter:
         exporter = GeoJSONExporter()
         exporter.export(sample_export_data, output_path)
 
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             data = json.load(f)
 
         # Should have different geometry types
@@ -480,13 +445,15 @@ class TestGeoJSONExporter:
     def test_geometry_to_geojson_polygon(self) -> None:
         """Test Polygon conversion to GeoJSON."""
         exporter = GeoJSONExporter()
-        polygon = Polygon([
-            (-122.5, 37.8),
-            (-122.4, 37.8),
-            (-122.4, 37.9),
-            (-122.5, 37.9),
-            (-122.5, 37.8),
-        ])
+        polygon = Polygon(
+            [
+                (-122.5, 37.8),
+                (-122.4, 37.8),
+                (-122.4, 37.9),
+                (-122.5, 37.9),
+                (-122.5, 37.8),
+            ]
+        )
 
         geojson = exporter._geometry_to_geojson(polygon)
 
@@ -610,7 +577,7 @@ class TestDXFExporter:
         for layer_name, layer_props in exporter.LAYERS.items():
             if layer_name in [layer.dxf.name for layer in doc.layers]:
                 layer = doc.layers.get(layer_name)
-                assert layer.dxf.color == layer_props['color']
+                assert layer.dxf.color == layer_props["color"]
 
 
 class TestGeospatialExportIntegration:
@@ -651,7 +618,7 @@ class TestGeospatialExportIntegration:
         exporter.export(sample_export_data, output_path)
 
         # Read back
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             data = json.load(f)
 
         # Verify critical data is preserved
@@ -674,18 +641,20 @@ class TestGeospatialExportIntegration:
 
         # Add many constraints
         for i in range(50):
-            constraint = Polygon([
-                (-122.4 + i*0.01, 37.8 + i*0.01),
-                (-122.39 + i*0.01, 37.8 + i*0.01),
-                (-122.39 + i*0.01, 37.81 + i*0.01),
-                (-122.4 + i*0.01, 37.81 + i*0.01),
-                (-122.4 + i*0.01, 37.8 + i*0.01),
-            ])
+            constraint = Polygon(
+                [
+                    (-122.4 + i * 0.01, 37.8 + i * 0.01),
+                    (-122.39 + i * 0.01, 37.8 + i * 0.01),
+                    (-122.39 + i * 0.01, 37.81 + i * 0.01),
+                    (-122.4 + i * 0.01, 37.81 + i * 0.01),
+                    (-122.4 + i * 0.01, 37.8 + i * 0.01),
+                ]
+            )
             data.add_constraint(constraint, f"Constraint {i}", "setback")
 
         # Add many assets
         for i in range(30):
-            asset = Point(-122.35 + i*0.01, 37.85 + i*0.01)
+            asset = Point(-122.35 + i * 0.01, 37.85 + i * 0.01)
             data.add_asset(asset, f"Asset {i}", "building")
 
         # Export to all formats
@@ -705,13 +674,15 @@ class TestGeospatialExportIntegration:
     ) -> None:
         """Test export with different CRS."""
         # UTM Zone 10N (common for San Francisco area)
-        boundary = Polygon([
-            (551000, 4180000),
-            (552000, 4180000),
-            (552000, 4181000),
-            (551000, 4181000),
-            (551000, 4180000),
-        ])
+        boundary = Polygon(
+            [
+                (551000, 4180000),
+                (552000, 4180000),
+                (552000, 4181000),
+                (551000, 4181000),
+                (551000, 4180000),
+            ]
+        )
 
         data = ExportData("UTM Test", 32610, boundary)
 
@@ -720,7 +691,7 @@ class TestGeospatialExportIntegration:
         exporter = GeoJSONExporter()
         exporter.export(data, output_path)
 
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             geojson = json.load(f)
 
         assert "EPSG::32610" in geojson["crs"]["properties"]["name"]

@@ -48,7 +48,9 @@ class TestBoundaryIdentification:
         """Helper to create a test polygon placemark."""
         if geometry is None:
             # Simple square polygon
-            geometry = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+            geometry = Polygon(
+                [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+            )
 
         return Placemark(
             name=name,
@@ -122,9 +124,15 @@ class TestBoundaryIdentification:
         service = BoundaryExtractionService()
 
         # Create polygons of different sizes
-        small_poly = Polygon([(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)])
-        medium_poly = Polygon([(-122.1, 37.4), (-122.08, 37.4), (-122.08, 37.42), (-122.1, 37.42), (-122.1, 37.4)])
-        large_poly = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        small_poly = Polygon(
+            [(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)]
+        )
+        medium_poly = Polygon(
+            [(-122.1, 37.4), (-122.08, 37.4), (-122.08, 37.42), (-122.1, 37.42), (-122.1, 37.4)]
+        )
+        large_poly = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         placemarks = [
             self.create_polygon_placemark("Small", geometry=small_poly),
@@ -143,7 +151,9 @@ class TestGeometryValidation:
     def test_validate_valid_polygon(self):
         """Test validation of a valid polygon."""
         service = BoundaryExtractionService()
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         is_valid, issues = service._validate_geometry(polygon)
         assert is_valid is True
@@ -153,7 +163,9 @@ class TestGeometryValidation:
         """Test validation of self-intersecting polygon."""
         service = BoundaryExtractionService()
         # Bowtie/figure-8 polygon (self-intersecting)
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.5), (-122.0, 37.4), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.5), (-122.0, 37.4), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         is_valid, issues = service._validate_geometry(polygon)
         assert is_valid is False
@@ -163,7 +175,9 @@ class TestGeometryValidation:
         """Test validation of polygon with invalid coordinates."""
         service = BoundaryExtractionService()
         # Polygon with longitude out of range
-        polygon = Polygon([(-200, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-200, 37.4)])
+        polygon = Polygon(
+            [(-200, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-200, 37.4)]
+        )
 
         is_valid, issues = service._validate_geometry(polygon)
         assert is_valid is False
@@ -173,7 +187,9 @@ class TestGeometryValidation:
         """Test automatic geometry repair."""
         service = BoundaryExtractionService(auto_repair=True)
         # Create a self-intersecting polygon
-        invalid_polygon = Polygon([(-122.1, 37.4), (-122.0, 37.5), (-122.0, 37.4), (-122.1, 37.5), (-122.1, 37.4)])
+        invalid_polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.5), (-122.0, 37.4), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         repaired = service._repair_geometry(invalid_polygon)
         assert repaired is not None
@@ -183,7 +199,9 @@ class TestGeometryValidation:
         """Test that auto-repair can be disabled."""
         service = BoundaryExtractionService(auto_repair=False)
         # Create a valid polygon placemark
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Test",
             geometry=polygon,
@@ -204,7 +222,9 @@ class TestMetricCalculations:
         # Create a roughly 1km x 1km square
         # At latitude 37.4, 0.01 degrees longitude ≈ 889 meters
         # At any latitude, 0.01 degrees latitude ≈ 1,111 meters
-        polygon = Polygon([(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)]
+        )
 
         metrics = service._calculate_metrics(polygon)
 
@@ -217,7 +237,9 @@ class TestMetricCalculations:
     def test_calculate_perimeter(self):
         """Test perimeter calculation."""
         service = BoundaryExtractionService()
-        polygon = Polygon([(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)]
+        )
 
         metrics = service._calculate_metrics(polygon)
 
@@ -229,7 +251,9 @@ class TestMetricCalculations:
     def test_calculate_centroid(self):
         """Test centroid calculation."""
         service = BoundaryExtractionService()
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         metrics = service._calculate_metrics(polygon)
 
@@ -240,7 +264,9 @@ class TestMetricCalculations:
     def test_calculate_bounding_box(self):
         """Test bounding box calculation."""
         service = BoundaryExtractionService()
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         metrics = service._calculate_metrics(polygon)
 
@@ -256,7 +282,13 @@ class TestMetricCalculations:
         # Outer ring
         outer = [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
         # Inner hole
-        hole = [(-122.08, 37.42), (-122.02, 37.42), (-122.02, 37.48), (-122.08, 37.48), (-122.08, 37.42)]
+        hole = [
+            (-122.08, 37.42),
+            (-122.02, 37.42),
+            (-122.02, 37.48),
+            (-122.08, 37.48),
+            (-122.08, 37.42),
+        ]
 
         polygon = Polygon(outer, [hole])
 
@@ -276,8 +308,18 @@ class TestMultiPolygonHandling:
         service = BoundaryExtractionService()
 
         # Create two separate polygons
-        poly1 = Polygon([(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)])
-        poly2 = Polygon([(-122.05, 37.45), (-122.04, 37.45), (-122.04, 37.46), (-122.05, 37.46), (-122.05, 37.45)])
+        poly1 = Polygon(
+            [(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)]
+        )
+        poly2 = Polygon(
+            [
+                (-122.05, 37.45),
+                (-122.04, 37.45),
+                (-122.04, 37.46),
+                (-122.05, 37.46),
+                (-122.05, 37.45),
+            ]
+        )
 
         multi_poly = MultiPolygon([poly1, poly2])
 
@@ -297,8 +339,18 @@ class TestMultiPolygonHandling:
         """Test extraction of sub-parcel details."""
         service = BoundaryExtractionService()
 
-        poly1 = Polygon([(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)])
-        poly2 = Polygon([(-122.05, 37.45), (-122.04, 37.45), (-122.04, 37.46), (-122.05, 37.46), (-122.05, 37.45)])
+        poly1 = Polygon(
+            [(-122.1, 37.4), (-122.09, 37.4), (-122.09, 37.41), (-122.1, 37.41), (-122.1, 37.4)]
+        )
+        poly2 = Polygon(
+            [
+                (-122.05, 37.45),
+                (-122.04, 37.45),
+                (-122.04, 37.46),
+                (-122.05, 37.46),
+                (-122.05, 37.45),
+            ]
+        )
 
         multi_poly = MultiPolygon([poly1, poly2])
 
@@ -318,7 +370,9 @@ class TestMetadataExtraction:
         """Test extraction of basic metadata."""
         service = BoundaryExtractionService()
 
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Property Boundary",
             description="Main parcel for development",
@@ -340,7 +394,9 @@ class TestMetadataExtraction:
         """Test address extraction from properties."""
         service = BoundaryExtractionService()
 
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Property",
             geometry=polygon,
@@ -356,7 +412,9 @@ class TestMetadataExtraction:
         """Test parcel ID extraction."""
         service = BoundaryExtractionService()
 
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Property",
             geometry=polygon,
@@ -372,7 +430,9 @@ class TestMetadataExtraction:
         """Test address extraction from description text."""
         service = BoundaryExtractionService()
 
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Property",
             description="Property located at 456 Oak Avenue, with development potential",
@@ -397,7 +457,9 @@ class TestFullExtraction:
 
     def test_extract_single_boundary(self):
         """Test extraction of single boundary."""
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Property Boundary",
             geometry=polygon,
@@ -415,8 +477,18 @@ class TestFullExtraction:
 
     def test_extract_multiple_boundaries(self):
         """Test extraction of multiple boundaries."""
-        polygon1 = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
-        polygon2 = Polygon([(-122.05, 37.45), (-122.04, 37.45), (-122.04, 37.46), (-122.05, 37.46), (-122.05, 37.45)])
+        polygon1 = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
+        polygon2 = Polygon(
+            [
+                (-122.05, 37.45),
+                (-122.04, 37.45),
+                (-122.04, 37.46),
+                (-122.05, 37.46),
+                (-122.05, 37.45),
+            ]
+        )
 
         placemark1 = Placemark(
             name="Parcel 1",
@@ -446,7 +518,9 @@ class TestFullExtraction:
 
     def test_extract_with_specific_strategy(self):
         """Test extraction with specific strategy."""
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Polygon 1",
             geometry=polygon,
@@ -454,9 +528,7 @@ class TestFullExtraction:
         )
 
         parsed_kml = self.create_parsed_kml([placemark])
-        result = extract_boundaries_from_kml(
-            parsed_kml, strategy=BoundarySource.LARGEST_POLYGON
-        )
+        result = extract_boundaries_from_kml(parsed_kml, strategy=BoundarySource.LARGEST_POLYGON)
 
         assert result.success is True
         assert result.extraction_strategy == BoundarySource.LARGEST_POLYGON
@@ -464,13 +536,15 @@ class TestFullExtraction:
     def test_small_area_warning(self):
         """Test warning for very small areas."""
         # Create a very small polygon
-        small_polygon = Polygon([
-            (-122.1, 37.4),
-            (-122.09999, 37.4),
-            (-122.09999, 37.40001),
-            (-122.1, 37.40001),
-            (-122.1, 37.4),
-        ])
+        small_polygon = Polygon(
+            [
+                (-122.1, 37.4),
+                (-122.09999, 37.4),
+                (-122.09999, 37.40001),
+                (-122.1, 37.40001),
+                (-122.1, 37.4),
+            ]
+        )
         placemark = Placemark(
             name="Small Parcel",
             geometry=small_polygon,
@@ -491,7 +565,9 @@ class TestGeoJSONExport:
         """Test conversion of boundary to GeoJSON."""
         service = BoundaryExtractionService()
 
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name="Property Boundary",
             description="Test property",
@@ -516,7 +592,9 @@ class TestEdgeCases:
 
     def test_extract_with_contour_lines(self):
         """Test that contour lines are excluded from boundaries."""
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
 
         boundary_placemark = Placemark(
             name="Property Boundary",
@@ -553,7 +631,9 @@ class TestEdgeCases:
 
     def test_empty_name_handling(self):
         """Test handling of placemarks with no name."""
-        polygon = Polygon([(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)])
+        polygon = Polygon(
+            [(-122.1, 37.4), (-122.0, 37.4), (-122.0, 37.5), (-122.1, 37.5), (-122.1, 37.4)]
+        )
         placemark = Placemark(
             name=None,
             geometry=polygon,

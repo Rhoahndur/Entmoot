@@ -31,9 +31,7 @@ class TestConstraintCollection:
     @pytest.fixture
     def site_boundary(self):
         """Create a site boundary polygon."""
-        return Polygon([
-            (0, 0), (200, 0), (200, 200), (0, 200), (0, 0)
-        ])
+        return Polygon([(0, 0), (200, 0), (200, 200), (0, 200), (0, 0)])
 
     @pytest.fixture
     def sample_constraints(self):
@@ -42,40 +40,46 @@ class TestConstraintCollection:
 
         # Setback constraint
         poly1 = box(0, 0, 50, 200)
-        constraints.append(SetbackConstraint(
-            id="setback_001",
-            name="Property Line Setback",
-            constraint_type=ConstraintType.PROPERTY_LINE,
-            severity=ConstraintSeverity.BLOCKING,
-            priority=ConstraintPriority.HIGH,
-            geometry_wkt=poly1.wkt,
-            setback_distance_m=7.62,
-        ))
+        constraints.append(
+            SetbackConstraint(
+                id="setback_001",
+                name="Property Line Setback",
+                constraint_type=ConstraintType.PROPERTY_LINE,
+                severity=ConstraintSeverity.BLOCKING,
+                priority=ConstraintPriority.HIGH,
+                geometry_wkt=poly1.wkt,
+                setback_distance_m=7.62,
+            )
+        )
 
         # Exclusion zone
         poly2 = box(50, 50, 100, 100)
-        constraints.append(ExclusionZoneConstraint(
-            id="exclusion_001",
-            name="Wetland",
-            constraint_type=ConstraintType.WETLAND,
-            severity=ConstraintSeverity.BLOCKING,
-            priority=ConstraintPriority.CRITICAL,
-            geometry_wkt=poly2.wkt,
-            reason="Protected wetland",
-            is_permanent=True,
-        ))
+        constraints.append(
+            ExclusionZoneConstraint(
+                id="exclusion_001",
+                name="Wetland",
+                constraint_type=ConstraintType.WETLAND,
+                severity=ConstraintSeverity.BLOCKING,
+                priority=ConstraintPriority.CRITICAL,
+                geometry_wkt=poly2.wkt,
+                reason="Protected wetland",
+                is_permanent=True,
+            )
+        )
 
         # User preference
         poly3 = box(150, 150, 200, 200)
-        constraints.append(UserDefinedConstraint(
-            id="custom_001",
-            name="View Preservation",
-            constraint_type=ConstraintType.CUSTOM,
-            severity=ConstraintSeverity.PREFERENCE,
-            priority=ConstraintPriority.LOW,
-            geometry_wkt=poly3.wkt,
-            rule_description="Preserve view",
-        ))
+        constraints.append(
+            UserDefinedConstraint(
+                id="custom_001",
+                name="View Preservation",
+                constraint_type=ConstraintType.CUSTOM,
+                severity=ConstraintSeverity.PREFERENCE,
+                priority=ConstraintPriority.LOW,
+                geometry_wkt=poly3.wkt,
+                rule_description="Preserve view",
+            )
+        )
 
         return constraints
 
@@ -325,9 +329,7 @@ class TestConstraintValidator:
     @pytest.fixture
     def site_boundary(self):
         """Create a site boundary."""
-        return Polygon([
-            (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-        ])
+        return Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     def test_validate_geometry_valid(self):
         """Test validating valid geometry."""
@@ -426,9 +428,7 @@ class TestConstraintValidator:
             is_permanent=True,
         )
 
-        is_valid, warnings = ConstraintValidator.verify_coverage(
-            [constraint], site_boundary
-        )
+        is_valid, warnings = ConstraintValidator.verify_coverage([constraint], site_boundary)
 
         assert is_valid is True
         assert len(warnings) > 0  # Should warn about high coverage (>95%)
@@ -444,9 +444,7 @@ class TestConstraintValidator:
             setback_distance_m=10.0,
         )
 
-        results = ConstraintValidator.validate_collection(
-            [constraint], site_boundary
-        )
+        results = ConstraintValidator.validate_collection([constraint], site_boundary)
 
         assert "is_valid" in results
         assert "constraint_errors" in results
@@ -460,9 +458,7 @@ class TestConstraintAggregator:
     @pytest.fixture
     def site_boundary(self):
         """Create a site boundary."""
-        return Polygon([
-            (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-        ])
+        return Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     @pytest.fixture
     def sample_constraints(self):
@@ -470,24 +466,28 @@ class TestConstraintAggregator:
         constraints = []
 
         poly1 = box(0, 0, 40, 40)
-        constraints.append(SetbackConstraint(
-            id="c1",
-            name="Constraint 1",
-            constraint_type=ConstraintType.PROPERTY_LINE,
-            severity=ConstraintSeverity.BLOCKING,
-            geometry_wkt=poly1.wkt,
-            setback_distance_m=10.0,
-        ))
+        constraints.append(
+            SetbackConstraint(
+                id="c1",
+                name="Constraint 1",
+                constraint_type=ConstraintType.PROPERTY_LINE,
+                severity=ConstraintSeverity.BLOCKING,
+                geometry_wkt=poly1.wkt,
+                setback_distance_m=10.0,
+            )
+        )
 
         poly2 = box(30, 30, 70, 70)
-        constraints.append(SetbackConstraint(
-            id="c2",
-            name="Constraint 2",
-            constraint_type=ConstraintType.ROAD,
-            severity=ConstraintSeverity.BLOCKING,
-            geometry_wkt=poly2.wkt,
-            setback_distance_m=10.0,
-        ))
+        constraints.append(
+            SetbackConstraint(
+                id="c2",
+                name="Constraint 2",
+                constraint_type=ConstraintType.ROAD,
+                severity=ConstraintSeverity.BLOCKING,
+                geometry_wkt=poly2.wkt,
+                setback_distance_m=10.0,
+            )
+        )
 
         return constraints
 
@@ -517,9 +517,7 @@ class TestConstraintAggregator:
 
     def test_create_composite_constraint_map(self, sample_constraints):
         """Test creating composite constraint map."""
-        result = ConstraintAggregator.create_composite_constraint_map(
-            sample_constraints
-        )
+        result = ConstraintAggregator.create_composite_constraint_map(sample_constraints)
 
         assert result is not None
         assert result.is_valid
@@ -528,18 +526,15 @@ class TestConstraintAggregator:
     def test_create_composite_map_with_filter(self, sample_constraints):
         """Test creating composite map with severity filter."""
         result = ConstraintAggregator.create_composite_constraint_map(
-            sample_constraints,
-            filter_severity=[ConstraintSeverity.BLOCKING]
+            sample_constraints, filter_severity=[ConstraintSeverity.BLOCKING]
         )
 
         assert result is not None
 
     def test_calculate_available_area(self, site_boundary, sample_constraints):
         """Test calculating available area."""
-        available_geom, area_sqm, area_acres = (
-            ConstraintAggregator.calculate_available_area(
-                site_boundary, sample_constraints
-            )
+        available_geom, area_sqm, area_acres = ConstraintAggregator.calculate_available_area(
+            site_boundary, sample_constraints
         )
 
         assert available_geom is not None
@@ -572,9 +567,7 @@ class TestConstraintAggregator:
 
     def test_identify_overlapping_constraints(self, sample_constraints):
         """Test identifying overlapping constraints."""
-        overlaps = ConstraintAggregator.identify_overlapping_constraints(
-            sample_constraints
-        )
+        overlaps = ConstraintAggregator.identify_overlapping_constraints(sample_constraints)
 
         assert len(overlaps) >= 1
         assert "overlap_area_sqm" in overlaps[0]

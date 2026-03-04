@@ -55,7 +55,13 @@ class TestAspectCalculator:
         # But in GIS convention, we want the direction of slope (uphill gradient)
         # So when elevation increases to east, aspect should be 90 (East)
         dem = np.array(
-            [[100, 101, 102, 103, 104], [100, 101, 102, 103, 104], [100, 101, 102, 103, 104], [100, 101, 102, 103, 104], [100, 101, 102, 103, 104]]
+            [
+                [100, 101, 102, 103, 104],
+                [100, 101, 102, 103, 104],
+                [100, 101, 102, 103, 104],
+                [100, 101, 102, 103, 104],
+                [100, 101, 102, 103, 104],
+            ]
         )
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)
@@ -65,13 +71,21 @@ class TestAspectCalculator:
         # Standard GIS: aspect = direction slope faces (downhill)
         expected_aspect = 270.0
         center_aspect = aspect[1:-1, 1:-1]
-        assert_array_almost_equal(center_aspect, np.full_like(center_aspect, expected_aspect), decimal=1)
+        assert_array_almost_equal(
+            center_aspect, np.full_like(center_aspect, expected_aspect), decimal=1
+        )
 
     def test_slope_west(self) -> None:
         """Test aspect for slope facing west (270 degrees)."""
         # Elevation increases to the west, slope faces EAST (90 degrees downhill)
         dem = np.array(
-            [[104, 103, 102, 101, 100], [104, 103, 102, 101, 100], [104, 103, 102, 101, 100], [104, 103, 102, 101, 100], [104, 103, 102, 101, 100]]
+            [
+                [104, 103, 102, 101, 100],
+                [104, 103, 102, 101, 100],
+                [104, 103, 102, 101, 100],
+                [104, 103, 102, 101, 100],
+                [104, 103, 102, 101, 100],
+            ]
         )
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)
@@ -79,14 +93,22 @@ class TestAspectCalculator:
         # Should be close to 90 degrees (East - downhill direction)
         expected_aspect = 90.0
         center_aspect = aspect[1:-1, 1:-1]
-        assert_array_almost_equal(center_aspect, np.full_like(center_aspect, expected_aspect), decimal=1)
+        assert_array_almost_equal(
+            center_aspect, np.full_like(center_aspect, expected_aspect), decimal=1
+        )
 
     def test_slope_north(self) -> None:
         """Test aspect for slope facing north (0/360 degrees)."""
         # Elevation increases to the north (row 0 is higher)
         # So slope faces SOUTH (180 degrees downhill)
         dem = np.array(
-            [[104, 104, 104, 104, 104], [103, 103, 103, 103, 103], [102, 102, 102, 102, 102], [101, 101, 101, 101, 101], [100, 100, 100, 100, 100]]
+            [
+                [104, 104, 104, 104, 104],
+                [103, 103, 103, 103, 103],
+                [102, 102, 102, 102, 102],
+                [101, 101, 101, 101, 101],
+                [100, 100, 100, 100, 100],
+            ]
         )
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)
@@ -94,14 +116,22 @@ class TestAspectCalculator:
         # Should be close to 180 degrees (South - downhill direction)
         expected_aspect = 180.0
         center_aspect = aspect[1:-1, 1:-1]
-        assert_array_almost_equal(center_aspect, np.full_like(center_aspect, expected_aspect), decimal=1)
+        assert_array_almost_equal(
+            center_aspect, np.full_like(center_aspect, expected_aspect), decimal=1
+        )
 
     def test_slope_south(self) -> None:
         """Test aspect for slope facing south (180 degrees)."""
         # Elevation increases to the south (last row is higher)
         # So slope faces NORTH (0/360 degrees downhill)
         dem = np.array(
-            [[100, 100, 100, 100, 100], [101, 101, 101, 101, 101], [102, 102, 102, 102, 102], [103, 103, 103, 103, 103], [104, 104, 104, 104, 104]]
+            [
+                [100, 100, 100, 100, 100],
+                [101, 101, 101, 101, 101],
+                [102, 102, 102, 102, 102],
+                [103, 103, 103, 103, 103],
+                [104, 104, 104, 104, 104],
+            ]
         )
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)
@@ -116,7 +146,13 @@ class TestAspectCalculator:
         # Elevation increases to northeast (top-right)
         # Result is actually 315 (NW) which is correct for downhill direction
         dem = np.array(
-            [[100.0, 101.4, 102.8, 104.2, 105.6], [101.4, 102.8, 104.2, 105.6, 107.0], [102.8, 104.2, 105.6, 107.0, 108.4], [104.2, 105.6, 107.0, 108.4, 109.8], [105.6, 107.0, 108.4, 109.8, 111.2]]
+            [
+                [100.0, 101.4, 102.8, 104.2, 105.6],
+                [101.4, 102.8, 104.2, 105.6, 107.0],
+                [102.8, 104.2, 105.6, 107.0, 108.4],
+                [104.2, 105.6, 107.0, 108.4, 109.8],
+                [105.6, 107.0, 108.4, 109.8, 111.2],
+            ]
         )
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)
@@ -130,7 +166,13 @@ class TestAspectCalculator:
         """Test aspect for slope facing southwest (225 degrees)."""
         # Elevation increases to southwest (bottom-left)
         dem = np.array(
-            [[111.2, 109.8, 108.4, 107.0, 105.6], [109.8, 108.4, 107.0, 105.6, 104.2], [108.4, 107.0, 105.6, 104.2, 102.8], [107.0, 105.6, 104.2, 102.8, 101.4], [105.6, 104.2, 102.8, 101.4, 100.0]]
+            [
+                [111.2, 109.8, 108.4, 107.0, 105.6],
+                [109.8, 108.4, 107.0, 105.6, 104.2],
+                [108.4, 107.0, 105.6, 104.2, 102.8],
+                [107.0, 105.6, 104.2, 102.8, 101.4],
+                [105.6, 104.2, 102.8, 101.4, 100.0],
+            ]
         )
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)
@@ -143,9 +185,7 @@ class TestAspectCalculator:
     def test_slope_threshold(self) -> None:
         """Test that slope threshold correctly identifies flat areas."""
         # Create DEM with very gentle slope
-        dem = np.array(
-            [[100.0, 100.05, 100.1], [100.0, 100.05, 100.1], [100.0, 100.05, 100.1]]
-        )
+        dem = np.array([[100.0, 100.05, 100.1], [100.0, 100.05, 100.1], [100.0, 100.05, 100.1]])
 
         calc = AspectCalculator(cell_size=1.0)
 
@@ -203,9 +243,7 @@ class TestAspectCalculator:
 
     def test_calculate_with_metadata(self) -> None:
         """Test calculate_with_metadata method."""
-        dem = np.array(
-            [[100, 101, 102], [100, 105, 102], [100, 101, 102]]
-        )
+        dem = np.array([[100, 101, 102], [100, 105, 102], [100, 101, 102]])
         calc = AspectCalculator(cell_size=1.0)
         result = calc.calculate_with_metadata(dem, slope_threshold=0.1)
 
@@ -220,9 +258,7 @@ class TestConvenienceFunctions:
 
     def test_calculate_aspect_function(self) -> None:
         """Test calculate_aspect convenience function."""
-        dem = np.array(
-            [[100, 101, 102], [100, 101, 102], [100, 101, 102]]
-        )
+        dem = np.array([[100, 101, 102], [100, 101, 102], [100, 101, 102]])
         aspect = calculate_aspect(dem, cell_size=1.0)
 
         assert aspect.shape == dem.shape
@@ -617,9 +653,7 @@ class TestIntegration:
     def test_aspect_with_solar_and_wind_exposure(self) -> None:
         """Test complete workflow with aspect, solar, and wind exposure."""
         # Create slope that faces north (elevation increases to south)
-        dem = np.array(
-            [[100, 100, 100], [101, 101, 101], [102, 102, 102]]
-        )
+        dem = np.array([[100, 100, 100], [101, 101, 101], [102, 102, 102]])
 
         calc = AspectCalculator(cell_size=1.0)
         aspect = calc.calculate(dem, slope_threshold=0.0)

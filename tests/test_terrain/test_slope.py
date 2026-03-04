@@ -60,7 +60,13 @@ class TestSlopeCalculator:
         """Test slope calculation with uniform slope to the east."""
         # Create DEM with 45-degree slope to the east (rise/run = 1)
         dem = np.array(
-            [[0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0, 2.0, 3.0, 4.0]]
+            [
+                [0.0, 1.0, 2.0, 3.0, 4.0],
+                [0.0, 1.0, 2.0, 3.0, 4.0],
+                [0.0, 1.0, 2.0, 3.0, 4.0],
+                [0.0, 1.0, 2.0, 3.0, 4.0],
+                [0.0, 1.0, 2.0, 3.0, 4.0],
+            ]
         )
         calc = SlopeCalculator(cell_size=1.0, units="degrees")
         slope = calc.calculate(dem)
@@ -69,27 +75,35 @@ class TestSlopeCalculator:
         # Check center pixels which are most accurate with edge padding
         expected_slope = 45.0
         center_slope = slope[1:-1, 1:-1]
-        assert_array_almost_equal(center_slope, np.full_like(center_slope, expected_slope), decimal=1)
+        assert_array_almost_equal(
+            center_slope, np.full_like(center_slope, expected_slope), decimal=1
+        )
 
     def test_uniform_slope_north(self) -> None:
         """Test slope calculation with uniform slope to the north."""
         # Create DEM with 45-degree slope to the north
         dem = np.array(
-            [[4.0, 4.0, 4.0, 4.0, 4.0], [3.0, 3.0, 3.0, 3.0, 3.0], [2.0, 2.0, 2.0, 2.0, 2.0], [1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]]
+            [
+                [4.0, 4.0, 4.0, 4.0, 4.0],
+                [3.0, 3.0, 3.0, 3.0, 3.0],
+                [2.0, 2.0, 2.0, 2.0, 2.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0],
+            ]
         )
         calc = SlopeCalculator(cell_size=1.0, units="degrees")
         slope = calc.calculate(dem)
 
         expected_slope = 45.0
         center_slope = slope[1:-1, 1:-1]
-        assert_array_almost_equal(center_slope, np.full_like(center_slope, expected_slope), decimal=1)
+        assert_array_almost_equal(
+            center_slope, np.full_like(center_slope, expected_slope), decimal=1
+        )
 
     def test_steep_slope(self) -> None:
         """Test calculation with steep slope (>45 degrees)."""
         # Create DEM with steeper slope (rise/run = 2, ~63.4 degrees)
-        dem = np.array(
-            [[0.0, 2.0, 4.0], [0.0, 2.0, 4.0], [0.0, 2.0, 4.0]]
-        )
+        dem = np.array([[0.0, 2.0, 4.0], [0.0, 2.0, 4.0], [0.0, 2.0, 4.0]])
         calc = SlopeCalculator(cell_size=1.0, units="degrees")
         slope = calc.calculate(dem)
 
@@ -100,9 +114,7 @@ class TestSlopeCalculator:
     def test_gentle_slope(self) -> None:
         """Test calculation with gentle slope (<10 degrees)."""
         # Create DEM with gentle slope (rise/run = 0.1, ~5.7 degrees)
-        dem = np.array(
-            [[0.0, 0.1, 0.2], [0.0, 0.1, 0.2], [0.0, 0.1, 0.2]]
-        )
+        dem = np.array([[0.0, 0.1, 0.2], [0.0, 0.1, 0.2], [0.0, 0.1, 0.2]])
         calc = SlopeCalculator(cell_size=1.0, units="degrees")
         slope = calc.calculate(dem)
 
@@ -112,9 +124,7 @@ class TestSlopeCalculator:
 
     def test_percent_units(self) -> None:
         """Test slope calculation in percent units."""
-        dem = np.array(
-            [[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]]
-        )
+        dem = np.array([[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]])
         calc = SlopeCalculator(cell_size=1.0, units="percent")
         slope = calc.calculate(dem)
 
@@ -125,9 +135,7 @@ class TestSlopeCalculator:
 
     def test_z_factor(self) -> None:
         """Test that z_factor correctly scales elevation."""
-        dem = np.array(
-            [[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]]
-        )
+        dem = np.array([[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]])
 
         # Without z_factor
         calc1 = SlopeCalculator(cell_size=1.0, units="degrees")
@@ -142,9 +150,7 @@ class TestSlopeCalculator:
 
     def test_cell_size_effect(self) -> None:
         """Test that cell size affects slope calculation."""
-        dem = np.array(
-            [[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]]
-        )
+        dem = np.array([[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]])
 
         # 1-meter cells
         calc1 = SlopeCalculator(cell_size=1.0, units="degrees")
@@ -159,9 +165,7 @@ class TestSlopeCalculator:
 
     def test_horn_vs_fleming_hoffer(self) -> None:
         """Test different calculation methods produce different results."""
-        dem = np.array(
-            [[100, 102, 104], [101, 103, 105], [102, 104, 106]]
-        )
+        dem = np.array([[100, 102, 104], [101, 103, 105], [102, 104, 106]])
 
         calc_horn = SlopeCalculator(method=SlopeMethod.HORN)
         slope_horn = calc_horn.calculate(dem)
@@ -178,9 +182,7 @@ class TestSlopeCalculator:
 
     def test_horn_vs_zevenbergen_thorne(self) -> None:
         """Test Horn's method vs Zevenbergen and Thorne method."""
-        dem = np.array(
-            [[100, 102, 104], [101, 103, 105], [102, 104, 106]]
-        )
+        dem = np.array([[100, 102, 104], [101, 103, 105], [102, 104, 106]])
 
         calc_horn = SlopeCalculator(method=SlopeMethod.HORN)
         slope_horn = calc_horn.calculate(dem)
@@ -225,9 +227,7 @@ class TestSlopeCalculator:
 
     def test_calculate_with_metadata(self) -> None:
         """Test calculate_with_metadata method."""
-        dem = np.array(
-            [[100, 102, 104], [101, 103, 105], [102, 104, 106]]
-        )
+        dem = np.array([[100, 102, 104], [101, 103, 105], [102, 104, 106]])
         calc = SlopeCalculator(cell_size=1.0, units="degrees")
         result = calc.calculate_with_metadata(dem)
 
@@ -249,9 +249,7 @@ class TestConvenienceFunctions:
 
     def test_calculate_slope_function(self) -> None:
         """Test calculate_slope convenience function."""
-        dem = np.array(
-            [[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]]
-        )
+        dem = np.array([[0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]])
         slope = calculate_slope(dem, cell_size=1.0, units="degrees")
 
         assert slope.shape == dem.shape
@@ -259,9 +257,7 @@ class TestConvenienceFunctions:
 
     def test_calculate_slope_with_method(self) -> None:
         """Test calculate_slope with different methods."""
-        dem = np.array(
-            [[100, 102, 104], [101, 103, 105], [102, 104, 106]]
-        )
+        dem = np.array([[100, 102, 104], [101, 103, 105], [102, 104, 106]])
 
         slope_horn = calculate_slope(dem, method=SlopeMethod.HORN)
         slope_fleming = calculate_slope(dem, method=SlopeMethod.FLEMING_HOFFER)

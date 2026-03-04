@@ -11,6 +11,7 @@ try:
     import rasterio
     from rasterio.transform import from_bounds
     from rasterio.crs import CRS
+
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
@@ -46,8 +47,8 @@ def create_simple_dem(
     # Write GeoTIFF
     with rasterio.open(
         output_path,
-        'w',
-        driver='GTiff',
+        "w",
+        driver="GTiff",
         height=height,
         width=width,
         count=1,
@@ -98,8 +99,8 @@ def create_dem_with_gaps(
     # Write GeoTIFF
     with rasterio.open(
         output_path,
-        'w',
-        driver='GTiff',
+        "w",
+        driver="GTiff",
         height=height,
         width=width,
         count=1,
@@ -136,12 +137,7 @@ def create_hilly_dem(
     y = np.linspace(0, 4 * np.pi, height)
     X, Y = np.meshgrid(x, y)
 
-    elevation = (
-        200 +
-        20 * np.sin(X) +
-        15 * np.cos(Y) +
-        10 * np.sin(X + Y)
-    ).astype(np.float32)
+    elevation = (200 + 20 * np.sin(X) + 15 * np.cos(Y) + 10 * np.sin(X + Y)).astype(np.float32)
 
     # Define bounds
     bounds = (0, 0, width * resolution, height * resolution)
@@ -150,8 +146,8 @@ def create_hilly_dem(
     # Write GeoTIFF
     with rasterio.open(
         output_path,
-        'w',
-        driver='GTiff',
+        "w",
+        driver="GTiff",
         height=height,
         width=width,
         count=1,
@@ -186,7 +182,7 @@ def create_ascii_grid(
         elevation[i, :] = 100 + i * 0.3
 
     # Write ASCII grid
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         # Write header
         f.write(f"ncols         {width}\n")
         f.write(f"nrows         {height}\n")
@@ -231,8 +227,8 @@ def create_small_dem(
     # Write GeoTIFF
     with rasterio.open(
         output_path,
-        'w',
-        driver='GTiff',
+        "w",
+        driver="GTiff",
         height=height,
         width=width,
         count=1,

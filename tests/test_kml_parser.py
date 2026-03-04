@@ -27,7 +27,6 @@ from entmoot.core.parsers import (
     validate_kml_string,
 )
 
-
 # Test fixtures path
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SIMPLE_KML = FIXTURES_DIR / "simple.kml"
@@ -368,9 +367,7 @@ class TestKMLParser:
         assert result.contour_count >= 2
 
         # All geometries should be valid
-        assert result.geometry_count == sum(
-            1 for p in result.placemarks if p.geometry is not None
-        )
+        assert result.geometry_count == sum(1 for p in result.placemarks if p.geometry is not None)
 
 
 class TestGeometryParsing:

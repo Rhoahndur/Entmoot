@@ -39,9 +39,7 @@ class TestParseCRSString:
 
     def test_parse_epsg_url_format(self) -> None:
         """Test parsing URL format."""
-        crs_info = detector.parse_crs_string(
-            "http://www.opengis.net/def/crs/EPSG/0/4326"
-        )
+        crs_info = detector.parse_crs_string("http://www.opengis.net/def/crs/EPSG/0/4326")
         assert crs_info.epsg == 4326
 
     def test_parse_proj4_string(self) -> None:
@@ -102,7 +100,7 @@ class TestDetectCRSFromKML:
   </Placemark>
 </kml>"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.kml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as f:
             f.write(kml_content)
             f.flush()
             temp_path = Path(f.name)
@@ -117,7 +115,7 @@ class TestDetectCRSFromKML:
 
     def test_detect_crs_from_kml_invalid_xml(self) -> None:
         """Test error handling for invalid KML."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.kml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as f:
             f.write("invalid xml content")
             f.flush()
             temp_path = Path(f.name)
@@ -139,16 +137,13 @@ class TestDetectCRSFromGeoJSON:
             "features": [
                 {
                     "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-122.08, 37.42]
-                    },
-                    "properties": {}
+                    "geometry": {"type": "Point", "coordinates": [-122.08, 37.42]},
+                    "properties": {},
                 }
-            ]
+            ],
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.geojson', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".geojson", delete=False) as f:
             json.dump(geojson_content, f)
             f.flush()
             temp_path = Path(f.name)
@@ -164,16 +159,11 @@ class TestDetectCRSFromGeoJSON:
         """Test detection of explicitly specified CRS in GeoJSON."""
         geojson_content = {
             "type": "FeatureCollection",
-            "crs": {
-                "type": "name",
-                "properties": {
-                    "name": "urn:ogc:def:crs:EPSG::32631"
-                }
-            },
-            "features": []
+            "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32631"}},
+            "features": [],
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.geojson', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".geojson", delete=False) as f:
             json.dump(geojson_content, f)
             f.flush()
             temp_path = Path(f.name)
@@ -186,7 +176,7 @@ class TestDetectCRSFromGeoJSON:
 
     def test_detect_crs_from_geojson_invalid_json(self) -> None:
         """Test error handling for invalid JSON."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.geojson', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".geojson", delete=False) as f:
             f.write("invalid json")
             f.flush()
             temp_path = Path(f.name)
@@ -212,7 +202,7 @@ class TestDetectCRSFromFile:
   </Placemark>
 </kml>"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.kml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as f:
             f.write(kml_content)
             f.flush()
             temp_path = Path(f.name)
@@ -228,10 +218,10 @@ class TestDetectCRSFromFile:
         geojson_content = {
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [0, 0]},
-            "properties": {}
+            "properties": {},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.geojson', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".geojson", delete=False) as f:
             json.dump(geojson_content, f)
             f.flush()
             temp_path = Path(f.name)
@@ -249,7 +239,7 @@ class TestDetectCRSFromFile:
 
     def test_detect_crs_from_file_unsupported_format(self) -> None:
         """Test error handling for unsupported file format."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("test")
             f.flush()
             temp_path = Path(f.name)
@@ -268,7 +258,7 @@ class TestDetectCRSFromPRJ:
         """Test detection from .prj file with WGS84."""
         wkt = """GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.prj', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".prj", delete=False) as f:
             f.write(wkt)
             f.flush()
             temp_path = Path(f.name)
@@ -281,7 +271,7 @@ class TestDetectCRSFromPRJ:
 
     def test_detect_crs_from_prj_invalid_wkt(self) -> None:
         """Test error handling for invalid WKT."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.prj', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".prj", delete=False) as f:
             f.write("invalid wkt")
             f.flush()
             temp_path = Path(f.name)

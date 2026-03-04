@@ -68,10 +68,7 @@ class TestBufferConfig:
 
     def test_config_with_simplification(self):
         """Test buffer config with simplification."""
-        config = BufferConfig(
-            distance_m=10.0,
-            simplify_tolerance=0.5
-        )
+        config = BufferConfig(distance_m=10.0, simplify_tolerance=0.5)
 
         assert config.simplify_tolerance == 0.5
 
@@ -105,16 +102,12 @@ class TestBufferGenerator:
     @pytest.fixture
     def simple_polygon(self):
         """Create a simple polygon for testing."""
-        return Polygon([
-            (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-        ])
+        return Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     @pytest.fixture
     def property_boundary(self):
         """Create a property boundary polygon."""
-        return Polygon([
-            (0, 0), (200, 0), (200, 200), (0, 200), (0, 0)
-        ])
+        return Polygon([(0, 0), (200, 0), (200, 200), (0, 200), (0, 0)])
 
     def test_create_basic_buffer(self, generator, simple_line):
         """Test creating a basic buffer around a line."""
@@ -150,10 +143,7 @@ class TestBufferGenerator:
 
     def test_buffer_with_flat_caps(self, generator, simple_line):
         """Test buffer with flat end caps."""
-        config = BufferConfig(
-            distance_m=10.0,
-            style=BufferStyle.FLAT
-        )
+        config = BufferConfig(distance_m=10.0, style=BufferStyle.FLAT)
         buffer = generator.create_buffer(simple_line, config)
 
         assert buffer.is_valid
@@ -161,10 +151,7 @@ class TestBufferGenerator:
 
     def test_buffer_with_square_caps(self, generator, simple_line):
         """Test buffer with square end caps."""
-        config = BufferConfig(
-            distance_m=10.0,
-            style=BufferStyle.SQUARE
-        )
+        config = BufferConfig(distance_m=10.0, style=BufferStyle.SQUARE)
         buffer = generator.create_buffer(simple_line, config)
 
         assert buffer.is_valid
@@ -180,15 +167,13 @@ class TestBufferGenerator:
 
         assert buffer_simple.is_valid
         # Simplified version should have fewer vertices
-        if hasattr(buffer_complex, 'exterior') and hasattr(buffer_simple, 'exterior'):
+        if hasattr(buffer_complex, "exterior") and hasattr(buffer_simple, "exterior"):
             assert len(buffer_simple.exterior.coords) <= len(buffer_complex.exterior.coords)
 
     def test_auto_repair_invalid_geometry(self, generator):
         """Test automatic repair of invalid geometries."""
         # Create a self-intersecting polygon (bowtie)
-        invalid_polygon = Polygon([
-            (0, 0), (100, 100), (100, 0), (0, 100), (0, 0)
-        ])
+        invalid_polygon = Polygon([(0, 0), (100, 100), (100, 0), (0, 100), (0, 0)])
 
         config = BufferConfig(distance_m=5.0)
 
@@ -201,9 +186,7 @@ class TestBufferGenerator:
         generator = BufferGenerator(auto_validate=True, auto_repair=False)
 
         # Try to buffer an invalid geometry
-        invalid_polygon = Polygon([
-            (0, 0), (100, 100), (100, 0), (0, 100), (0, 0)
-        ])
+        invalid_polygon = Polygon([(0, 0), (100, 100), (100, 0), (0, 100), (0, 0)])
 
         config = BufferConfig(distance_m=5.0)
 
@@ -236,7 +219,7 @@ class TestMultiBuffer:
 
         assert buffer.is_valid
         # Should be a single geometry (possibly MultiPolygon)
-        assert hasattr(buffer, 'area')
+        assert hasattr(buffer, "area")
         assert buffer.area > 0
 
     def test_create_multi_buffer_separate(self, generator, multiple_lines):
@@ -262,7 +245,7 @@ class TestMultiBuffer:
 
         assert merged_buffer.is_valid
         # Merged should be a single polygon
-        assert merged_buffer.geom_type in ['Polygon', 'MultiPolygon']
+        assert merged_buffer.geom_type in ["Polygon", "MultiPolygon"]
 
     def test_multi_buffer_empty_list_raises_error(self, generator):
         """Test that empty geometry list raises error."""
@@ -283,9 +266,7 @@ class TestPropertySetback:
     @pytest.fixture
     def property_boundary(self):
         """Create a property boundary."""
-        return Polygon([
-            (0, 0), (200, 0), (200, 200), (0, 200), (0, 0)
-        ])
+        return Polygon([(0, 0), (200, 0), (200, 200), (0, 200), (0, 0)])
 
     def test_create_default_property_setback(self, generator, property_boundary):
         """Test creating default property setback."""
@@ -454,16 +435,12 @@ class TestWaterFeatureSetback:
     @pytest.fixture
     def stream_line(self):
         """Create a stream centerline."""
-        return LineString([
-            (0, 0), (50, 10), (100, 5), (150, 20)
-        ])
+        return LineString([(0, 0), (50, 10), (100, 5), (150, 20)])
 
     @pytest.fixture
     def pond_polygon(self):
         """Create a pond polygon."""
-        return Polygon([
-            (0, 0), (50, 0), (50, 50), (0, 50), (0, 0)
-        ])
+        return Polygon([(0, 0), (50, 0), (50, 50), (0, 50), (0, 0)])
 
     def test_create_stream_setback(self, generator, stream_line):
         """Test creating stream setback."""
@@ -477,7 +454,10 @@ class TestWaterFeatureSetback:
         assert constraint.constraint_type == ConstraintType.WATER_FEATURE
         assert constraint.severity == ConstraintSeverity.BLOCKING
         assert constraint.priority == ConstraintPriority.CRITICAL
-        assert constraint.metadata["setback_distance_m"] == WATER_FEATURE_SETBACK[WaterFeatureType.STREAM]
+        assert (
+            constraint.metadata["setback_distance_m"]
+            == WATER_FEATURE_SETBACK[WaterFeatureType.STREAM]
+        )
         assert "stream" in constraint.name.lower()
 
     def test_create_river_setback(self, generator, stream_line):
@@ -488,7 +468,10 @@ class TestWaterFeatureSetback:
             feature_type=WaterFeatureType.RIVER,
         )
 
-        assert constraint.metadata["setback_distance_m"] == WATER_FEATURE_SETBACK[WaterFeatureType.RIVER]
+        assert (
+            constraint.metadata["setback_distance_m"]
+            == WATER_FEATURE_SETBACK[WaterFeatureType.RIVER]
+        )
         assert "river" in constraint.name.lower()
 
     def test_create_pond_setback(self, generator, pond_polygon):
@@ -499,7 +482,10 @@ class TestWaterFeatureSetback:
             feature_type=WaterFeatureType.POND,
         )
 
-        assert constraint.metadata["setback_distance_m"] == WATER_FEATURE_SETBACK[WaterFeatureType.POND]
+        assert (
+            constraint.metadata["setback_distance_m"]
+            == WATER_FEATURE_SETBACK[WaterFeatureType.POND]
+        )
         assert "pond" in constraint.name.lower()
 
     def test_create_wetland_setback(self, generator, pond_polygon):
@@ -510,7 +496,10 @@ class TestWaterFeatureSetback:
             feature_type=WaterFeatureType.WETLAND,
         )
 
-        assert constraint.metadata["setback_distance_m"] == WATER_FEATURE_SETBACK[WaterFeatureType.WETLAND]
+        assert (
+            constraint.metadata["setback_distance_m"]
+            == WATER_FEATURE_SETBACK[WaterFeatureType.WETLAND]
+        )
         assert "wetland" in constraint.name.lower()
 
     def test_water_setback_regulatory_info(self, generator, stream_line):
@@ -571,9 +560,7 @@ class TestUtilitySetback:
     @pytest.fixture
     def power_line(self):
         """Create a power line."""
-        return LineString([
-            (0, 0), (100, 0), (200, 50)
-        ])
+        return LineString([(0, 0), (100, 0), (200, 50)])
 
     def test_create_power_line_setback(self, generator, power_line):
         """Test creating power line setback."""
@@ -683,9 +670,7 @@ class TestBufferValidation:
     def test_validate_invalid_buffer(self, generator, simple_line):
         """Test validation catches invalid geometry."""
         # Create an invalid polygon
-        invalid_polygon = Polygon([
-            (0, 0), (10, 10), (10, 0), (0, 10), (0, 0)
-        ])
+        invalid_polygon = Polygon([(0, 0), (10, 10), (10, 0), (0, 10), (0, 0)])
 
         is_valid, issues = generator.validate_buffer(invalid_polygon, simple_line, 10.0)
 
@@ -706,6 +691,7 @@ class TestBufferSimplification:
         """Create a complex polygon with many vertices."""
         # Create a circle approximation with many points
         import math
+
         points = []
         for i in range(100):
             angle = 2 * math.pi * i / 100
@@ -728,9 +714,7 @@ class TestBufferSimplification:
     def test_simplify_preserves_topology(self, generator, complex_polygon):
         """Test that simplification preserves topology."""
         simplified = generator.simplify_buffer(
-            complex_polygon,
-            tolerance=1.0,
-            preserve_topology=True
+            complex_polygon, tolerance=1.0, preserve_topology=True
         )
 
         assert simplified.is_valid
@@ -769,9 +753,7 @@ class TestEdgeCases:
 
     def test_inward_buffer_larger_than_geometry(self, generator):
         """Test inward buffer that's larger than the geometry."""
-        small_polygon = Polygon([
-            (0, 0), (10, 0), (10, 10), (0, 10), (0, 0)
-        ])
+        small_polygon = Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])
 
         # Try to create inward buffer larger than polygon
         config = BufferConfig(distance_m=20.0)  # Larger than polygon
@@ -788,11 +770,13 @@ class TestEdgeCases:
 
     def test_multipart_geometry_buffer(self, generator):
         """Test buffering multipart geometries."""
-        multi_line = MultiLineString([
-            [(0, 0), (10, 0)],
-            [(20, 0), (30, 0)],
-            [(0, 20), (10, 20)],
-        ])
+        multi_line = MultiLineString(
+            [
+                [(0, 0), (10, 0)],
+                [(20, 0), (30, 0)],
+                [(0, 20), (10, 20)],
+            ]
+        )
 
         config = BufferConfig(distance_m=5.0)
         buffer = generator.create_buffer(multi_line, config)

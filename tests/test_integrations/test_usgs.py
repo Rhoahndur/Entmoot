@@ -41,7 +41,6 @@ from entmoot.models.elevation import (
     USRegion,
 )
 
-
 # Fixtures
 
 
@@ -163,9 +162,7 @@ def test_parser_epqs_response_success(
     parser: USGSResponseParser, mock_epqs_response: Dict[str, Any]
 ) -> None:
     """Test parsing successful EPQS response."""
-    point = parser.parse_epqs_response(
-        mock_epqs_response, longitude=-105.5, latitude=40.0
-    )
+    point = parser.parse_epqs_response(mock_epqs_response, longitude=-105.5, latitude=40.0)
 
     assert point.longitude == -105.5
     assert point.latitude == 40.0
@@ -179,9 +176,7 @@ def test_parser_epqs_response_null_value(
     parser: USGSResponseParser, mock_epqs_response_null: Dict[str, Any]
 ) -> None:
     """Test parsing EPQS response with null value."""
-    point = parser.parse_epqs_response(
-        mock_epqs_response_null, longitude=-105.5, latitude=40.0
-    )
+    point = parser.parse_epqs_response(mock_epqs_response_null, longitude=-105.5, latitude=40.0)
 
     assert point.longitude == -105.5
     assert point.latitude == 40.0
@@ -411,9 +406,7 @@ async def test_query_batch_elevation_partial_success(usgs_client: USGSClient) ->
         else:
             return ElevationPoint(longitude=lon, latitude=lat, elevation=None, unit=unit)
 
-    with patch.object(
-        usgs_client, "query_point_elevation", new_callable=AsyncMock
-    ) as mock_query:
+    with patch.object(usgs_client, "query_point_elevation", new_callable=AsyncMock) as mock_query:
         mock_query.side_effect = mock_query_side_effect
 
         response = await usgs_client.query_batch_elevation(points)
@@ -926,10 +919,16 @@ def test_parser_epqs_response_invalid_elevation(parser: USGSResponseParser) -> N
 def test_parser_determine_data_source_variations(parser: USGSResponseParser) -> None:
     """Test data source determination with various inputs."""
     # Test 1-meter
-    assert parser._determine_data_source({"data_source": "1-meter"}, None) == ElevationDataSource.USGS_3DEP_1M
+    assert (
+        parser._determine_data_source({"data_source": "1-meter"}, None)
+        == ElevationDataSource.USGS_3DEP_1M
+    )
 
     # Test 1/3 arc
-    assert parser._determine_data_source({"data_source": "1/3 arc-second"}, None) == ElevationDataSource.USGS_3DEP_1_3M
+    assert (
+        parser._determine_data_source({"data_source": "1/3 arc-second"}, None)
+        == ElevationDataSource.USGS_3DEP_1_3M
+    )
 
     # Test NED
     assert parser._determine_data_source({"data_source": "NED"}, None) == ElevationDataSource.NED
@@ -978,7 +977,9 @@ async def test_query_point_elevation_with_feet(usgs_client: USGSClient) -> None:
         assert point.elevation == 100.0
 
 
-def test_cache_manager_get_tile_path_exists(cache_manager: ElevationCacheManager, tmp_path: Path) -> None:
+def test_cache_manager_get_tile_path_exists(
+    cache_manager: ElevationCacheManager, tmp_path: Path
+) -> None:
     """Test getting tile path when file exists."""
     # Create metadata and file
     metadata = DEMTileMetadata(
@@ -1055,7 +1056,9 @@ def test_cache_manager_delete_tile(cache_manager: ElevationCacheManager, tmp_pat
     assert result is False
 
 
-def test_cache_manager_cleanup_old_tiles(cache_manager: ElevationCacheManager, tmp_path: Path) -> None:
+def test_cache_manager_cleanup_old_tiles(
+    cache_manager: ElevationCacheManager, tmp_path: Path
+) -> None:
     """Test cleaning up old tiles."""
     from datetime import timedelta
 

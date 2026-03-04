@@ -96,9 +96,7 @@ class TestPreGradingModel:
         model = PreGradingModel(sloped_dem)
 
         distance, elevation = model.get_elevation_profile(
-            start=(5.0, 5.0),
-            end=(45.0, 45.0),
-            num_points=50
+            start=(5.0, 5.0), end=(45.0, 45.0), num_points=50
         )
 
         assert len(distance) == 50

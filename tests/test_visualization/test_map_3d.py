@@ -40,20 +40,12 @@ def sample_terrain():
 def sample_geometries():
     """Create sample geometries for 3D rendering."""
     # Buildings
-    building1 = Polygon([
-        (20, 20), (30, 20), (30, 30), (20, 30), (20, 20)
-    ])
-    building2 = Polygon([
-        (60, 60), (75, 60), (75, 75), (60, 75), (60, 60)
-    ])
+    building1 = Polygon([(20, 20), (30, 20), (30, 30), (20, 30), (20, 20)])
+    building2 = Polygon([(60, 60), (75, 60), (75, 75), (60, 75), (60, 60)])
 
     # Roads
-    road1 = LineString([
-        (0, 50), (50, 50), (50, 100)
-    ])
-    road2 = LineString([
-        (50, 50), (100, 50)
-    ])
+    road1 = LineString([(0, 50), (50, 50), (50, 100)])
+    road2 = LineString([(50, 50), (100, 50)])
 
     # Multi geometries
     multi_building = MultiPolygon([building1, building2])

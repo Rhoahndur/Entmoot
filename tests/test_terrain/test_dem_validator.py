@@ -62,11 +62,7 @@ class TestDEMValidatorInit:
 
     def test_init_custom(self):
         """Test initialization with custom parameters."""
-        validator = DEMValidator(
-            min_elevation=-100.0,
-            max_elevation=5000.0,
-            max_no_data_pct=25.0
-        )
+        validator = DEMValidator(min_elevation=-100.0, max_elevation=5000.0, max_no_data_pct=25.0)
         assert validator.min_elevation == -100.0
         assert validator.max_elevation == 5000.0
         assert validator.max_no_data_pct == 25.0
@@ -153,8 +149,7 @@ class TestDEMValidatorElevationData:
 
         result = validator.validate(dem_data)
         assert not result.is_valid
-        assert any("no-data" in issue.lower() or "nan" in issue.lower()
-                   for issue in result.issues)
+        assert any("no-data" in issue.lower() or "nan" in issue.lower() for issue in result.issues)
 
     def test_validate_non_float_dtype_warning(self, validator, valid_metadata):
         """Test warning for non-floating point data."""

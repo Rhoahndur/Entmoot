@@ -303,9 +303,7 @@ class TestBuildabilityAnalyzer:
         slope[:, :] = 30.0  # Make most unbuildable
         slope[0:5, 0:5] = 3.0  # Small buildable area (25 sq m at 1m resolution)
 
-        thresholds = BuildabilityThresholds(
-            min_zone_area_sqm=100.0  # Minimum 100 sq m
-        )
+        thresholds = BuildabilityThresholds(min_zone_area_sqm=100.0)  # Minimum 100 sq m
         analyzer = BuildabilityAnalyzer(cell_size=1.0, thresholds=thresholds)
 
         mask = analyzer.create_buildable_mask(slope, elevation)
@@ -337,7 +335,9 @@ class TestBuildabilityAnalyzer:
         assert zone.min_elevation == pytest.approx(150.0, rel=1e-5)
         assert zone.max_elevation == pytest.approx(150.0, rel=1e-5)
         assert zone.mean_elevation == pytest.approx(150.0, rel=1e-5)
-        assert zone.area_sqm == pytest.approx(50 * 50 * 100, rel=1e-2)  # 50x50 pixels * 100 sqm/pixel
+        assert zone.area_sqm == pytest.approx(
+            50 * 50 * 100, rel=1e-2
+        )  # 50x50 pixels * 100 sqm/pixel
 
     def test_zone_classification(self, mixed_terrain):
         """Test zone buildability classification."""
@@ -634,9 +634,7 @@ class TestEdgeCases:
         # Single buildable pixel
         slope[5, 5] = 3.0
 
-        thresholds = BuildabilityThresholds(
-            min_zone_area_sqm=0.5  # Allow very small zones
-        )
+        thresholds = BuildabilityThresholds(min_zone_area_sqm=0.5)  # Allow very small zones
         analyzer = BuildabilityAnalyzer(cell_size=1.0, thresholds=thresholds)
 
         result = analyzer.analyze(slope, elevation)
@@ -812,9 +810,7 @@ class TestRealWorldScenarios:
 
         # Should detect three separate zones
         assert result.num_zones == 3
-        assert all(
-            z.buildability_class == BuildabilityClass.EXCELLENT for z in result.zones
-        )
+        assert all(z.buildability_class == BuildabilityClass.EXCELLENT for z in result.zones)
 
     def test_coastal_property_with_flood_constraint(self):
         """Test coastal property with low-elevation flood zones."""

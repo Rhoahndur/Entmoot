@@ -18,13 +18,15 @@ from entmoot.core.optimization.problem import (
 @pytest.fixture
 def sample_site_boundary():
     """Create a sample site boundary."""
-    return ShapelyPolygon([
-        (0, 0),
-        (200, 0),
-        (200, 200),
-        (0, 200),
-        (0, 0),
-    ])
+    return ShapelyPolygon(
+        [
+            (0, 0),
+            (200, 0),
+            (200, 200),
+            (0, 200),
+            (0, 0),
+        ]
+    )
 
 
 @pytest.fixture
@@ -117,6 +119,7 @@ class TestOptimizationConstraints:
         """Test invalid boundary validation."""
         # Create a self-intersecting polygon (figure-8 shape)
         from shapely.wkt import loads
+
         invalid_polygon = loads("POLYGON((0 0, 2 2, 2 0, 0 2, 0 0))")  # Self-intersecting
 
         with pytest.raises(ValueError, match="valid polygon"):
@@ -143,13 +146,15 @@ class TestOptimizationConstraints:
 
     def test_get_buildable_area_with_exclusions(self, sample_site_boundary):
         """Test buildable area with exclusion zones."""
-        exclusion = ShapelyPolygon([
-            (50, 50),
-            (100, 50),
-            (100, 100),
-            (50, 100),
-            (50, 50),
-        ])
+        exclusion = ShapelyPolygon(
+            [
+                (50, 50),
+                (100, 50),
+                (100, 100),
+                (50, 100),
+                (50, 50),
+            ]
+        )
 
         constraints = OptimizationConstraints(
             site_boundary=sample_site_boundary,

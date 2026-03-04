@@ -71,17 +71,13 @@ class TestSetbackConstraint:
     @pytest.fixture
     def property_line(self):
         """Create a simple property line."""
-        return LineString([
-            (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-        ])
+        return LineString([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     @pytest.fixture
     def setback_polygon(self):
         """Create a setback polygon."""
         # 10m buffer around property line
-        return Polygon([
-            (-10, -10), (110, -10), (110, 110), (-10, 110), (-10, -10)
-        ])
+        return Polygon([(-10, -10), (110, -10), (110, 110), (-10, 110), (-10, -10)])
 
     def test_create_setback_constraint(self, setback_polygon):
         """Test creating a valid setback constraint."""
@@ -162,9 +158,7 @@ class TestExclusionZoneConstraint:
     @pytest.fixture
     def wetland_polygon(self):
         """Create a wetland polygon."""
-        return Polygon([
-            (10, 10), (50, 10), (50, 50), (10, 50), (10, 10)
-        ])
+        return Polygon([(10, 10), (50, 10), (50, 50), (10, 50), (10, 10)])
 
     def test_create_exclusion_zone(self, wetland_polygon):
         """Test creating an exclusion zone."""
@@ -253,9 +247,7 @@ class TestRegulatoryConstraint:
     @pytest.fixture
     def floodplain_polygon(self):
         """Create a floodplain polygon."""
-        return Polygon([
-            (0, 0), (100, 0), (100, 50), (0, 50), (0, 0)
-        ])
+        return Polygon([(0, 0), (100, 0), (100, 50), (0, 50), (0, 0)])
 
     def test_create_regulatory_constraint(self, floodplain_polygon):
         """Test creating a regulatory constraint."""
@@ -337,9 +329,7 @@ class TestUserDefinedConstraint:
     @pytest.fixture
     def custom_polygon(self):
         """Create a custom constraint polygon."""
-        return Polygon([
-            (20, 20), (80, 20), (80, 80), (20, 80), (20, 20)
-        ])
+        return Polygon([(20, 20), (80, 20), (80, 80), (20, 80), (20, 20)])
 
     def test_create_user_defined_constraint(self, custom_polygon):
         """Test creating a user-defined constraint."""
@@ -393,9 +383,7 @@ class TestConstraintGeometry:
     @pytest.fixture
     def test_polygon(self):
         """Create a test polygon."""
-        return Polygon([
-            (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-        ])
+        return Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     def test_get_geometry(self, test_polygon):
         """Test getting Shapely geometry from WKT."""
@@ -484,9 +472,7 @@ class TestConstraintGeoJSON:
     @pytest.fixture
     def test_polygon(self):
         """Create a test polygon."""
-        return Polygon([
-            (0, 0), (10, 0), (10, 10), (0, 10), (0, 0)
-        ])
+        return Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])
 
     def test_to_geojson(self, test_polygon):
         """Test exporting constraint to GeoJSON."""
@@ -523,9 +509,7 @@ class TestStandardSetbacks:
 
     def test_create_standard_setback(self):
         """Test creating a standard setback constraint."""
-        property_line = LineString([
-            (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-        ])
+        property_line = LineString([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
         constraint = create_standard_setback(
             constraint_id="std_001",
@@ -540,9 +524,7 @@ class TestStandardSetbacks:
 
     def test_create_standard_setback_with_override(self):
         """Test creating standard setback with distance override."""
-        property_line = LineString([
-            (0, 0), (100, 0)
-        ])
+        property_line = LineString([(0, 0), (100, 0)])
 
         constraint = create_standard_setback(
             constraint_id="std_002",

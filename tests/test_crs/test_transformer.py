@@ -192,9 +192,7 @@ class TestTransformCoordinates:
         wgs84 = CRSInfo.from_epsg(4326)
         utm_31n = CRSInfo.from_epsg(32631)
 
-        x, y = transformer.transform_coordinates(
-            2.3522, 48.8566, wgs84, utm_31n
-        )
+        x, y = transformer.transform_coordinates(2.3522, 48.8566, wgs84, utm_31n)
 
         assert 440000 < x < 460000
         assert 5400000 < y < 5420000
@@ -204,9 +202,7 @@ class TestTransformCoordinates:
         wgs84 = CRSInfo.from_epsg(4326)
         utm_31n = CRSInfo.from_epsg(32631)
 
-        x, y, z = transformer.transform_coordinates(
-            -0.1278, 51.5074, wgs84, utm_31n, z=100.0
-        )
+        x, y, z = transformer.transform_coordinates(-0.1278, 51.5074, wgs84, utm_31n, z=100.0)
 
         assert abs(z - 100.0) < 0.01
 
@@ -229,9 +225,7 @@ class TestWGS84ToUTM:
         """Test WGS84 to UTM with specified zone."""
         lon, lat = -0.1278, 51.5074
 
-        easting, northing, crs_info = transformer.transform_wgs84_to_utm(
-            lon, lat, utm_zone=31
-        )
+        easting, northing, crs_info = transformer.transform_wgs84_to_utm(lon, lat, utm_zone=31)
 
         assert crs_info.epsg == 32631
 
@@ -295,9 +289,7 @@ class TestWebMercator:
         """Test transformation to Web Mercator from UTM."""
         easting, northing = 699329, 5710164
 
-        x, y = transformer.transform_to_web_mercator(
-            easting, northing, source_epsg=32631
-        )
+        x, y = transformer.transform_to_web_mercator(easting, northing, source_epsg=32631)
 
         # Should produce valid Web Mercator coordinates
         assert isinstance(x, float)

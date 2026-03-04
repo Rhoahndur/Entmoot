@@ -26,13 +26,15 @@ from entmoot.core.reports.pdf_generator import (
 @pytest.fixture
 def sample_boundary() -> Polygon:
     """Create sample site boundary."""
-    return Polygon([
-        (0, 0),
-        (100, 0),
-        (100, 100),
-        (0, 100),
-        (0, 0),
-    ])
+    return Polygon(
+        [
+            (0, 0),
+            (100, 0),
+            (100, 100),
+            (0, 100),
+            (0, 0),
+        ]
+    )
 
 
 @pytest.fixture
@@ -52,75 +54,75 @@ def sample_report_data(sample_boundary: Polygon) -> ReportData:
     # Add constraints
     data.constraints = [
         {
-            'name': 'Property Line Setback',
-            'type': 'property_line',
-            'constraint_type': 'property_line',
-            'severity': 'blocking',
-            'description': '25-foot setback from property boundary',
-            'area_sqm': 1500.0,
+            "name": "Property Line Setback",
+            "type": "property_line",
+            "constraint_type": "property_line",
+            "severity": "blocking",
+            "description": "25-foot setback from property boundary",
+            "area_sqm": 1500.0,
         },
         {
-            'name': 'Wetland Buffer',
-            'type': 'wetland',
-            'constraint_type': 'wetland',
-            'severity': 'blocking',
-            'description': 'Protected wetland area',
-            'area_sqm': 800.0,
+            "name": "Wetland Buffer",
+            "type": "wetland",
+            "constraint_type": "wetland",
+            "severity": "blocking",
+            "description": "Protected wetland area",
+            "area_sqm": 800.0,
         },
     ]
 
     # Add assets
     data.assets = [
         {
-            'name': 'Main Building',
-            'type': 'building',
-            'asset_type': 'building',
-            'area_sqm': 500.0,
-            'position': (50, 50),
+            "name": "Main Building",
+            "type": "building",
+            "asset_type": "building",
+            "area_sqm": 500.0,
+            "position": (50, 50),
         },
         {
-            'name': 'Parking Lot',
-            'type': 'parking_lot',
-            'asset_type': 'parking_lot',
-            'area_sqm': 300.0,
-            'position': (30, 70),
+            "name": "Parking Lot",
+            "type": "parking_lot",
+            "asset_type": "parking_lot",
+            "area_sqm": 300.0,
+            "position": (30, 70),
         },
     ]
 
     # Add earthwork data
     data.earthwork = {
-        'cut_volume_m3': 5000.0,
-        'fill_volume_m3': 4500.0,
-        'cut_cost': 25000.0,
-        'fill_cost': 22500.0,
-        'haul_cost': 5000.0,
-        'total_cost': 52500.0,
+        "cut_volume_m3": 5000.0,
+        "fill_volume_m3": 4500.0,
+        "cut_cost": 25000.0,
+        "fill_cost": 22500.0,
+        "haul_cost": 5000.0,
+        "total_cost": 52500.0,
     }
 
     # Add road data
     data.roads = {
-        'total_length_m': 250.0,
-        'num_segments': 3,
-        'avg_grade': 3.5,
-        'max_grade': 8.0,
-        'total_cost': 75000.0,
+        "total_length_m": 250.0,
+        "num_segments": 3,
+        "avg_grade": 3.5,
+        "max_grade": 8.0,
+        "total_cost": 75000.0,
     }
 
     # Add cost data
     data.costs = {
-        'earthwork_cost': 52500.0,
-        'road_cost': 75000.0,
-        'utility_cost': 35000.0,
-        'site_prep_cost': 20000.0,
+        "earthwork_cost": 52500.0,
+        "road_cost": 75000.0,
+        "utility_cost": 35000.0,
+        "site_prep_cost": 20000.0,
     }
 
     # Add terrain metrics
     data.terrain_metrics = {
-        'min_elevation': 100.0,
-        'max_elevation': 125.0,
-        'mean_elevation': 112.5,
-        'std_elevation': 5.2,
-        'elevation_range': 25.0,
+        "min_elevation": 100.0,
+        "max_elevation": 125.0,
+        "mean_elevation": 112.5,
+        "std_elevation": 5.2,
+        "elevation_range": 25.0,
     }
 
     # Add DEM data
@@ -468,60 +470,64 @@ class TestPDFIntegration:
 
         # Multiple constraints
         for i in range(5):
-            data.constraints.append({
-                'name': f'Constraint {i+1}',
-                'type': 'setback',
-                'constraint_type': 'property_line',
-                'severity': 'blocking',
-                'description': f'Test constraint {i+1}',
-                'area_sqm': 500.0 + i * 100,
-            })
+            data.constraints.append(
+                {
+                    "name": f"Constraint {i+1}",
+                    "type": "setback",
+                    "constraint_type": "property_line",
+                    "severity": "blocking",
+                    "description": f"Test constraint {i+1}",
+                    "area_sqm": 500.0 + i * 100,
+                }
+            )
 
         # Multiple assets
-        asset_types = ['building', 'equipment_yard', 'parking_lot', 'storage_tank']
+        asset_types = ["building", "equipment_yard", "parking_lot", "storage_tank"]
         for i, atype in enumerate(asset_types):
-            data.assets.append({
-                'name': f'{atype.replace("_", " ").title()} {i+1}',
-                'type': atype,
-                'asset_type': atype,
-                'area_sqm': 400.0 + i * 50,
-                'position': (20 + i*15, 30 + i*10),
-            })
+            data.assets.append(
+                {
+                    "name": f'{atype.replace("_", " ").title()} {i+1}',
+                    "type": atype,
+                    "asset_type": atype,
+                    "area_sqm": 400.0 + i * 50,
+                    "position": (20 + i * 15, 30 + i * 10),
+                }
+            )
 
         # Earthwork
         data.earthwork = {
-            'cut_volume_m3': 12000.0,
-            'fill_volume_m3': 10500.0,
-            'cut_cost': 60000.0,
-            'fill_cost': 52500.0,
-            'haul_cost': 15000.0,
-            'total_cost': 127500.0,
+            "cut_volume_m3": 12000.0,
+            "fill_volume_m3": 10500.0,
+            "cut_cost": 60000.0,
+            "fill_cost": 52500.0,
+            "haul_cost": 15000.0,
+            "total_cost": 127500.0,
         }
 
         # Roads
         data.roads = {
-            'total_length_m': 450.0,
-            'num_segments': 5,
-            'avg_grade': 4.2,
-            'max_grade': 9.5,
-            'total_cost': 135000.0,
+            "total_length_m": 450.0,
+            "num_segments": 5,
+            "avg_grade": 4.2,
+            "max_grade": 9.5,
+            "total_cost": 135000.0,
         }
 
         # Costs
         data.costs = {
-            'earthwork_cost': 127500.0,
-            'road_cost': 135000.0,
-            'utility_cost': 85000.0,
-            'site_prep_cost': 45000.0,
+            "earthwork_cost": 127500.0,
+            "road_cost": 135000.0,
+            "utility_cost": 85000.0,
+            "site_prep_cost": 45000.0,
         }
 
         # Terrain
         data.terrain_metrics = {
-            'min_elevation': 95.0,
-            'max_elevation': 135.0,
-            'mean_elevation': 115.0,
-            'std_elevation': 8.5,
-            'elevation_range': 40.0,
+            "min_elevation": 95.0,
+            "max_elevation": 135.0,
+            "mean_elevation": 115.0,
+            "std_elevation": 8.5,
+            "elevation_range": 40.0,
         }
 
         # DEM

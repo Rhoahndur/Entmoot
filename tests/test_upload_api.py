@@ -67,9 +67,7 @@ class TestUploadEndpoint:
     def test_upload_geojson_file_success(self, client: TestClient, temp_upload_dir: Path) -> None:
         """Test successful upload of a GeoJSON file."""
         file_content = b'{"type": "FeatureCollection", "features": []}'
-        files = {
-            "file": ("test.geojson", io.BytesIO(file_content), "application/geo+json")
-        }
+        files = {"file": ("test.geojson", io.BytesIO(file_content), "application/geo+json")}
 
         response = client.post("/api/v1/upload", files=files)
 
@@ -105,9 +103,7 @@ class TestUploadEndpoint:
         assert data["detail"]["error_code"] == "VALIDATION_ERROR"
 
     @pytest.mark.integration
-    def test_upload_mismatched_mime_type(
-        self, client: TestClient, temp_upload_dir: Path
-    ) -> None:
+    def test_upload_mismatched_mime_type(self, client: TestClient, temp_upload_dir: Path) -> None:
         """Test that mismatched MIME types are rejected."""
         # KMZ file with wrong MIME type
         file_content = b"PK\x03\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00test"
@@ -177,9 +173,7 @@ class TestUploadEndpoint:
         assert response.status_code in [400, 422]
 
     @pytest.mark.integration
-    def test_upload_file_stored_correctly(
-        self, client: TestClient, temp_upload_dir: Path
-    ) -> None:
+    def test_upload_file_stored_correctly(self, client: TestClient, temp_upload_dir: Path) -> None:
         """Test that uploaded file is stored in correct location."""
         file_content = b"PK\x03\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00test data"
         files = {"file": ("test.kmz", io.BytesIO(file_content), "application/zip")}

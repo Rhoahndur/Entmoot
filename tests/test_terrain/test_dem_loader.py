@@ -46,8 +46,8 @@ def simple_dem_path(fixtures_dir, tmp_path):
         # Write GeoTIFF
         with rasterio.open(
             dem_path,
-            'w',
-            driver='GTiff',
+            "w",
+            driver="GTiff",
             height=height,
             width=width,
             count=1,
@@ -73,7 +73,7 @@ def ascii_grid_path(tmp_path):
     elevation = np.arange(width * height, dtype=np.float32).reshape(height, width)
     elevation = elevation + 100
 
-    with open(asc_path, 'w') as f:
+    with open(asc_path, "w") as f:
         f.write(f"ncols         {width}\n")
         f.write(f"nrows         {height}\n")
         f.write(f"xllcorner     0.0\n")
@@ -187,7 +187,7 @@ class TestDEMLoaderASCIIGrid:
         elevation = np.ones((height, width), dtype=np.float32) * 100
         elevation[2, 2] = -9999  # No-data value
 
-        with open(asc_path, 'w') as f:
+        with open(asc_path, "w") as f:
             f.write(f"ncols         {width}\n")
             f.write(f"nrows         {height}\n")
             f.write(f"xllcorner     0.0\n")
@@ -208,7 +208,7 @@ class TestDEMLoaderASCIIGrid:
         asc_path = tmp_path / "test_invalid.asc"
 
         # Create incomplete ASCII grid
-        with open(asc_path, 'w') as f:
+        with open(asc_path, "w") as f:
             f.write("ncols 10\n")
             f.write("nrows 10\n")
             # Missing other required fields
@@ -223,11 +223,7 @@ class TestDEMLoaderWindow:
     def test_load_window(self, dem_loader, simple_dem_path):
         """Test loading a specific window."""
         dem_data = dem_loader.load_window(
-            simple_dem_path,
-            col_off=10,
-            row_off=10,
-            width=20,
-            height=20
+            simple_dem_path, col_off=10, row_off=10, width=20, height=20
         )
 
         assert dem_data.elevation.shape == (20, 20)
@@ -241,11 +237,7 @@ class TestDEMLoaderWindow:
 
         # Load window
         window_dem = dem_loader.load_window(
-            simple_dem_path,
-            col_off=10,
-            row_off=10,
-            width=20,
-            height=20
+            simple_dem_path, col_off=10, row_off=10, width=20, height=20
         )
 
         # Check that window bounds are subset of full bounds
@@ -291,9 +283,7 @@ class TestDEMLoaderUnitConversion:
         """Test meters to feet conversion."""
         elevation_m = np.array([100.0, 200.0, 300.0], dtype=np.float32)
         elevation_ft = dem_loader._convert_units(
-            elevation_m,
-            ElevationUnit.METERS,
-            ElevationUnit.FEET
+            elevation_m, ElevationUnit.METERS, ElevationUnit.FEET
         )
 
         # 1 meter = 1/0.3048 feet
@@ -304,9 +294,7 @@ class TestDEMLoaderUnitConversion:
         """Test feet to meters conversion."""
         elevation_ft = np.array([100.0, 200.0, 300.0], dtype=np.float32)
         elevation_m = dem_loader._convert_units(
-            elevation_ft,
-            ElevationUnit.FEET,
-            ElevationUnit.METERS
+            elevation_ft, ElevationUnit.FEET, ElevationUnit.METERS
         )
 
         # 1 foot = 0.3048 meters
@@ -316,11 +304,7 @@ class TestDEMLoaderUnitConversion:
     def test_convert_same_unit(self, dem_loader):
         """Test conversion with same unit (no-op)."""
         elevation = np.array([100.0, 200.0, 300.0], dtype=np.float32)
-        result = dem_loader._convert_units(
-            elevation,
-            ElevationUnit.METERS,
-            ElevationUnit.METERS
-        )
+        result = dem_loader._convert_units(elevation, ElevationUnit.METERS, ElevationUnit.METERS)
 
         np.testing.assert_array_equal(result, elevation)
 
@@ -370,8 +354,8 @@ class TestDEMLoaderEdgeCases:
 
         with rasterio.open(
             dem_path,
-            'w',
-            driver='GTiff',
+            "w",
+            driver="GTiff",
             height=height,
             width=width,
             count=1,
@@ -407,8 +391,8 @@ class TestDEMLoaderEdgeCases:
 
         with rasterio.open(
             dem_path,
-            'w',
-            driver='GTiff',
+            "w",
+            driver="GTiff",
             height=height,
             width=width,
             count=1,
