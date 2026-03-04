@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 from rasterio.merge import merge
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 
+from entmoot.integrations.rate_limiter import RateLimiter
 from entmoot.models.elevation import (
     DEMTileMetadata,
     DEMTileRequest,
@@ -64,56 +65,6 @@ class USGSClientConfig(BaseModel):
     tile_cache_permanent: bool = Field(
         default=True, description="DEM tiles cached permanently"
     )
-
-
-class RateLimiter:
-    """Token bucket rate limiter."""
-
-    def __init__(self, calls: int, period: float) -> None:
-        """
-        Initialize rate limiter.
-
-        Args:
-            calls: Maximum number of calls per period
-            period: Time period in seconds
-        """
-        self.calls = calls
-        self.period = period
-        self.tokens = float(calls)
-        self.last_update = time.time()
-
-    def acquire(self) -> bool:
-        """
-        Acquire a token for making an API call.
-
-        Returns:
-            True if token acquired, False if rate limited
-        """
-        now = time.time()
-        elapsed = now - self.last_update
-
-        # Refill tokens based on elapsed time
-        self.tokens = min(self.calls, self.tokens + elapsed * (self.calls / self.period))
-        self.last_update = now
-
-        if self.tokens >= 1:
-            self.tokens -= 1
-            return True
-
-        return False
-
-    def wait_time(self) -> float:
-        """
-        Calculate wait time until next token is available.
-
-        Returns:
-            Wait time in seconds
-        """
-        if self.tokens >= 1:
-            return 0.0
-
-        tokens_needed = 1 - self.tokens
-        return tokens_needed * (self.period / self.calls)
 
 
 class USGSClient:

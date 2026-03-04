@@ -10,6 +10,7 @@ Implements API client with:
 - Caching
 """
 
+import asyncio
 import hashlib
 import logging
 import time
@@ -19,6 +20,7 @@ from urllib.parse import urlencode
 import httpx
 from pydantic import BaseModel, Field
 
+from entmoot.integrations.rate_limiter import RateLimiter
 from entmoot.models.regulatory import FloodplainData, RegulatoryDataSource
 
 logger = logging.getLogger(__name__)
@@ -45,56 +47,6 @@ class FEMAClientConfig(BaseModel):
     api_key: Optional[str] = Field(None, description="API key if required")
     cache_enabled: bool = Field(default=True, description="Enable caching")
     cache_ttl: int = Field(default=2592000, description="Cache TTL in seconds (30 days)", ge=0)
-
-
-class RateLimiter:
-    """Token bucket rate limiter."""
-
-    def __init__(self, calls: int, period: float) -> None:
-        """
-        Initialize rate limiter.
-
-        Args:
-            calls: Maximum number of calls per period
-            period: Time period in seconds
-        """
-        self.calls = calls
-        self.period = period
-        self.tokens = float(calls)
-        self.last_update = time.time()
-
-    def acquire(self) -> bool:
-        """
-        Acquire a token for making an API call.
-
-        Returns:
-            True if token acquired, False if rate limited
-        """
-        now = time.time()
-        elapsed = now - self.last_update
-
-        # Refill tokens based on elapsed time
-        self.tokens = min(self.calls, self.tokens + elapsed * (self.calls / self.period))
-        self.last_update = now
-
-        if self.tokens >= 1:
-            self.tokens -= 1
-            return True
-
-        return False
-
-    def wait_time(self) -> float:
-        """
-        Calculate wait time until next token is available.
-
-        Returns:
-            Wait time in seconds
-        """
-        if self.tokens >= 1:
-            return 0.0
-
-        tokens_needed = 1 - self.tokens
-        return tokens_needed * (self.period / self.calls)
 
 
 class FEMAClient:
@@ -222,8 +174,7 @@ class FEMAClient:
         while not self.rate_limiter.acquire():
             wait_time = self.rate_limiter.wait_time()
             logger.debug(f"Rate limited, waiting {wait_time:.2f}s")
-            await httpx.AsyncClient().aclose()  # Release any connection
-            time.sleep(wait_time)
+            await asyncio.sleep(wait_time)
 
         url = f"{self.config.base_url}/{endpoint}"
 
@@ -257,7 +208,7 @@ class FEMAClient:
             if retry_count < self.config.max_retries:
                 backoff = self.config.retry_backoff_factor * (2**retry_count)
                 logger.info(f"Retrying in {backoff:.2f}s...")
-                time.sleep(backoff)
+                await asyncio.sleep(backoff)
                 return await self._make_request(endpoint, params, retry_count + 1)
 
             # Max retries exceeded
