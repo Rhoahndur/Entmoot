@@ -70,13 +70,13 @@ const createApiClient = (): AxiosInstance => {
 export class ApiError extends Error {
   public status: number;
   public code?: string;
-  public details?: Record<string, any>;
+  public details?: Record<string, unknown>;
 
   constructor(
     message: string,
     status: number,
     code?: string,
-    details?: Record<string, any>
+    details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'ApiError';

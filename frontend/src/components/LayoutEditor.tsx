@@ -65,6 +65,7 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
       setEditHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalMoveOperation]);
 
   // Cleanup animation frame on unmount

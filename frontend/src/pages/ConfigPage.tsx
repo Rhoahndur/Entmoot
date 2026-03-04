@@ -76,17 +76,17 @@ export const ConfigPage: React.FC = () => {
     setAssets(assets.filter((_, i) => i !== index));
   };
 
-  const handleAssetChange = (index: number, field: keyof AssetConfig, value: any) => {
+  const handleAssetChange = (index: number, field: keyof AssetConfig, value: AssetConfig[keyof AssetConfig]) => {
     const newAssets = [...assets];
     newAssets[index] = { ...newAssets[index], [field]: value };
     setAssets(newAssets);
   };
 
-  const handleConstraintChange = (field: keyof ConstraintConfig, value: any) => {
+  const handleConstraintChange = (field: keyof ConstraintConfig, value: ConstraintConfig[keyof ConstraintConfig]) => {
     setConstraints({ ...constraints, [field]: value });
   };
 
-  const handleRoadConfigChange = (field: keyof RoadConfig, value: any) => {
+  const handleRoadConfigChange = (field: keyof RoadConfig, value: RoadConfig[keyof RoadConfig]) => {
     setRoadConfig({ ...roadConfig, [field]: value });
   };
 
@@ -125,9 +125,9 @@ export const ConfigPage: React.FC = () => {
 
       // Navigate to results page with project ID
       navigate(`/results?project_id=${response.project_id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error submitting configuration:', err);
-      setError(err.message || 'Failed to submit configuration. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to submit configuration. Please try again.');
       setIsSubmitting(false);
     }
   };

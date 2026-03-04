@@ -31,7 +31,7 @@ export interface UploadResponse {
 export interface ErrorResponse {
   error_code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export interface UploadMetadata {

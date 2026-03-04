@@ -3,7 +3,7 @@
  * Supports layers, controls, and interaction handlers
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type {
@@ -147,6 +147,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       map.current?.remove();
       map.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update property boundary layer
@@ -605,11 +606,19 @@ export const MapViewer: React.FC<MapViewerProps> = ({
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapLoaded, assets, layerVisibility.assets, selectedAssetId, violatingAssetIds]);
+
+  // Stable key for asset positions to avoid unnecessary marker recreation
+  const assetsPositionKey = useMemo(() =>
+    JSON.stringify(assets.map(a => ({ id: a.id, lat: a.position.latitude, lng: a.position.longitude }))),
+    [assets]
+  );
 
   // Update asset markers (only when assets are added/removed or selection changes)
   useEffect(() => {
     if (!map.current || !mapLoaded || !layerVisibility.assets) return;
+    const currentMarkers = markersRef.current;
 
     // Global drag handlers
     const onGlobalMouseMove = (e: maplibregl.MapMouseEvent) => {
@@ -619,11 +628,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       // Update the polygon in real-time
       const source = map.current?.getSource('asset-polygons') as maplibregl.GeoJSONSource;
       if (source) {
-        const data = source._data as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (source as any)._data as { features?: Array<{ properties: { id: string }; geometry: { coordinates: number[][][] } }> };
         if (data?.features) {
           // Find the feature for this asset and update its geometry
           const featureIndex = data.features.findIndex(
-            (f: any) => f.properties.id === dragStateRef.current!.assetId
+            (f) => f.properties.id === dragStateRef.current!.assetId
           );
           if (featureIndex !== -1) {
             const asset = assets.find(a => a.id === dragStateRef.current!.assetId);
@@ -685,11 +695,11 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     // For now, recreate all markers to avoid stale closure issues
     // TODO: Optimize this later by properly updating event listeners
-    markersRef.current.forEach((markerData) => {
+    currentMarkers.forEach((markerData) => {
       markerData.marker.remove();
       markerData.popup.remove(); // Clean up popup
     });
-    markersRef.current.clear();
+    currentMarkers.clear();
 
     // Create markers for each asset
     assets.forEach((asset) => {
@@ -788,7 +798,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       el.addEventListener('mouseleave', handleMouseLeave);
 
       // Store marker and popup references for future updates
-      markersRef.current.set(asset.id, { marker, element: el, popup });
+      currentMarkers.set(asset.id, { marker, element: el, popup });
     });
 
     // Cleanup function
@@ -799,11 +809,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       document.removeEventListener('keyup', onGlobalKeyUp);
 
       // Clean up all popups when unmounting or dependencies change
-      markersRef.current.forEach((markerData) => {
+      currentMarkers.forEach((markerData) => {
         markerData.popup.remove();
       });
     };
-  }, [mapLoaded, assets.length, JSON.stringify(assets.map(a => ({id: a.id, lat: a.position.latitude, lng: a.position.longitude}))), layerVisibility.assets, selectedAssetId, editable, onAssetClick, onAssetMove]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapLoaded, assetsPositionKey, layerVisibility.assets, selectedAssetId, editable]);
 
   const toggleMeasurement = () => {
     const newMeasuring = !measuring;
@@ -850,7 +861,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     if (!measuring || measurementPoints.length === 0) return;
 
     // Create line features
-    const features: any[] = [];
+    const features: Array<{ type: string; properties: Record<string, unknown>; geometry: { type: string; coordinates: number[] | number[][] } }> = [];
 
     // Add points
     measurementPoints.forEach((point, index) => {
