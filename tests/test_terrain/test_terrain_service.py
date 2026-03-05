@@ -12,7 +12,6 @@ from shapely.geometry import Polygon, box
 
 from entmoot.services.terrain_service import TerrainData, prepare_terrain_data
 
-
 # -----------------------------------------------------------------------
 # Fixtures
 # -----------------------------------------------------------------------
