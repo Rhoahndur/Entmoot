@@ -320,6 +320,7 @@ class OptimizationObjective:
         slope_data: Optional[NDArray[np.floating[Any]]] = None,
         transform: Optional[Any] = None,
         road_entry_point: Optional[Tuple[float, float]] = None,
+        terrain_data: Optional[Any] = None,
     ):
         """
         Initialize optimization objectives.
@@ -331,6 +332,7 @@ class OptimizationObjective:
             slope_data: Slope percentage data
             transform: Rasterio affine transform
             road_entry_point: (x, y) point where road enters site
+            terrain_data: TerrainData object with sampling methods (optional)
         """
         self.constraints = constraints
         self.weights = weights or ObjectiveWeights()
@@ -338,6 +340,7 @@ class OptimizationObjective:
         self.slope_data = slope_data
         self.transform = transform
         self.road_entry_point = road_entry_point or (0.0, 0.0)
+        self.terrain_data = terrain_data
 
     def evaluate(self, solution: PlacementSolution) -> float:
         """
@@ -442,21 +445,40 @@ class OptimizationObjective:
         """
         Evaluate cut/fill objective (minimize earthwork).
 
+        When terrain_data is available, samples the elevation grid under each
+        asset footprint and scores based on elevation variance (flat = 100,
+        high variance = 0).
+
         Returns:
             Score 0-100 (higher = better, less cut/fill needed)
         """
         if self.elevation_data is None:
             return 50.0  # Neutral score if no elevation data
 
+        if self.terrain_data is not None:
+            total_variance = 0.0
+            count = 0
+            for asset in solution.assets:
+                footprint = asset.get_geometry()
+                elevations = self.terrain_data.get_elevation_under_footprint(footprint)
+                if len(elevations) > 1:
+                    total_variance += float(np.var(elevations))
+                    count += 1
+
+            if count == 0:
+                return 50.0
+
+            avg_variance = total_variance / count
+            # Normalize: 0 variance → 100, ≥4 m² variance → 0
+            score = 100.0 * max(0.0, 1.0 - avg_variance / 4.0)
+            return score
+
+        # Fallback heuristic when we have elevation_data array but no terrain_data
         total_variance = 0.0
         for asset in solution.assets:
-            # Get elevation at asset location
             x, y = asset.position
-            # Sample elevation (simplified - would need proper raster sampling)
-            # For now, use a heuristic based on position variance
             total_variance += abs(x % 100) + abs(y % 100)
 
-        # Normalize to 0-100 (lower variance = higher score)
         max_variance = len(solution.assets) * 200
         score = (
             100.0 * (1.0 - min(total_variance / max_variance, 1.0)) if max_variance > 0 else 100.0
@@ -556,25 +578,45 @@ class OptimizationObjective:
         """
         Evaluate slope variance (minimize variance in slopes at asset locations).
 
+        When terrain_data is available, samples the mean slope under each asset
+        footprint and scores based on average slope + variance across assets.
+
         Returns:
             Score 0-100 (higher = better, less variance)
         """
         if self.slope_data is None or not solution.assets:
             return 50.0  # Neutral score
 
-        # Simplified: would need proper raster sampling
-        # For now, use heuristic based on position clustering
+        if self.terrain_data is not None:
+            slopes = []
+            for asset in solution.assets:
+                footprint = asset.get_geometry()
+                mean_slope = self.terrain_data.get_mean_slope_in_footprint(footprint)
+                if mean_slope is not None:
+                    slopes.append(mean_slope)
+
+            if not slopes:
+                return 50.0
+
+            avg_slope = float(np.mean(slopes))
+            slope_var = float(np.var(slopes)) if len(slopes) > 1 else 0.0
+
+            # Score: penalise high average slope and high variance
+            # avg_slope ≥ 25% → 0; variance ≥ 100 → 0
+            slope_score = max(0.0, 1.0 - avg_slope / 25.0)
+            var_score = max(0.0, 1.0 - slope_var / 100.0)
+            score = 100.0 * (0.6 * slope_score + 0.4 * var_score)
+            return score
+
+        # Fallback heuristic
         positions = [asset.position for asset in solution.assets]
         if len(positions) < 2:
             return 100.0
 
-        # Calculate variance in positions as proxy for slope variance
         xs = [p[0] for p in positions]
         ys = [p[1] for p in positions]
-
         variance = np.var(xs) + np.var(ys)
 
-        # Normalize: lower variance = higher score
-        max_variance = 10000.0  # Typical
+        max_variance = 10000.0
         score = 100.0 * (1.0 - min(variance / max_variance, 1.0))
         return max(score, 0.0)

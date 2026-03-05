@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+import numpy as np
 from shapely.geometry import box, shape
 
 from entmoot.core.redis_storage import get_storage
@@ -594,6 +595,14 @@ def run_optimization_sync(  # noqa: C901
         length_m = math.sqrt(dx_m**2 + dy_m**2)
         length_ft = length_m * 3.28084
 
+        # Compute road grade from real elevation if terrain data is available
+        road_grade = 0.0
+        if terrain_data and length_m > 0:
+            elev_start = terrain_data.sample_elevation(entrance_pos[0], entrance_pos[1])
+            elev_end = terrain_data.sample_elevation(asset.position[0], asset.position[1])
+            if elev_start is not None and elev_end is not None:
+                road_grade = abs(elev_end - elev_start) / length_m * 100.0
+
         segment = RoadSegment(
             id=f"road_{i}",
             points=[
@@ -601,7 +610,7 @@ def run_optimization_sync(  # noqa: C901
                 Coordinate(latitude=asset_lat, longitude=asset_lon),
             ],
             width=config.road_design.min_width,
-            grade=0.0,
+            grade=round(road_grade, 2),
             surface_type=config.road_design.surface_type,
             length=length_ft,
         )
@@ -611,10 +620,32 @@ def run_optimization_sync(  # noqa: C901
     # Step 9: Calculate earthwork
     # ------------------------------------------------------------------
     logger.info("Calculating earthwork")
-    total_cut = sum(a.area_sqm * 0.5 for a in result.best_solution.assets)
-    total_fill = sum(a.area_sqm * 0.3 for a in result.best_solution.assets)
-    total_cut_cy = total_cut * 1.30795
-    total_fill_cy = total_fill * 1.30795
+
+    if terrain_data:
+        # Real earthwork: sample elevation under each asset footprint, compute cut/fill
+        # against median target elevation
+        total_cut_m3 = 0.0
+        total_fill_m3 = 0.0
+        for asset in result.best_solution.assets:
+            footprint = asset.get_geometry()
+            elevations = terrain_data.get_elevation_under_footprint(footprint)
+            if len(elevations) > 0:
+                target_elev = float(np.median(elevations))
+                cuts = elevations[elevations > target_elev] - target_elev
+                fills = target_elev - elevations[elevations < target_elev]
+                pixel_area = terrain_data.cell_size ** 2
+                total_cut_m3 += float(np.sum(cuts)) * pixel_area
+                total_fill_m3 += float(np.sum(fills)) * pixel_area
+            else:
+                # Fallback for assets outside DEM extent
+                total_cut_m3 += asset.area_sqm * 0.5
+                total_fill_m3 += asset.area_sqm * 0.3
+    else:
+        total_cut_m3 = sum(a.area_sqm * 0.5 for a in result.best_solution.assets)
+        total_fill_m3 = sum(a.area_sqm * 0.3 for a in result.best_solution.assets)
+
+    total_cut_cy = total_cut_m3 * 1.30795
+    total_fill_cy = total_fill_m3 * 1.30795
 
     earthwork = EarthworkSummary(
         total_cut_volume=total_cut_cy,
