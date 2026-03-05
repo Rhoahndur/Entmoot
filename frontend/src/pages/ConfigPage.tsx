@@ -19,6 +19,7 @@ export const ConfigPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const uploadId = searchParams.get('upload_id');
+  const demUploadId = searchParams.get('dem_upload_id');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,6 +112,7 @@ export const ConfigPage: React.FC = () => {
     const config: ProjectConfig = {
       project_name: projectName,
       upload_id: uploadId,
+      ...(demUploadId ? { dem_upload_id: demUploadId } : {}),
       assets,
       constraints,
       road_design: roadConfig,
@@ -145,6 +147,14 @@ export const ConfigPage: React.FC = () => {
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800">
               <span className="font-medium">Upload ID:</span> {uploadId}
+            </p>
+            <p className="text-sm text-green-800 mt-1">
+              <span className="font-medium">Terrain data:</span>{' '}
+              {demUploadId ? (
+                <span className="text-green-700">Uploaded</span>
+              ) : (
+                <span className="text-gray-500">Not provided (using defaults)</span>
+              )}
             </p>
           </div>
         )}
