@@ -309,7 +309,9 @@ def run_optimization_sync(  # noqa: C901
 
             dem_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(dem_loop)
-            dem_file_path = dem_loop.run_until_complete(storage_service.get_file_path(dem_upload_id))
+            dem_file_path = dem_loop.run_until_complete(
+                storage_service.get_file_path(dem_upload_id)
+            )
             dem_loop.close()
 
             if dem_file_path and dem_file_path.exists():
@@ -326,9 +328,7 @@ def run_optimization_sync(  # noqa: C901
                     tc = get_utm_crs_info(cx, cy)
                     target_crs_epsg = tc.epsg
 
-                terrain_data = prepare_terrain_data(
-                    dem_file_path, site_boundary, target_crs_epsg
-                )
+                terrain_data = prepare_terrain_data(dem_file_path, site_boundary, target_crs_epsg)
                 logger.info("Terrain data loaded successfully")
             else:
                 logger.warning(f"DEM file not found for dem_upload_id: {config.dem_upload_id}")
@@ -633,7 +633,7 @@ def run_optimization_sync(  # noqa: C901
                 target_elev = float(np.median(elevations))
                 cuts = elevations[elevations > target_elev] - target_elev
                 fills = target_elev - elevations[elevations < target_elev]
-                pixel_area = terrain_data.cell_size ** 2
+                pixel_area = terrain_data.cell_size**2
                 total_cut_m3 += float(np.sum(cuts)) * pixel_area
                 total_fill_m3 += float(np.sum(fills)) * pixel_area
             else:

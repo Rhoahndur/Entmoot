@@ -178,16 +178,26 @@ def prepare_terrain_data(
     if src_crs and not src_crs.equals(target_crs):
         logger.info(f"Reprojecting DEM from {src_crs.name} to EPSG:{target_crs_epsg}")
         src_bounds = dem_data.metadata.bounds
-        src_transform = Affine(*dem_data.metadata.transform) if dem_data.metadata.transform else (
-            Affine(
-                dem_data.metadata.resolution[0], 0, src_bounds[0],
-                0, -dem_data.metadata.resolution[1], src_bounds[3],
+        src_transform = (
+            Affine(*dem_data.metadata.transform)
+            if dem_data.metadata.transform
+            else (
+                Affine(
+                    dem_data.metadata.resolution[0],
+                    0,
+                    src_bounds[0],
+                    0,
+                    -dem_data.metadata.resolution[1],
+                    src_bounds[3],
+                )
             )
         )
 
         dst_transform, dst_width, dst_height = calculate_default_transform(
-            src_crs, target_crs,
-            dem_data.metadata.width, dem_data.metadata.height,
+            src_crs,
+            target_crs,
+            dem_data.metadata.width,
+            dem_data.metadata.height,
             *src_bounds,
         )
 
@@ -214,8 +224,12 @@ def prepare_terrain_data(
         else:
             b = dem_data.metadata.bounds
             transform = Affine(
-                dem_data.metadata.resolution[0], 0, b[0],
-                0, -dem_data.metadata.resolution[1], b[3],
+                dem_data.metadata.resolution[0],
+                0,
+                b[0],
+                0,
+                -dem_data.metadata.resolution[1],
+                b[3],
             )
         cell_size = dem_data.metadata.resolution[0]
 
@@ -249,8 +263,12 @@ def prepare_terrain_data(
 
     # Rebuild transform from cropped bounds
     transform = Affine(
-        cell_size, 0, bounds[0],
-        0, -cell_size, bounds[3],
+        cell_size,
+        0,
+        bounds[0],
+        0,
+        -cell_size,
+        bounds[3],
     )
 
     # 5. Compute slope (percent)
