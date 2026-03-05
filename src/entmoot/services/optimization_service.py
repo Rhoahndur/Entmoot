@@ -293,6 +293,48 @@ def run_optimization_sync(  # noqa: C901
             )
             site_boundary = box(0, 0, 500 * 0.3048, 500 * 0.3048)
 
+    # ------------------------------------------------------------------
+    # Step 2c: Load DEM if provided
+    # ------------------------------------------------------------------
+    terrain_data = None
+    target_crs_epsg = None
+
+    if hasattr(config, "dem_upload_id") and config.dem_upload_id:
+        try:
+            from entmoot.services.terrain_service import prepare_terrain_data
+
+            logger.info(f"Loading DEM for dem_upload_id: {config.dem_upload_id}")
+            dem_upload_id = UUID(config.dem_upload_id)
+
+            dem_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(dem_loop)
+            dem_file_path = dem_loop.run_until_complete(storage_service.get_file_path(dem_upload_id))
+            dem_loop.close()
+
+            if dem_file_path and dem_file_path.exists():
+                # Determine target CRS EPSG
+                if "target_crs" in dir() and hasattr(target_crs, "to_epsg"):
+                    target_crs_epsg = target_crs.to_epsg()
+                else:
+                    # Fallback: derive from boundary centroid
+                    from entmoot.core.crs.utm import get_utm_crs_info
+
+                    cx, cy = site_boundary.centroid.x, site_boundary.centroid.y
+                    if raw_boundary:
+                        cx, cy = raw_boundary.centroid.x, raw_boundary.centroid.y
+                    tc = get_utm_crs_info(cx, cy)
+                    target_crs_epsg = tc.epsg
+
+                terrain_data = prepare_terrain_data(
+                    dem_file_path, site_boundary, target_crs_epsg
+                )
+                logger.info("Terrain data loaded successfully")
+            else:
+                logger.warning(f"DEM file not found for dem_upload_id: {config.dem_upload_id}")
+        except Exception as e:
+            logger.warning(f"Failed to load DEM, continuing without terrain data: {e}")
+            terrain_data = None
+
     # Update progress
     _update_progress(project_id, 10)
 
@@ -357,6 +399,39 @@ def run_optimization_sync(  # noqa: C901
     )
 
     # ------------------------------------------------------------------
+    # Step 4b: Generate slope exclusion zones from terrain data
+    # ------------------------------------------------------------------
+    if terrain_data is not None:
+        try:
+            import rasterio.features
+            from shapely.geometry import shape as shapely_shape
+
+            slope_limit = config.constraints.slope_limit
+            steep_mask = (terrain_data.slope_percent > slope_limit).astype(np.uint8)
+
+            if np.any(steep_mask):
+                shapes_gen = rasterio.features.shapes(
+                    steep_mask, mask=steep_mask == 1, transform=terrain_data.transform
+                )
+                for geom, value in shapes_gen:
+                    exclusion_poly = shapely_shape(geom)
+                    clipped = exclusion_poly.intersection(site_boundary)
+                    if not clipped.is_empty and clipped.area > 1.0:
+                        if clipped.geom_type == "Polygon":
+                            constraints.exclusion_zones.append(clipped)
+                        elif clipped.geom_type == "MultiPolygon":
+                            for part in clipped.geoms:
+                                if part.area > 1.0:
+                                    constraints.exclusion_zones.append(part)
+
+                logger.info(
+                    f"Added {len(constraints.exclusion_zones)} slope exclusion zones "
+                    f"(slope > {slope_limit}%)"
+                )
+        except Exception as e:
+            logger.warning(f"Failed to generate slope exclusion zones: {e}")
+
+    # ------------------------------------------------------------------
     # Step 5: Set up optimization objectives
     # ------------------------------------------------------------------
     logger.info("Setting up optimization objectives")
@@ -372,10 +447,11 @@ def run_optimization_sync(  # noqa: C901
     objective = OptimizationObjective(
         constraints=constraints,
         weights=objective_weights,
-        elevation_data=None,
-        slope_data=None,
-        transform=None,
+        elevation_data=terrain_data.elevation if terrain_data else None,
+        slope_data=terrain_data.slope_percent if terrain_data else None,
+        transform=terrain_data.transform if terrain_data else None,
         road_entry_point=(site_boundary.centroid.x, site_boundary.centroid.y),
+        terrain_data=terrain_data,
     )
 
     _update_progress(project_id, 30)

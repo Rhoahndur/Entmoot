@@ -84,6 +84,9 @@ class ProjectConfig(BaseModel):
     constraints: ConstraintConfig = Field(..., description="Constraint configuration")
     road_design: RoadConfig = Field(..., description="Road design configuration")
     optimization_weights: OptimizationWeights = Field(..., description="Optimization weights")
+    dem_upload_id: Optional[str] = Field(
+        None, description="Upload ID for DEM file (optional)"
+    )
 
 
 class ProjectStatus(str, Enum):
