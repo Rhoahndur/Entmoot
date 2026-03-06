@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from shapely.geometry import LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon
+from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 from shapely.validation import make_valid
@@ -450,7 +450,7 @@ class BufferGenerator:
                 "source_feature_wkt": water_geometry.wkt,
                 **kwargs.get("metadata", {}),
             },
-            **{k: v for k, v in kwargs.items() if k not in ["metadata"]},
+            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority", "metadata"]},
         )
 
     def create_utility_setback(

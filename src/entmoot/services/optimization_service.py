@@ -206,6 +206,7 @@ def run_optimization_sync(  # noqa: C901
     # ------------------------------------------------------------------
     # Step 2b: CRS transformation
     # ------------------------------------------------------------------
+    transformer = None
     inverse_transformer = None
 
     if not raw_boundary:
@@ -357,6 +358,7 @@ def run_optimization_sync(  # noqa: C901
     if (
         config.constraints.use_existing_conditions
         and raw_boundary is not None
+        and transformer is not None
         and inverse_transformer is not None
     ):
         try:

@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from shapely.errors import GEOSException
 from shapely.geometry import LineString, Polygon
 
 from entmoot.models.existing_conditions import (
@@ -72,7 +73,8 @@ class OSMResponseParser:
         water_features: List[OSMFeature] = []
 
         for el in elements:
-            if el.get("type") not in ("way", "relation"):
+            # Only process ways — relation member resolution not yet implemented
+            if el.get("type") != "way":
                 continue
 
             tags = el.get("tags", {})
@@ -189,7 +191,8 @@ class OSMResponseParser:
             if poly.is_empty:
                 return None
             return poly
-        except Exception:
+        except (ValueError, GEOSException):
+            logger.debug("Failed to create polygon from %d coords", len(coords))
             return None
 
     @staticmethod

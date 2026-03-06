@@ -183,7 +183,7 @@ class ConstraintAggregator:
 
         # Calculate available area
         (
-            available_geom,
+            _,
             available_sqm,
             available_acres,
         ) = ConstraintAggregator.calculate_available_area(

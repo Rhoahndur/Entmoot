@@ -5,7 +5,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional
 from uuid import UUID, uuid4
 
 from entmoot.core.config import settings

@@ -211,7 +211,7 @@ class CollisionDetector:
         """
         geom1 = asset1.get_geometry()
         geom2 = asset2.get_geometry()
-        return bool(geom1.intersects(geom2))
+        return bool(geom1.intersects(geom2) and not geom1.touches(geom2))
 
     def check_spacing(self, asset1: PlacedAsset, asset2: PlacedAsset) -> Tuple[bool, float, float]:
         """

@@ -141,9 +141,9 @@ fail_under = 25
 
 # Bandit security linter configuration
 [tool.bandit]
-# B311: random module usage — our genetic algorithm uses random for
-# pseudo-random optimization (seeded for reproducibility), not for crypto.
-skips = ["B311"]
+# B405: xml.etree import — we use defusedxml for all parsing; the only
+# stdlib import is xml.etree.ElementTree.Element for type annotations.
+skips = ["B405"]
 
 # Mypy configuration
 [tool.mypy]

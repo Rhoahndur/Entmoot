@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.ops import unary_union

@@ -8,6 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+from xml.etree.ElementTree import Element
 
 import defusedxml.ElementTree as ET
 from shapely.geometry.base import BaseGeometry
@@ -213,7 +214,7 @@ class KMLParser:
             self.result.parse_errors.append(str(e))
             raise
 
-    def _parse_document(self, root: ET.Element) -> None:
+    def _parse_document(self, root: Element) -> None:
         """
         Parse Document-level elements.
 
@@ -236,7 +237,7 @@ class KMLParser:
             # Parse extended data
             self._parse_extended_data(document, self.result.properties)
 
-    def _parse_styles(self, root: ET.Element) -> None:
+    def _parse_styles(self, root: Element) -> None:
         """
         Parse Style and StyleMap elements.
 
@@ -272,9 +273,7 @@ class KMLParser:
 
                 self.result.styles[style_id] = style_data
 
-    def _parse_placemarks(
-        self, element: ET.Element, folder_path: Optional[List[str]] = None
-    ) -> None:
+    def _parse_placemarks(self, element: Element, folder_path: Optional[List[str]] = None) -> None:
         """
         Recursively parse Placemarks from element and its folders.
 
@@ -291,7 +290,7 @@ class KMLParser:
         else:
             self._parse_element_placemarks(element, folder_path)
 
-    def _parse_element_placemarks(self, element: ET.Element, folder_path: List[str]) -> None:
+    def _parse_element_placemarks(self, element: Element, folder_path: List[str]) -> None:
         """
         Recursively parse Placemarks from element and its folders.
 
@@ -321,7 +320,7 @@ class KMLParser:
             self.result.folders.append("/".join(folder_path + [folder_name]))
             self._parse_element_placemarks(folder, folder_path + [folder_name])
 
-    def _parse_placemark(self, element: ET.Element, folder_path: List[str]) -> Optional[Placemark]:
+    def _parse_placemark(self, element: Element, folder_path: List[str]) -> Optional[Placemark]:
         """
         Parse a single Placemark element.
 
@@ -373,7 +372,7 @@ class KMLParser:
 
         return placemark
 
-    def _parse_geometry(self, element: ET.Element) -> Optional[ParsedGeometry]:
+    def _parse_geometry(self, element: Element) -> Optional[ParsedGeometry]:
         """
         Parse geometry from Placemark element.
 
@@ -391,9 +390,7 @@ class KMLParser:
 
         return None
 
-    def _parse_geometry_element(
-        self, element: ET.Element, geom_type: str
-    ) -> Optional[ParsedGeometry]:
+    def _parse_geometry_element(self, element: Element, geom_type: str) -> Optional[ParsedGeometry]:
         """
         Parse specific geometry element.
 
@@ -458,7 +455,7 @@ class KMLParser:
             logger.error(f"Failed to parse {geom_type}: {e}")
             return None
 
-    def _parse_extended_data(self, element: ET.Element, properties: Dict[str, Any]) -> None:
+    def _parse_extended_data(self, element: Element, properties: Dict[str, Any]) -> None:
         """
         Parse ExtendedData elements and add to properties.
 

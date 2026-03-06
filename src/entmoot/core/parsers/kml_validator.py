@@ -9,6 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Union
+from xml.etree.ElementTree import Element
 
 import defusedxml.ElementTree as ET
 
@@ -141,7 +142,7 @@ class KMLValidator:
             self.result.add_error(f"Validation failed: {e}")
             return self.result
 
-    def _validate_root(self, root: ET.Element) -> bool:
+    def _validate_root(self, root: Element) -> bool:
         """
         Validate root element is 'kml'.
 
@@ -163,7 +164,7 @@ class KMLValidator:
 
         return True
 
-    def _extract_namespace(self, root: ET.Element) -> None:
+    def _extract_namespace(self, root: Element) -> None:
         """
         Extract KML namespace from root element.
 
@@ -176,7 +177,7 @@ class KMLValidator:
         else:
             self.result.add_warning("No namespace found in KML file")
 
-    def _validate_structure(self, root: ET.Element) -> None:
+    def _validate_structure(self, root: Element) -> None:
         """
         Validate KML structure (Document, Folder, Placemark hierarchy).
 
@@ -201,7 +202,7 @@ class KMLValidator:
         else:
             self.result.add_warning("No Placemark elements found")
 
-    def _validate_geometries(self, root: ET.Element) -> None:
+    def _validate_geometries(self, root: Element) -> None:
         """
         Validate geometry elements in KML.
 
@@ -223,7 +224,7 @@ class KMLValidator:
         self.result.geometry_count = geometry_count
         self.result.has_geometries = geometry_count > 0
 
-    def _validate_geometry_element(self, element: ET.Element, geom_type: str) -> None:
+    def _validate_geometry_element(self, element: Element, geom_type: str) -> None:
         """
         Validate individual geometry element.
 

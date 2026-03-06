@@ -3,9 +3,9 @@
  * Supports layers, controls, and interaction handlers
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type {
   Coordinate,
   PlacedAsset,
@@ -14,7 +14,7 @@ import type {
   BuildableArea,
   LayerVisibility,
   Bounds,
-} from '../types/results';
+} from "../types/results";
 
 interface MapViewerProps {
   bounds: Bounds;
@@ -54,8 +54,21 @@ export const MapViewer: React.FC<MapViewerProps> = ({
   const [measurementPoints, setMeasurementPoints] = useState<Coordinate[]>([]);
   const measuringRef = useRef(measuring);
   const measurementPointsRef = useRef(measurementPoints);
-  const markersRef = useRef<Map<string, { marker: maplibregl.Marker; element: HTMLElement; popup: maplibregl.Popup }>>(new Map());
-  const dragStateRef = useRef<{ assetId: string; marker: maplibregl.Marker; element: HTMLElement } | null>(null);
+  const markersRef = useRef<
+    Map<
+      string,
+      {
+        marker: maplibregl.Marker;
+        element: HTMLElement;
+        popup: maplibregl.Popup;
+      }
+    >
+  >(new Map());
+  const dragStateRef = useRef<{
+    assetId: string;
+    marker: maplibregl.Marker;
+    element: HTMLElement;
+  } | null>(null);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -78,26 +91,27 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       style: {
         version: 8,
         sources: {
-          'carto-light': {
-            type: 'raster',
+          "carto-light": {
+            type: "raster",
             tiles: [
-              'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-              'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-              'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+              "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+              "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+              "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
             ],
             tileSize: 256,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          }
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          },
         },
         layers: [
           {
-            id: 'carto-light',
-            type: 'raster',
-            source: 'carto-light',
+            id: "carto-light",
+            type: "raster",
+            source: "carto-light",
             minzoom: 0,
-            maxzoom: 19
-          }
-        ]
+            maxzoom: 19,
+          },
+        ],
       },
       center: [centerLng, centerLat],
       zoom: 15,
@@ -105,15 +119,15 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       bearing: 0,
     });
 
-    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-    map.current.addControl(new maplibregl.ScaleControl(), 'bottom-left');
-    map.current.addControl(new maplibregl.FullscreenControl(), 'top-right');
+    map.current.addControl(new maplibregl.NavigationControl(), "top-right");
+    map.current.addControl(new maplibregl.ScaleControl(), "bottom-left");
+    map.current.addControl(new maplibregl.FullscreenControl(), "top-right");
 
-    map.current.on('load', () => {
+    map.current.on("load", () => {
       setMapLoaded(true);
     });
 
-    map.current.on('click', (e) => {
+    map.current.on("click", (e) => {
       // Handle measurement mode clicks
       if (measuringRef.current) {
         const newPoint = {
@@ -139,7 +153,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
           [bounds.west, bounds.south],
           [bounds.east, bounds.north],
         ],
-        { padding: 50 }
+        { padding: 50 },
       );
     }
 
@@ -154,8 +168,8 @@ export const MapViewer: React.FC<MapViewerProps> = ({
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    const sourceId = 'property-boundary';
-    const layerId = 'property-boundary-layer';
+    const sourceId = "property-boundary";
+    const layerId = "property-boundary-layer";
 
     if (map.current.getLayer(layerId)) {
       map.current.removeLayer(layerId);
@@ -171,12 +185,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     coordinates.push(coordinates[0]);
 
     map.current.addSource(sourceId, {
-      type: 'geojson',
+      type: "geojson",
       data: {
-        type: 'Feature',
+        type: "Feature",
         properties: {},
         geometry: {
-          type: 'Polygon',
+          type: "Polygon",
           coordinates: [coordinates],
         },
       },
@@ -184,22 +198,22 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     map.current.addLayer({
       id: layerId,
-      type: 'line',
+      type: "line",
       source: sourceId,
       paint: {
-        'line-color': '#FF0000',
-        'line-width': 3,
-        'line-opacity': 0.8,
+        "line-color": "#FF0000",
+        "line-width": 3,
+        "line-opacity": 0.8,
       },
     });
 
     map.current.addLayer({
       id: `${layerId}-fill`,
-      type: 'fill',
+      type: "fill",
       source: sourceId,
       paint: {
-        'fill-color': '#FF0000',
-        'fill-opacity': 0.1,
+        "fill-color": "#FF0000",
+        "fill-opacity": 0.1,
       },
     });
   }, [mapLoaded, propertyBoundary, layerVisibility.property_boundary]);
@@ -208,8 +222,8 @@ export const MapViewer: React.FC<MapViewerProps> = ({
   useEffect(() => {
     if (!map.current || !mapLoaded || !layerVisibility.buildable_areas) return;
 
-    const sourceId = 'buildable-areas';
-    const layerId = 'buildable-areas-layer';
+    const sourceId = "buildable-areas";
+    const layerId = "buildable-areas-layer";
 
     if (map.current.getLayer(layerId)) {
       map.current.removeLayer(layerId);
@@ -223,45 +237,49 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       coordinates.push(coordinates[0]);
 
       return {
-        type: 'Feature' as const,
+        type: "Feature" as const,
         properties: {
           id: index,
           usable: area.usable,
           area: area.area,
         },
         geometry: {
-          type: 'Polygon' as const,
+          type: "Polygon" as const,
           coordinates: [coordinates],
         },
       };
     });
 
     map.current.addSource(sourceId, {
-      type: 'geojson',
+      type: "geojson",
       data: {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features,
       },
     });
 
     map.current.addLayer({
       id: layerId,
-      type: 'fill',
+      type: "fill",
       source: sourceId,
       paint: {
-        'fill-color': ['case', ['get', 'usable'], '#00FF00', '#FFAA00'],
-        'fill-opacity': 0.3,
+        "fill-color": ["case", ["get", "usable"], "#00FF00", "#FFAA00"],
+        "fill-opacity": 0.3,
       },
     });
   }, [mapLoaded, buildableAreas, layerVisibility.buildable_areas]);
 
-  // Update constraint zones layer
+  // Update constraint zones layer (non-existing-conditions only)
   useEffect(() => {
-    if (!map.current || !mapLoaded || !layerVisibility.constraints) return;
+    if (!map.current || !mapLoaded) return;
 
-    const sourceId = 'constraint-zones';
-    const layerId = 'constraint-zones-layer';
+    const sourceId = "constraint-zones";
+    const layerId = "constraint-zones-layer";
 
+    // Clean up existing layers
+    if (map.current.getLayer(`${layerId}-outline`)) {
+      map.current.removeLayer(`${layerId}-outline`);
+    }
     if (map.current.getLayer(layerId)) {
       map.current.removeLayer(layerId);
     }
@@ -269,91 +287,171 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       map.current.removeSource(sourceId);
     }
 
+    if (!layerVisibility.constraints) return;
+
     const severityColors: Record<string, string> = {
-      low: '#FFFF00',
-      medium: '#FFA500',
-      high: '#FF0000',
+      low: "#FFFF00",
+      medium: "#FFA500",
+      high: "#FF0000",
     };
 
-    const features = constraintZones.map((zone) => {
-      const coordinates = zone.polygon.map((c) => [c.longitude, c.latitude]);
-      coordinates.push(coordinates[0]);
+    // Filter out existing conditions features — they go in their own layer
+    const constraintFeatures = constraintZones
+      .filter((zone) => !zone.type.startsWith("existing_"))
+      .map((zone) => {
+        const coordinates = zone.polygon.map((c) => [c.longitude, c.latitude]);
+        coordinates.push(coordinates[0]);
+        return {
+          type: "Feature" as const,
+          properties: {
+            id: zone.id,
+            type: zone.type,
+            severity: zone.severity,
+            description: zone.description || "",
+          },
+          geometry: {
+            type: "Polygon" as const,
+            coordinates: [coordinates],
+          },
+        };
+      });
 
-      return {
-        type: 'Feature' as const,
-        properties: {
-          id: zone.id,
-          type: zone.type,
-          severity: zone.severity,
-          description: zone.description || '',
-        },
-        geometry: {
-          type: 'Polygon' as const,
-          coordinates: [coordinates],
-        },
-      };
-    });
+    if (constraintFeatures.length === 0) return;
 
     map.current.addSource(sourceId, {
-      type: 'geojson',
+      type: "geojson",
       data: {
-        type: 'FeatureCollection',
-        features,
+        type: "FeatureCollection",
+        features: constraintFeatures,
       },
     });
 
     map.current.addLayer({
       id: layerId,
-      type: 'fill',
+      type: "fill",
       source: sourceId,
       paint: {
-        'fill-color': [
-          'case',
-          // Existing conditions: type-based colors
-          ['==', ['get', 'type'], 'existing_building'],
-          '#8B4513', // brown
-          ['==', ['get', 'type'], 'existing_road'],
-          '#666666', // gray
-          ['==', ['get', 'type'], 'existing_utility'],
-          '#FF8C00', // dark orange
-          ['==', ['get', 'type'], 'existing_water'],
-          '#4169E1', // royal blue
-          // Fallback: severity-based colors
-          ['==', ['get', 'severity'], 'low'],
+        "fill-color": [
+          "case",
+          ["==", ["get", "severity"], "low"],
           severityColors.low,
-          ['==', ['get', 'severity'], 'medium'],
+          ["==", ["get", "severity"], "medium"],
           severityColors.medium,
-          ['==', ['get', 'severity'], 'high'],
+          ["==", ["get", "severity"], "high"],
           severityColors.high,
-          '#CCCCCC',
+          "#CCCCCC",
         ],
-        'fill-opacity': 0.4,
+        "fill-opacity": 0.4,
       },
     });
 
     map.current.addLayer({
       id: `${layerId}-outline`,
-      type: 'line',
+      type: "line",
       source: sourceId,
       paint: {
-        'line-color': '#000000',
-        'line-width': 1,
-        'line-opacity': 0.5,
+        "line-color": "#000000",
+        "line-width": 1,
+        "line-opacity": 0.5,
       },
     });
   }, [mapLoaded, constraintZones, layerVisibility.constraints]);
 
+  // Update existing conditions layer (buildings, roads, utilities, water from OSM)
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const sourceId = "existing-conditions";
+    const layerId = "existing-conditions-layer";
+
+    // Clean up existing layers
+    if (map.current.getLayer(`${layerId}-outline`)) {
+      map.current.removeLayer(`${layerId}-outline`);
+    }
+    if (map.current.getLayer(layerId)) {
+      map.current.removeLayer(layerId);
+    }
+    if (map.current.getSource(sourceId)) {
+      map.current.removeSource(sourceId);
+    }
+
+    if (!layerVisibility.existing_conditions) return;
+
+    const ecFeatures = constraintZones
+      .filter((zone) => zone.type.startsWith("existing_"))
+      .map((zone) => {
+        const coordinates = zone.polygon.map((c) => [c.longitude, c.latitude]);
+        coordinates.push(coordinates[0]);
+        return {
+          type: "Feature" as const,
+          properties: {
+            id: zone.id,
+            type: zone.type,
+            severity: zone.severity,
+            description: zone.description || "",
+          },
+          geometry: {
+            type: "Polygon" as const,
+            coordinates: [coordinates],
+          },
+        };
+      });
+
+    if (ecFeatures.length === 0) return;
+
+    map.current.addSource(sourceId, {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: ecFeatures,
+      },
+    });
+
+    map.current.addLayer({
+      id: layerId,
+      type: "fill",
+      source: sourceId,
+      paint: {
+        "fill-color": [
+          "case",
+          ["==", ["get", "type"], "existing_building"],
+          "#8B4513",
+          ["==", ["get", "type"], "existing_road"],
+          "#666666",
+          ["==", ["get", "type"], "existing_utility"],
+          "#FF8C00",
+          ["==", ["get", "type"], "existing_water"],
+          "#4169E1",
+          "#CCCCCC",
+        ],
+        "fill-opacity": 0.4,
+      },
+    });
+
+    map.current.addLayer({
+      id: `${layerId}-outline`,
+      type: "line",
+      source: sourceId,
+      paint: {
+        "line-color": "#000000",
+        "line-width": 1,
+        "line-opacity": 0.5,
+      },
+    });
+  }, [mapLoaded, constraintZones, layerVisibility.existing_conditions]);
+
   // Update roads layer
   useEffect(() => {
-    if (!map.current || !mapLoaded || !layerVisibility.roads || !roadNetwork) return;
+    if (!map.current || !mapLoaded || !layerVisibility.roads || !roadNetwork)
+      return;
 
-    const sourceId = 'roads';
-    const baseLayerId = 'roads-base-layer';
-    const borderLayerId = 'roads-border-layer';
-    const centerlineLayerId = 'roads-centerline-layer';
+    const sourceId = "roads";
+    const baseLayerId = "roads-base-layer";
+    const borderLayerId = "roads-border-layer";
+    const centerlineLayerId = "roads-centerline-layer";
 
     // Remove existing layers
-    [centerlineLayerId, baseLayerId, borderLayerId].forEach(layerId => {
+    [centerlineLayerId, baseLayerId, borderLayerId].forEach((layerId) => {
       if (map.current!.getLayer(layerId)) {
         map.current!.removeLayer(layerId);
       }
@@ -363,11 +461,14 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     }
 
     // Helper function to find the asset closest to a road endpoint
-    const findAssetAtPoint = (point: Coordinate, threshold = 0.0001): PlacedAsset | null => {
+    const findAssetAtPoint = (
+      point: Coordinate,
+      threshold = 0.0001,
+    ): PlacedAsset | null => {
       for (const asset of assets) {
         const distance = Math.sqrt(
           Math.pow(asset.position.latitude - point.latitude, 2) +
-          Math.pow(asset.position.longitude - point.longitude, 2)
+            Math.pow(asset.position.longitude - point.longitude, 2),
         );
         if (distance < threshold) {
           return asset;
@@ -393,7 +494,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       }
 
       return {
-        type: 'Feature' as const,
+        type: "Feature" as const,
         properties: {
           id: segment.id,
           width: segment.width,
@@ -402,16 +503,16 @@ export const MapViewer: React.FC<MapViewerProps> = ({
           length: segment.length,
         },
         geometry: {
-          type: 'LineString' as const,
+          type: "LineString" as const,
           coordinates: points.map((p) => [p.longitude, p.latitude]),
         },
       };
     });
 
     map.current.addSource(sourceId, {
-      type: 'geojson',
+      type: "geojson",
       data: {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features,
       },
     });
@@ -419,44 +520,47 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     // Road border (darker outline)
     map.current.addLayer({
       id: borderLayerId,
-      type: 'line',
+      type: "line",
       source: sourceId,
       paint: {
-        'line-color': '#2c2c2c',
-        'line-width': ['+', ['get', 'width'], 2], // Slightly wider than base
-        'line-opacity': 0.9,
+        "line-color": "#2c2c2c",
+        "line-width": ["+", ["get", "width"], 2], // Slightly wider than base
+        "line-opacity": 0.9,
       },
     });
 
     // Road base (asphalt color)
     map.current.addLayer({
       id: baseLayerId,
-      type: 'line',
+      type: "line",
       source: sourceId,
       paint: {
-        'line-color': [
-          'match',
-          ['get', 'surface_type'],
-          'paved', '#4a4a4a',
-          'gravel', '#8b7d6b',
-          'dirt', '#a0826d',
-          '#4a4a4a' // default
+        "line-color": [
+          "match",
+          ["get", "surface_type"],
+          "paved",
+          "#4a4a4a",
+          "gravel",
+          "#8b7d6b",
+          "dirt",
+          "#a0826d",
+          "#4a4a4a", // default
         ],
-        'line-width': ['get', 'width'],
-        'line-opacity': 0.85,
+        "line-width": ["get", "width"],
+        "line-opacity": 0.85,
       },
     });
 
     // Road centerline (dashed yellow)
     map.current.addLayer({
       id: centerlineLayerId,
-      type: 'line',
+      type: "line",
       source: sourceId,
       paint: {
-        'line-color': '#ffd700',
-        'line-width': 2,
-        'line-opacity': 0.8,
-        'line-dasharray': [3, 3],
+        "line-color": "#ffd700",
+        "line-width": 2,
+        "line-opacity": 0.8,
+        "line-dasharray": [3, 3],
       },
     });
   }, [mapLoaded, roadNetwork, layerVisibility.roads, assets]);
@@ -467,7 +571,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     centerLng: number,
     widthFeet: number,
     lengthFeet: number,
-    rotationDegrees: number
+    rotationDegrees: number,
   ): [number, number][] => {
     // Convert feet to approximate degrees (very rough approximation)
     // At equator: 1 degree latitude ≈ 364,000 feet, 1 degree longitude ≈ 288,200 feet
@@ -510,14 +614,14 @@ export const MapViewer: React.FC<MapViewerProps> = ({
         asset.position.longitude,
         asset.width,
         asset.length,
-        asset.rotation
+        asset.rotation,
       );
 
       // Close the polygon
       corners.push(corners[0]);
 
       return {
-        type: 'Feature' as const,
+        type: "Feature" as const,
         properties: {
           id: asset.id,
           type: asset.type,
@@ -525,77 +629,79 @@ export const MapViewer: React.FC<MapViewerProps> = ({
           violating: violatingAssetIds.includes(asset.id),
         },
         geometry: {
-          type: 'Polygon' as const,
+          type: "Polygon" as const,
           coordinates: [corners],
         },
       };
     });
 
     const geojsonData = {
-      type: 'FeatureCollection' as const,
+      type: "FeatureCollection" as const,
       features,
     };
 
     // Check if source exists - if so, just update the data (much faster!)
-    const source = map.current.getSource('asset-polygons') as maplibregl.GeoJSONSource;
+    const source = map.current.getSource(
+      "asset-polygons",
+    ) as maplibregl.GeoJSONSource;
     if (source) {
       // Efficiently update just the data without recreating layers
       source.setData(geojsonData);
     } else {
       // First time - create source and layers
-      map.current.addSource('asset-polygons', {
-        type: 'geojson',
+      map.current.addSource("asset-polygons", {
+        type: "geojson",
         data: geojsonData,
       });
 
       // Add fill layer
       map.current.addLayer({
-        id: 'asset-polygons-fill',
-        type: 'fill',
-        source: 'asset-polygons',
+        id: "asset-polygons-fill",
+        type: "fill",
+        source: "asset-polygons",
         paint: {
-          'fill-color': [
-            'case',
-            ['get', 'violating'],
-            '#DC2626', // Red for violating
-            ['get', 'selected'],
-            '#0000FF', // Blue for selected
-            '#FF6600'  // Orange for normal
+          "fill-color": [
+            "case",
+            ["get", "violating"],
+            "#DC2626", // Red for violating
+            ["get", "selected"],
+            "#0000FF", // Blue for selected
+            "#FF6600", // Orange for normal
           ],
-          'fill-opacity': 0.3,
+          "fill-opacity": 0.3,
         },
       });
 
       // Add outline layer
       map.current.addLayer({
-        id: 'asset-polygons-outline',
-        type: 'line',
-        source: 'asset-polygons',
+        id: "asset-polygons-outline",
+        type: "line",
+        source: "asset-polygons",
         paint: {
-          'line-color': [
-            'case',
-            ['get', 'violating'],
-            '#DC2626', // Red for violating
-            ['get', 'selected'],
-            '#0000FF', // Blue for selected
-            '#FF6600'  // Orange for normal
+          "line-color": [
+            "case",
+            ["get", "violating"],
+            "#DC2626", // Red for violating
+            ["get", "selected"],
+            "#0000FF", // Blue for selected
+            "#FF6600", // Orange for normal
           ],
-          'line-width': [
-            'case',
-            ['get', 'violating'],
+          "line-width": [
+            "case",
+            ["get", "violating"],
             4, // Thicker for violating
-            ['get', 'selected'],
+            ["get", "selected"],
             3, // Medium for selected
-            2  // Thin for normal
+            2, // Thin for normal
           ],
         },
       });
 
       // Add click handler for polygons (only once)
-      map.current.on('click', 'asset-polygons-fill', (e) => {
+      map.current.on("click", "asset-polygons-fill", (e) => {
         if (e.features && e.features.length > 0 && onAssetClick) {
           const assetId = e.features[0].properties?.id;
-          const asset = assets.find(a => a.id === assetId);
+          const asset = assets.find((a) => a.id === assetId);
           if (asset) {
             onAssetClick(asset);
           }
@@ -603,25 +709,38 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       });
 
       // Change cursor on hover (only once)
-      map.current.on('mouseenter', 'asset-polygons-fill', () => {
+      map.current.on("mouseenter", "asset-polygons-fill", () => {
         if (map.current) {
-          map.current.getCanvas().style.cursor = 'pointer';
+          map.current.getCanvas().style.cursor = "pointer";
         }
       });
 
-      map.current.on('mouseleave', 'asset-polygons-fill', () => {
+      map.current.on("mouseleave", "asset-polygons-fill", () => {
         if (map.current) {
-          map.current.getCanvas().style.cursor = '';
+          map.current.getCanvas().style.cursor = "";
         }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapLoaded, assets, layerVisibility.assets, selectedAssetId, violatingAssetIds]);
+  }, [
+    mapLoaded,
+    assets,
+    layerVisibility.assets,
+    selectedAssetId,
+    violatingAssetIds,
+  ]);
 
   // Stable key for asset positions to avoid unnecessary marker recreation
-  const assetsPositionKey = useMemo(() =>
-    JSON.stringify(assets.map(a => ({ id: a.id, lat: a.position.latitude, lng: a.position.longitude }))),
-    [assets]
+  const assetsPositionKey = useMemo(
+    () =>
+      JSON.stringify(
+        assets.map((a) => ({
+          id: a.id,
+          lat: a.position.latitude,
+          lng: a.position.longitude,
+        })),
+      ),
+    [assets],
   );
 
   // Update asset markers (only when assets are added/removed or selection changes)
@@ -635,24 +754,29 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       dragStateRef.current.marker.setLngLat(e.lngLat);
 
       // Update the polygon in real-time
-      const source = map.current?.getSource('asset-polygons') as maplibregl.GeoJSONSource;
+      const source = map.current?.getSource(
+        "asset-polygons",
+      ) as maplibregl.GeoJSONSource;
       if (source) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = (source as any)._data;
+        const data = (source as any)._data;
         if (data?.features) {
           // Find the feature for this asset and update its geometry
           const featureIndex = data.features.findIndex(
-            (f: { properties: { id: string } }) => f.properties.id === dragStateRef.current!.assetId
+            (f: { properties: { id: string } }) =>
+              f.properties.id === dragStateRef.current!.assetId,
           );
           if (featureIndex !== -1) {
-            const asset = assets.find(a => a.id === dragStateRef.current!.assetId);
+            const asset = assets.find(
+              (a) => a.id === dragStateRef.current!.assetId,
+            );
             if (asset) {
               const corners = getAssetPolygon(
                 e.lngLat.lat,
                 e.lngLat.lng,
                 asset.width,
                 asset.length,
-                asset.rotation
+                asset.rotation,
               );
               corners.push(corners[0]); // Close polygon
               data.features[featureIndex].geometry.coordinates = [corners];
@@ -670,37 +794,37 @@ export const MapViewer: React.FC<MapViewerProps> = ({
           latitude: lngLat.lat,
           longitude: lngLat.lng,
         });
-        dragStateRef.current.element.style.cursor = 'pointer';
+        dragStateRef.current.element.style.cursor = "pointer";
         map.current!.dragPan.enable();
         dragStateRef.current = null;
       }
     };
 
     const onGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Shift' && editable && onAssetMove) {
+      if (e.key === "Shift" && editable && onAssetMove) {
         // Update cursor for all hovered markers
-        const hovered = document.querySelector('.asset-marker:hover');
+        const hovered = document.querySelector(".asset-marker:hover");
         if (hovered && !dragStateRef.current) {
-          (hovered as HTMLElement).style.cursor = 'grab';
+          (hovered as HTMLElement).style.cursor = "grab";
         }
       }
     };
 
     const onGlobalKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift' && !dragStateRef.current) {
+      if (e.key === "Shift" && !dragStateRef.current) {
         // Reset cursor for all markers
-        const hovered = document.querySelector('.asset-marker:hover');
+        const hovered = document.querySelector(".asset-marker:hover");
         if (hovered) {
-          (hovered as HTMLElement).style.cursor = 'pointer';
+          (hovered as HTMLElement).style.cursor = "pointer";
         }
       }
     };
 
     // Register global handlers (only once per render, cleaned up at end)
-    map.current.on('mousemove', onGlobalMouseMove);
-    document.addEventListener('mouseup', onGlobalMouseUp);
-    document.addEventListener('keydown', onGlobalKeyDown);
-    document.addEventListener('keyup', onGlobalKeyUp);
+    map.current.on("mousemove", onGlobalMouseMove);
+    document.addEventListener("mouseup", onGlobalMouseUp);
+    document.addEventListener("keydown", onGlobalKeyDown);
+    document.addEventListener("keyup", onGlobalKeyUp);
 
     // For now, recreate all markers to avoid stale closure issues
     // TODO: Optimize this later by properly updating event listeners
@@ -713,17 +837,18 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     // Create markers for each asset
     assets.forEach((asset) => {
       // Create new marker
-      const el = document.createElement('div');
-      el.className = 'asset-marker';
-      el.style.width = '30px';
-      el.style.height = '30px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = asset.id === selectedAssetId ? '#0000FF' : '#FF6600';
-      el.style.border = '3px solid white';
-      el.style.cursor = 'pointer';
-      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      el.style.transition = 'box-shadow 0.2s, width 0.2s, height 0.2s';
-      el.style.zIndex = asset.id === selectedAssetId ? '1000' : '999';
+      const el = document.createElement("div");
+      el.className = "asset-marker";
+      el.style.width = "30px";
+      el.style.height = "30px";
+      el.style.borderRadius = "50%";
+      el.style.backgroundColor =
+        asset.id === selectedAssetId ? "#0000FF" : "#FF6600";
+      el.style.border = "3px solid white";
+      el.style.cursor = "pointer";
+      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+      el.style.transition = "box-shadow 0.2s, width 0.2s, height 0.2s";
+      el.style.zIndex = asset.id === selectedAssetId ? "1000" : "999";
 
       const marker = new maplibregl.Marker({
         element: el,
@@ -740,7 +865,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
             marker: marker,
             element: el,
           };
-          el.style.cursor = 'grabbing';
+          el.style.cursor = "grabbing";
           map.current!.dragPan.disable();
           e.stopPropagation();
           e.preventDefault();
@@ -762,49 +887,54 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       const popup = new maplibregl.Popup({
         offset: 25,
         closeButton: false,
-        closeOnClick: false
+        closeOnClick: false,
       }).setHTML(
         `
         <div style="padding: 8px;">
           <strong>${asset.type}</strong><br/>
           <small>Size: ${asset.width}' x ${asset.length}'</small><br/>
           <small>Rotation: ${asset.rotation}°</small>
-          ${asset.id === selectedAssetId ? '<br/><small style="color: blue; font-weight: bold;">SELECTED</small>' : ''}
+          ${asset.id === selectedAssetId ? '<br/><small style="color: blue; font-weight: bold;">SELECTED</small>' : ""}
         </div>
-        `
+        `,
       );
 
       const handleMouseEnter = (e: MouseEvent) => {
         // Use size change instead of transform to avoid conflict with marker positioning
-        el.style.width = '36px';
-        el.style.height = '36px';
-        el.style.marginLeft = '-3px';
-        el.style.marginTop = '-3px';
-        el.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+        el.style.width = "36px";
+        el.style.height = "36px";
+        el.style.marginLeft = "-3px";
+        el.style.marginTop = "-3px";
+        el.style.boxShadow = "0 4px 8px rgba(0,0,0,0.4)";
         if (e.shiftKey && editable && onAssetMove) {
-          el.style.cursor = 'grab';
+          el.style.cursor = "grab";
         }
-        popup.setLngLat([asset.position.longitude, asset.position.latitude]).addTo(map.current!);
+        popup
+          .setLngLat([asset.position.longitude, asset.position.latitude])
+          .addTo(map.current!);
       };
 
       const handleMouseLeave = () => {
         // Reset size
-        el.style.width = '30px';
-        el.style.height = '30px';
-        el.style.marginLeft = '0';
-        el.style.marginTop = '0';
-        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-        if (!dragStateRef.current || dragStateRef.current.assetId !== asset.id) {
-          el.style.cursor = 'pointer';
+        el.style.width = "30px";
+        el.style.height = "30px";
+        el.style.marginLeft = "0";
+        el.style.marginTop = "0";
+        el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+        if (
+          !dragStateRef.current ||
+          dragStateRef.current.assetId !== asset.id
+        ) {
+          el.style.cursor = "pointer";
         }
         popup.remove();
       };
 
       // Register per-asset event listeners
-      el.addEventListener('mousedown', onMouseDown);
-      el.addEventListener('click', onClick);
-      el.addEventListener('mouseenter', handleMouseEnter);
-      el.addEventListener('mouseleave', handleMouseLeave);
+      el.addEventListener("mousedown", onMouseDown);
+      el.addEventListener("click", onClick);
+      el.addEventListener("mouseenter", handleMouseEnter);
+      el.addEventListener("mouseleave", handleMouseLeave);
 
       // Store marker and popup references for future updates
       currentMarkers.set(asset.id, { marker, element: el, popup });
@@ -812,10 +942,10 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     // Cleanup function
     return () => {
-      map.current?.off('mousemove', onGlobalMouseMove);
-      document.removeEventListener('mouseup', onGlobalMouseUp);
-      document.removeEventListener('keydown', onGlobalKeyDown);
-      document.removeEventListener('keyup', onGlobalKeyUp);
+      map.current?.off("mousemove", onGlobalMouseMove);
+      document.removeEventListener("mouseup", onGlobalMouseUp);
+      document.removeEventListener("keydown", onGlobalKeyDown);
+      document.removeEventListener("keyup", onGlobalKeyUp);
 
       // Clean up all popups when unmounting or dependencies change
       currentMarkers.forEach((markerData) => {
@@ -823,7 +953,13 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapLoaded, assetsPositionKey, layerVisibility.assets, selectedAssetId, editable]);
+  }, [
+    mapLoaded,
+    assetsPositionKey,
+    layerVisibility.assets,
+    selectedAssetId,
+    editable,
+  ]);
 
   const toggleMeasurement = () => {
     const newMeasuring = !measuring;
@@ -832,12 +968,15 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     // Update cursor style
     if (map.current) {
-      map.current.getCanvas().style.cursor = newMeasuring ? 'crosshair' : '';
+      map.current.getCanvas().style.cursor = newMeasuring ? "crosshair" : "";
     }
   };
 
   // Calculate distance between two points in feet
-  const calculateDistance = (point1: Coordinate, point2: Coordinate): number => {
+  const calculateDistance = (
+    point1: Coordinate,
+    point2: Coordinate,
+  ): number => {
     const R = 20902231; // Earth's radius in feet
     const lat1 = (point1.latitude * Math.PI) / 180;
     const lat2 = (point2.latitude * Math.PI) / 180;
@@ -846,7 +985,10 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     const a =
       Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+      Math.cos(lat1) *
+        Math.cos(lat2) *
+        Math.sin(deltaLng / 2) *
+        Math.sin(deltaLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
@@ -857,14 +999,14 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     if (!map.current || !mapLoaded) return;
 
     // Remove existing measurement layers
-    if (map.current.getLayer('measurement-line')) {
-      map.current.removeLayer('measurement-line');
+    if (map.current.getLayer("measurement-line")) {
+      map.current.removeLayer("measurement-line");
     }
-    if (map.current.getLayer('measurement-points')) {
-      map.current.removeLayer('measurement-points');
+    if (map.current.getLayer("measurement-points")) {
+      map.current.removeLayer("measurement-points");
     }
-    if (map.current.getSource('measurement')) {
-      map.current.removeSource('measurement');
+    if (map.current.getSource("measurement")) {
+      map.current.removeSource("measurement");
     }
 
     if (!measuring || measurementPoints.length === 0) return;
@@ -876,13 +1018,13 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     // Add points
     measurementPoints.forEach((point, index) => {
       features.push({
-        type: 'Feature',
+        type: "Feature",
         properties: {
-          type: 'point',
+          type: "point",
           index,
         },
         geometry: {
-          type: 'Point',
+          type: "Point",
           coordinates: [point.longitude, point.latitude],
         },
       });
@@ -892,54 +1034,60 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     if (measurementPoints.length > 1) {
       for (let i = 0; i < measurementPoints.length - 1; i++) {
         features.push({
-          type: 'Feature',
+          type: "Feature",
           properties: {
-            type: 'line',
-            distance: calculateDistance(measurementPoints[i], measurementPoints[i + 1]),
+            type: "line",
+            distance: calculateDistance(
+              measurementPoints[i],
+              measurementPoints[i + 1],
+            ),
           },
           geometry: {
-            type: 'LineString',
+            type: "LineString",
             coordinates: [
               [measurementPoints[i].longitude, measurementPoints[i].latitude],
-              [measurementPoints[i + 1].longitude, measurementPoints[i + 1].latitude],
+              [
+                measurementPoints[i + 1].longitude,
+                measurementPoints[i + 1].latitude,
+              ],
             ],
           },
         });
       }
     }
 
-    map.current.addSource('measurement', {
-      type: 'geojson',
+    map.current.addSource("measurement", {
+      type: "geojson",
       data: {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features,
       },
     });
 
     // Add line layer
     map.current.addLayer({
-      id: 'measurement-line',
-      type: 'line',
-      source: 'measurement',
-      filter: ['==', ['get', 'type'], 'line'],
+      id: "measurement-line",
+      type: "line",
+      source: "measurement",
+      filter: ["==", ["get", "type"], "line"],
       paint: {
-        'line-color': '#FF0000',
-        'line-width': 3,
-        'line-dasharray': [2, 2],
+        "line-color": "#FF0000",
+        "line-width": 3,
+        "line-dasharray": [2, 2],
       },
     });
 
     // Add point layer
     map.current.addLayer({
-      id: 'measurement-points',
-      type: 'circle',
-      source: 'measurement',
-      filter: ['==', ['get', 'type'], 'point'],
+      id: "measurement-points",
+      type: "circle",
+      source: "measurement",
+      filter: ["==", ["get", "type"], "point"],
       paint: {
-        'circle-radius': 6,
-        'circle-color': '#FF0000',
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#FFFFFF',
+        "circle-radius": 6,
+        "circle-color": "#FF0000",
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#FFFFFF",
       },
     });
   }, [mapLoaded, measuring, measurementPoints]);
@@ -947,10 +1095,10 @@ export const MapViewer: React.FC<MapViewerProps> = ({
   const handleScreenshot = () => {
     if (!map.current) return;
 
-    map.current.once('render', () => {
+    map.current.once("render", () => {
       const canvas = map.current!.getCanvas();
-      const link = document.createElement('a');
-      link.download = 'map-screenshot.png';
+      const link = document.createElement("a");
+      link.download = "map-screenshot.png";
       link.href = canvas.toDataURL();
       link.click();
     });
@@ -966,7 +1114,9 @@ export const MapViewer: React.FC<MapViewerProps> = ({
         <button
           onClick={toggleMeasurement}
           className={`w-full px-3 py-2 text-sm rounded ${
-            measuring ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+            measuring
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 hover:bg-gray-200"
           }`}
           title="Measure distance"
         >
@@ -995,7 +1145,9 @@ export const MapViewer: React.FC<MapViewerProps> = ({
           </div>
 
           {measurementPoints.length === 0 ? (
-            <p className="text-xs text-gray-600">Click on the map to start measuring</p>
+            <p className="text-xs text-gray-600">
+              Click on the map to start measuring
+            </p>
           ) : (
             <div className="space-y-1">
               <p className="text-xs text-gray-600">
@@ -1006,7 +1158,10 @@ export const MapViewer: React.FC<MapViewerProps> = ({
                 <>
                   <div className="border-t border-gray-200 pt-2 mt-2">
                     {measurementPoints.slice(0, -1).map((point, i) => {
-                      const distance = calculateDistance(point, measurementPoints[i + 1]);
+                      const distance = calculateDistance(
+                        point,
+                        measurementPoints[i + 1],
+                      );
                       return (
                         <p key={i} className="text-xs text-gray-700">
                           Segment {i + 1}: {distance.toFixed(1)} ft
@@ -1017,15 +1172,25 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
                   <div className="border-t border-gray-200 pt-2 mt-2">
                     <p className="text-sm font-semibold text-blue-600">
-                      Total: {measurementPoints.slice(0, -1).reduce((total, point, i) => {
-                        return total + calculateDistance(point, measurementPoints[i + 1]);
-                      }, 0).toFixed(1)} ft
+                      Total:{" "}
+                      {measurementPoints
+                        .slice(0, -1)
+                        .reduce((total, point, i) => {
+                          return (
+                            total +
+                            calculateDistance(point, measurementPoints[i + 1])
+                          );
+                        }, 0)
+                        .toFixed(1)}{" "}
+                      ft
                     </p>
                   </div>
                 </>
               )}
 
-              <p className="text-xs text-gray-500 mt-2">Click to add more points</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Click to add more points
+              </p>
             </div>
           )}
         </div>

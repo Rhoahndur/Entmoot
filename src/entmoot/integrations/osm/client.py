@@ -149,7 +149,7 @@ class OSMClient:
             result: Dict[str, Any] = response.json()
             return result
 
-        except (httpx.HTTPError, httpx.TimeoutException) as e:
+        except httpx.RequestError as e:
             logger.warning(f"OSM request failed (attempt {retry_count + 1}): {e}")
 
             if retry_count < self.config.max_retries:

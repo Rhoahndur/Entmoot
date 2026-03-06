@@ -147,7 +147,7 @@ class GeneticOptimizer:
         self.config = config or GeneticAlgorithmConfig()
 
         if random_seed is not None:
-            random.seed(random_seed)
+            random.seed(random_seed)  # nosec B311
             np.random.seed(random_seed)
 
         self.population: List[PlacementSolution] = []
@@ -285,15 +285,15 @@ class GeneticOptimizer:
             placed_assets: List[Asset] = []
             for asset in asset_copies:
                 # Random rotation (0, 90, 180, 270)
-                asset.set_rotation(random.choice([0, 90, 180, 270]))
+                asset.set_rotation(random.choice([0, 90, 180, 270]))  # nosec B311
 
                 # Try to find a non-overlapping position
                 max_attempts = 30
                 placed_successfully = False
 
                 for _ in range(max_attempts):
-                    x = random.uniform(bounds[0], bounds[2])
-                    y = random.uniform(bounds[1], bounds[3])
+                    x = random.uniform(bounds[0], bounds[2])  # nosec B311
+                    y = random.uniform(bounds[1], bounds[3])  # nosec B311
 
                     asset.set_position(x, y)
 
@@ -348,11 +348,19 @@ class GeneticOptimizer:
                 grid_x = (i % grid_size) + 1
                 grid_y = (i // grid_size) + 1
 
-                x = bounds[0] + grid_x * x_spacing + random.uniform(-x_spacing / 4, x_spacing / 4)
-                y = bounds[1] + grid_y * y_spacing + random.uniform(-y_spacing / 4, y_spacing / 4)
+                x = (
+                    bounds[0]
+                    + grid_x * x_spacing
+                    + random.uniform(-x_spacing / 4, x_spacing / 4)  # nosec B311
+                )
+                y = (
+                    bounds[1]
+                    + grid_y * y_spacing
+                    + random.uniform(-y_spacing / 4, y_spacing / 4)  # nosec B311
+                )
 
                 asset.set_position(x, y)
-                asset.set_rotation(random.choice([0, 90, 180, 270]))
+                asset.set_rotation(random.choice([0, 90, 180, 270]))  # nosec B311
 
             solution = PlacementSolution(assets=asset_copies)
             population.append(solution)
@@ -377,8 +385,8 @@ class GeneticOptimizer:
 
             for i, asset in enumerate(asset_copies):
                 # High priority: closer to center
-                radius = (i + 1) * 20.0 + random.uniform(-10, 10)
-                angle = random.uniform(0, 2 * np.pi)
+                radius = (i + 1) * 20.0 + random.uniform(-10, 10)  # nosec B311
+                angle = random.uniform(0, 2 * np.pi)  # nosec B311
 
                 x = center_x + radius * np.cos(angle)
                 y = center_y + radius * np.sin(angle)
@@ -388,7 +396,7 @@ class GeneticOptimizer:
                 y = max(bounds[1], min(bounds[3], y))
 
                 asset.set_position(x, y)
-                asset.set_rotation(random.choice([0, 90, 180, 270]))
+                asset.set_rotation(random.choice([0, 90, 180, 270]))  # nosec B311
 
             solution = PlacementSolution(assets=asset_copies)
             population.append(solution)
@@ -411,13 +419,13 @@ class GeneticOptimizer:
             parent2 = self._tournament_selection()
 
             # Crossover
-            if random.random() < self.config.crossover_rate:
+            if random.random() < self.config.crossover_rate:  # nosec B311
                 child = self._crossover(parent1, parent2)
             else:
                 child = parent1.copy()
 
             # Mutation
-            if random.random() < self.config.mutation_rate:
+            if random.random() < self.config.mutation_rate:  # nosec B311
                 child = self._mutate(child)
 
             new_population.append(child)
@@ -426,7 +434,7 @@ class GeneticOptimizer:
 
     def _tournament_selection(self) -> PlacementSolution:
         """Select solution using tournament selection."""
-        tournament = random.sample(self.population, self.config.tournament_size)
+        tournament = random.sample(self.population, self.config.tournament_size)  # nosec B311
         tournament.sort(key=lambda s: s.fitness, reverse=True)
         return tournament[0]
 
@@ -478,7 +486,7 @@ class GeneticOptimizer:
         mutated = solution.copy()
 
         # Choose mutation operator
-        operator = random.choice(["move", "rotate", "swap"])
+        operator = random.choice(["move", "rotate", "swap"])  # nosec B311
 
         if operator == "move":
             mutated = self._mutate_move(mutated)
@@ -495,7 +503,7 @@ class GeneticOptimizer:
             return solution
 
         # Select random asset to move
-        asset_idx = random.randint(0, len(solution.assets) - 1)
+        asset_idx = random.randint(0, len(solution.assets) - 1)  # nosec B311
         asset = solution.assets[asset_idx]
 
         # Store original position in case we need to revert
@@ -506,8 +514,8 @@ class GeneticOptimizer:
         max_attempts = 10
 
         for _ in range(max_attempts):
-            dx = random.uniform(-step_size, step_size)
-            dy = random.uniform(-step_size, step_size)
+            dx = random.uniform(-step_size, step_size)  # nosec B311
+            dy = random.uniform(-step_size, step_size)  # nosec B311
 
             x, y = original_pos
             new_x, new_y = x + dx, y + dy
@@ -541,7 +549,7 @@ class GeneticOptimizer:
             return solution
 
         # Select random asset to rotate
-        asset_idx = random.randint(0, len(solution.assets) - 1)
+        asset_idx = random.randint(0, len(solution.assets) - 1)  # nosec B311
         asset = solution.assets[asset_idx]
 
         # Store original rotation in case we need to revert
@@ -549,7 +557,7 @@ class GeneticOptimizer:
 
         # Try all rotation angles, pick first one without overlaps
         rotation_options = [0, 90, 180, 270]
-        random.shuffle(rotation_options)  # Try in random order
+        random.shuffle(rotation_options)  # nosec B311  # Try in random order
 
         for new_rotation in rotation_options:
             if new_rotation == original_rotation:
@@ -585,7 +593,7 @@ class GeneticOptimizer:
             return solution
 
         # Select two random assets
-        asset1, asset2 = random.sample(solution.assets, 2)
+        asset1, asset2 = random.sample(solution.assets, 2)  # nosec B311
 
         # Swap positions
         pos1 = asset1.position

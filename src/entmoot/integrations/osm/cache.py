@@ -30,7 +30,7 @@ class OSMCache:
         """Return cached data if present and not expired."""
         if key in self._cache:
             data, timestamp = self._cache[key]
-            age = time.time() - timestamp
+            age = time.monotonic() - timestamp
             if age < self.ttl_seconds:
                 self._hits += 1
                 logger.debug(f"OSM cache hit for key {key[:8]}... (age: {age:.0f}s)")
@@ -44,7 +44,7 @@ class OSMCache:
 
     def put(self, key: str, data: ExistingConditionsData) -> None:
         """Store data in cache."""
-        self._cache[key] = (data, time.time())
+        self._cache[key] = (data, time.monotonic())
         logger.debug(f"OSM cache stored key {key[:8]}...")
 
     def clear(self) -> None:
