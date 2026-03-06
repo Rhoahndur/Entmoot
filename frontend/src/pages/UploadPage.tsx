@@ -2,7 +2,7 @@
  * Upload Page - File upload wizard with optional DEM upload
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { FileDropzone, FilePreview, UploadProgress } from '../components/FileDropzone';
@@ -20,6 +20,15 @@ export const UploadPage: React.FC = () => {
   const demUpload = useFileUpload();
   const uploadingRef = useRef(false);
   const demUploadingRef = useRef(false);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -71,7 +80,8 @@ export const UploadPage: React.FC = () => {
       const demResponse = await demUpload.uploadFile(selectedDemFile);
 
       if (demResponse) {
-        setTimeout(() => {
+        redirectTimerRef.current = setTimeout(() => {
+          redirectTimerRef.current = null;
           const params = new URLSearchParams();
           params.set('upload_id', uploadResponse.upload_id);
           params.set('dem_upload_id', demResponse.upload_id);
