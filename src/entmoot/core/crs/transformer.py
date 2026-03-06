@@ -10,12 +10,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from pyproj import CRS, Transformer
 
-from entmoot.models.crs import (
-    BoundingBox,
-    CRSInfo,
-    CoordinateOrder,
-    CoordinateTransformation,
-)
+from entmoot.models.crs import BoundingBox, CoordinateOrder, CoordinateTransformation, CRSInfo
 
 
 class TransformationError(Exception):
@@ -263,7 +258,7 @@ def transform_wgs84_to_utm(
     Raises:
         TransformationError: If transformation fails
     """
-    from entmoot.core.crs.utm import get_utm_crs_info, get_utm_epsg, detect_utm_zone
+    from entmoot.core.crs.utm import detect_utm_zone, get_utm_crs_info, get_utm_epsg
 
     # Create WGS84 CRS info
     wgs84 = CRSInfo.from_epsg(4326)
@@ -341,7 +336,8 @@ def transform_to_web_mercator(
     target_crs = CRSInfo.from_epsg(3857)
 
     transformer = CRSTransformer(source_crs, target_crs)
-    return transformer.transform(longitude, latitude)
+    x, y = transformer.transform(longitude, latitude)
+    return (x, y)
 
 
 def validate_transformation_accuracy(
@@ -387,7 +383,7 @@ def validate_transformation_accuracy(
 
         total_error = (error_x**2 + error_y**2) ** 0.5
 
-        return total_error <= max_error_meters
+        return bool(total_error <= max_error_meters)
 
     except Exception as e:
         raise TransformationError(f"Validation failed: {e}")

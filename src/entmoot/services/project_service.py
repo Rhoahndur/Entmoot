@@ -88,6 +88,15 @@ class ProjectService:
             property_boundary_coords,
             setback_ft=project.get("config", {}).get("constraints", {}).get("setback_distance", 20),
         )
+
+        # Append existing conditions zones (from OSM data)
+        for ec_data in project.get("existing_conditions", []):
+            try:
+                constraint_zones.append(ConstraintZone(**ec_data))
+            except (TypeError, ValueError, KeyError) as e:
+                logger.warning(
+                    f"Skipping existing condition zone {ec_data.get('id', 'unknown')}: {e}"
+                )
         buildable_areas = ProjectService._compute_buildable_areas(
             property_boundary_coords,
             setback_ft=project.get("config", {}).get("constraints", {}).get("setback_distance", 20),

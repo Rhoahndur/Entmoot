@@ -6,14 +6,14 @@ common coordinate reference system, handling mixed CRS inputs, and
 preserving original CRS metadata.
 """
 
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from entmoot.models.crs import BoundingBox, CRSInfo
 from entmoot.core.crs.transformer import CRSTransformer, TransformationError
 from entmoot.core.crs.utm import get_utm_crs_info
+from entmoot.models.crs import BoundingBox, CRSInfo
 
 
 class NormalizationError(Exception):
@@ -37,7 +37,7 @@ class NormalizedData:
     coordinates: List[Tuple[float, float]]
     target_crs: CRSInfo
     original_crs: CRSInfo
-    metadata: Dict[str, any] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Initialize metadata if not provided."""

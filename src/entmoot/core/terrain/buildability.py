@@ -10,15 +10,15 @@ and provides comprehensive metrics for each buildable zone. It uses:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Dict, Any, List
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import rasterio.features
 from numpy.typing import NDArray
 from scipy import ndimage
 from scipy.ndimage import label as scipy_label
-import rasterio.features
-from shapely.geometry import shape, Polygon, MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon, shape
 from shapely.ops import unary_union
 
 
@@ -505,7 +505,7 @@ class BuildabilityAnalyzer:
             return 0.0
 
         compactness = (4.0 * np.pi * area) / (perimeter**2)
-        return min(compactness, 1.0)  # Cap at 1.0 due to numerical errors
+        return float(min(compactness, 1.0))  # Cap at 1.0 due to numerical errors
 
     def _classify_zone(self, mean_slope: float) -> BuildabilityClass:
         """
@@ -638,7 +638,7 @@ class BuildabilityAnalyzer:
         Returns:
             Dictionary of additional metrics
         """
-        metrics = {}
+        metrics: Dict[str, Any] = {}
 
         if zones:
             # Area statistics
@@ -697,7 +697,7 @@ def analyze_buildability(
     property_mask: Optional[NDArray[np.bool_]] = None,
 ) -> BuildabilityResult:
     """
-    Convenience function to analyze buildability.
+    Analyze buildability.
 
     Args:
         slope_percent: Array of slope values in percent

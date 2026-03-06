@@ -6,29 +6,22 @@ feature types (property lines, roads, water features, utilities) with configurab
 distances and automatic constraint generation.
 """
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-import logging
 
-from shapely.geometry import (
-    Point,
-    LineString,
-    Polygon,
-    MultiPoint,
-    MultiLineString,
-    MultiPolygon,
-)
+from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 from shapely.validation import make_valid
 
 from entmoot.models.constraints import (
-    SetbackConstraint,
-    RegulatoryConstraint,
-    ConstraintType,
-    ConstraintSeverity,
     ConstraintPriority,
+    ConstraintSeverity,
+    ConstraintType,
+    RegulatoryConstraint,
+    SetbackConstraint,
 )
 
 logger = logging.getLogger(__name__)
@@ -86,7 +79,7 @@ class BufferConfig:
     mitre_limit: float = 5.0
     single_sided: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and adjust buffer configuration."""
         if self.distance_m <= 0:
             raise ValueError("Buffer distance must be positive")
@@ -308,7 +301,7 @@ class BufferGenerator:
         constraint_id: str,
         setback_distance: Optional[float] = None,
         setback_type: str = "default",
-        **kwargs,
+        **kwargs: Any,
     ) -> SetbackConstraint:
         """
         Create property line setback constraint.
@@ -356,7 +349,7 @@ class BufferGenerator:
         constraint_id: str,
         road_type: RoadType = RoadType.LOCAL,
         setback_distance: Optional[float] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> SetbackConstraint:
         """
         Create road setback constraint.
@@ -402,7 +395,7 @@ class BufferGenerator:
         feature_type: WaterFeatureType = WaterFeatureType.STREAM,
         setback_distance: Optional[float] = None,
         regulatory_info: Optional[Dict[str, str]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> RegulatoryConstraint:
         """
         Create water feature setback constraint.
@@ -457,7 +450,7 @@ class BufferGenerator:
                 "source_feature_wkt": water_geometry.wkt,
                 **kwargs.get("metadata", {}),
             },
-            **{k: v for k, v in kwargs.items() if k not in ["metadata"]},
+            **{k: v for k, v in kwargs.items() if k not in ["severity", "priority", "metadata"]},
         )
 
     def create_utility_setback(
@@ -466,7 +459,7 @@ class BufferGenerator:
         constraint_id: str,
         utility_type: str = "default",
         setback_distance: Optional[float] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> SetbackConstraint:
         """
         Create utility corridor setback constraint.
@@ -571,10 +564,10 @@ def create_buffer_from_config(
     distance_m: float,
     style: str = "round",
     simplify_tolerance: float = 0.0,
-    **kwargs,
+    **kwargs: Any,
 ) -> BaseGeometry:
     """
-    Convenience function to create a buffer from simple parameters.
+    Create a buffer from simple parameters.
 
     Args:
         geometry: Source geometry

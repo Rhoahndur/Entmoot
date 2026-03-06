@@ -4,9 +4,10 @@ Constraint validation utilities.
 This module provides validation functions for constraints and constraint collections.
 """
 
-from typing import Dict, List, Tuple
-from shapely.geometry.base import BaseGeometry
+from typing import Any, Dict, List, Tuple, cast
+
 from shapely import wkt
+from shapely.geometry.base import BaseGeometry
 
 from entmoot.models.constraints import Constraint, ConstraintSeverity
 
@@ -89,7 +90,7 @@ class ConstraintValidator:
         return (len(errors) == 0, errors)
 
     @staticmethod
-    def check_contradictions(constraints: List[Constraint]) -> List[Dict[str, any]]:
+    def check_contradictions(constraints: List[Constraint]) -> List[Dict[str, Any]]:
         """
         Check for contradictory constraints.
 
@@ -206,7 +207,7 @@ class ConstraintValidator:
     @classmethod
     def validate_collection(
         cls, constraints: List[Constraint], site_boundary: BaseGeometry
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Perform comprehensive validation of a constraint collection.
 
@@ -226,17 +227,19 @@ class ConstraintValidator:
         }
 
         # Validate each constraint individually
+        constraint_errors = cast(Dict[str, Any], results["constraint_errors"])
+        spatial_errors = cast(Dict[str, Any], results["spatial_errors"])
         for constraint in constraints:
             # Validate constraint logic
             is_valid, errors = cls.validate_constraint_logic(constraint)
             if not is_valid:
-                results["constraint_errors"][constraint.id] = errors
+                constraint_errors[constraint.id] = errors
                 results["is_valid"] = False
 
             # Validate spatial relationships
             is_valid, errors = cls.validate_spatial_relationships(constraint, site_boundary)
             if not is_valid:
-                results["spatial_errors"][constraint.id] = errors
+                spatial_errors[constraint.id] = errors
                 results["is_valid"] = False
 
         # Check for contradictions

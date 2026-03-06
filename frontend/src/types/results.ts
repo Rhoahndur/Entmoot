@@ -59,6 +59,10 @@ export const ConstraintType = {
   EASEMENT: 'easement',
   EXCLUSION: 'exclusion',
   PROPERTY_LINE: 'property_line',
+  EXISTING_BUILDING: 'existing_building',
+  EXISTING_ROAD: 'existing_road',
+  EXISTING_UTILITY: 'existing_utility',
+  EXISTING_WATER: 'existing_water',
 } as const;
 
 export type ConstraintType = typeof ConstraintType[keyof typeof ConstraintType];
@@ -151,6 +155,7 @@ export const LayerType = {
   CONSTRAINTS: 'constraints',
   BUILDABLE_AREAS: 'buildable_areas',
   EARTHWORK: 'earthwork',
+  EXISTING_CONDITIONS: 'existing_conditions',
 } as const;
 
 export type LayerType = typeof LayerType[keyof typeof LayerType];
@@ -164,6 +169,7 @@ export interface LayerVisibility {
   [LayerType.CONSTRAINTS]: boolean;
   [LayerType.BUILDABLE_AREAS]: boolean;
   [LayerType.EARTHWORK]: boolean;
+  [LayerType.EXISTING_CONDITIONS]: boolean;
 }
 
 // Results response from API

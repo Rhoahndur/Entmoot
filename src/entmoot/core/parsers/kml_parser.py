@@ -5,11 +5,12 @@ Parses KML files and extracts Placemarks with geometries, metadata, and properti
 """
 
 import logging
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+from xml.etree.ElementTree import Element
 
+import defusedxml.ElementTree as ET
 from shapely.geometry.base import BaseGeometry
 
 from .geometry import (
@@ -213,13 +214,14 @@ class KMLParser:
             self.result.parse_errors.append(str(e))
             raise
 
-    def _parse_document(self, root: ET.Element) -> None:
+    def _parse_document(self, root: Element) -> None:
         """
         Parse Document-level elements.
 
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         document = root.find(f"{self.namespace}Document")
         if document is not None:
             # Get document name
@@ -235,13 +237,14 @@ class KMLParser:
             # Parse extended data
             self._parse_extended_data(document, self.result.properties)
 
-    def _parse_styles(self, root: ET.Element) -> None:
+    def _parse_styles(self, root: Element) -> None:
         """
         Parse Style and StyleMap elements.
 
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         # Parse Style elements
         for style in root.findall(f".//{self.namespace}Style"):
             style_id = style.get("id")
@@ -270,9 +273,7 @@ class KMLParser:
 
                 self.result.styles[style_id] = style_data
 
-    def _parse_placemarks(
-        self, element: ET.Element, folder_path: Optional[List[str]] = None
-    ) -> None:
+    def _parse_placemarks(self, element: Element, folder_path: Optional[List[str]] = None) -> None:
         """
         Recursively parse Placemarks from element and its folders.
 
@@ -289,7 +290,7 @@ class KMLParser:
         else:
             self._parse_element_placemarks(element, folder_path)
 
-    def _parse_element_placemarks(self, element: ET.Element, folder_path: List[str]) -> None:
+    def _parse_element_placemarks(self, element: Element, folder_path: List[str]) -> None:
         """
         Recursively parse Placemarks from element and its folders.
 
@@ -297,6 +298,7 @@ class KMLParser:
             element: XML element to search
             folder_path: Current folder hierarchy path
         """
+        assert self.result is not None  # nosec B101
         # Parse direct child placemarks
         for placemark_elem in element.findall(f"{self.namespace}Placemark"):
             try:
@@ -318,7 +320,7 @@ class KMLParser:
             self.result.folders.append("/".join(folder_path + [folder_name]))
             self._parse_element_placemarks(folder, folder_path + [folder_name])
 
-    def _parse_placemark(self, element: ET.Element, folder_path: List[str]) -> Optional[Placemark]:
+    def _parse_placemark(self, element: Element, folder_path: List[str]) -> Optional[Placemark]:
         """
         Parse a single Placemark element.
 
@@ -370,7 +372,7 @@ class KMLParser:
 
         return placemark
 
-    def _parse_geometry(self, element: ET.Element) -> Optional[ParsedGeometry]:
+    def _parse_geometry(self, element: Element) -> Optional[ParsedGeometry]:
         """
         Parse geometry from Placemark element.
 
@@ -388,9 +390,7 @@ class KMLParser:
 
         return None
 
-    def _parse_geometry_element(
-        self, element: ET.Element, geom_type: str
-    ) -> Optional[ParsedGeometry]:
+    def _parse_geometry_element(self, element: Element, geom_type: str) -> Optional[ParsedGeometry]:
         """
         Parse specific geometry element.
 
@@ -455,7 +455,7 @@ class KMLParser:
             logger.error(f"Failed to parse {geom_type}: {e}")
             return None
 
-    def _parse_extended_data(self, element: ET.Element, properties: Dict[str, Any]) -> None:
+    def _parse_extended_data(self, element: Element, properties: Dict[str, Any]) -> None:
         """
         Parse ExtendedData elements and add to properties.
 
@@ -482,7 +482,7 @@ class KMLParser:
 
 def parse_kml_file(file_path: Union[str, Path], validate: bool = True) -> ParsedKML:
     """
-    Convenience function to parse a KML file.
+    Parse a KML file.
 
     Args:
         file_path: Path to KML file
@@ -497,7 +497,7 @@ def parse_kml_file(file_path: Union[str, Path], validate: bool = True) -> Parsed
 
 def parse_kml_string(kml_content: str, validate: bool = True) -> ParsedKML:
     """
-    Convenience function to parse KML string content.
+    Parse KML string content.
 
     Args:
         kml_content: KML content as string

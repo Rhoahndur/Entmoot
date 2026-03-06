@@ -5,18 +5,22 @@ This module provides functionality for combining and aggregating multiple constr
 into composite constraint maps and calculating aggregate statistics.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+from collections import defaultdict
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, cast
 
+from shapely import wkt
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
-from shapely import wkt
+
+logger = logging.getLogger(__name__)
 
 from entmoot.models.constraints import (
     Constraint,
-    ConstraintType,
-    ConstraintSeverity,
     ConstraintPriority,
+    ConstraintSeverity,
+    ConstraintType,
 )
 
 
@@ -53,6 +57,7 @@ class ConstraintAggregator:
             try:
                 geometries.append(constraint.get_geometry())
             except Exception:
+                logger.debug("Skipping constraint with invalid geometry during aggregation")
                 continue
 
         if not geometries:
@@ -177,10 +182,12 @@ class ConstraintAggregator:
             stats["coverage_percent"] = 0.0
 
         # Calculate available area
-        available_geom, available_sqm, available_acres = (
-            ConstraintAggregator.calculate_available_area(
-                site_boundary, constraints, only_blocking=True
-            )
+        (
+            _,
+            available_sqm,
+            available_acres,
+        ) = ConstraintAggregator.calculate_available_area(
+            site_boundary, constraints, only_blocking=True
         )
 
         stats["available_area_sqm"] = available_sqm
@@ -306,20 +313,19 @@ class ConstraintAggregator:
         }
 
         # Count by type, severity, priority
-        from collections import defaultdict
-
-        type_counts = defaultdict(int)
-        severity_counts = defaultdict(int)
-        priority_counts = defaultdict(int)
+        type_counts: defaultdict[str, int] = defaultdict(int)
+        severity_counts: defaultdict[str, int] = defaultdict(int)
+        priority_counts: defaultdict[str, int] = defaultdict(int)
 
         for c in constraints:
             type_counts[c.constraint_type] += 1
             severity_counts[c.severity] += 1
             priority_counts[c.priority] += 1
 
-        summary["constraints"]["by_type"] = dict(type_counts)
-        summary["constraints"]["by_severity"] = dict(severity_counts)
-        summary["constraints"]["by_priority"] = dict(priority_counts)
+        constraints_dict = cast(Dict[str, Any], summary["constraints"])
+        constraints_dict["by_type"] = dict(type_counts)
+        constraints_dict["by_severity"] = dict(severity_counts)
+        constraints_dict["by_priority"] = dict(priority_counts)
 
         # Calculate coverage
         coverage = ConstraintAggregator.calculate_constraint_coverage(
@@ -353,7 +359,7 @@ class ConstraintAggregator:
         Returns:
             Dictionary with layer information
         """
-        layers = {}
+        layers: Dict[str, Any] = {}
 
         if by_type:
             layers["by_type"] = {}

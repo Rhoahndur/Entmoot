@@ -3,15 +3,23 @@
  * Integrates MapViewer, ResultsDashboard, and LayoutEditor
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Header } from '../components/Header';
-import { MapViewer } from '../components/MapViewer';
-import { ResultsDashboard } from '../components/ResultsDashboard';
-import { LayoutEditor } from '../components/LayoutEditor';
-import { exportLayout } from '../utils/export';
-import { checkConstraintViolations, recalculateAssetPolygon } from '../utils/constraintChecker';
-import { getOptimizationResults, checkProjectStatus, reoptimizeLayout, saveLayout } from '../api/client';
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Header } from "../components/Header";
+import { MapViewer } from "../components/MapViewer";
+import { ResultsDashboard } from "../components/ResultsDashboard";
+import { LayoutEditor } from "../components/LayoutEditor";
+import { exportLayout } from "../utils/export";
+import {
+  checkConstraintViolations,
+  recalculateAssetPolygon,
+} from "../utils/constraintChecker";
+import {
+  getOptimizationResults,
+  checkProjectStatus,
+  reoptimizeLayout,
+  saveLayout,
+} from "../api/client";
 import type {
   OptimizationResults,
   PlacedAsset,
@@ -21,21 +29,26 @@ import type {
   EditOperation,
   Coordinate,
   ConstraintViolation,
-} from '../types/results';
+} from "../types/results";
 
 export const ResultsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const projectId = searchParams.get('project_id');
+  const projectId = searchParams.get("project_id");
 
   // State
   const [results, setResults] = useState<OptimizationResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAlternativeId, setSelectedAlternativeId] = useState<string | undefined>();
+  const [selectedAlternativeId, setSelectedAlternativeId] = useState<
+    string | undefined
+  >();
   const [selectedAssetId, setSelectedAssetId] = useState<string | undefined>();
   const [editMode, setEditMode] = useState(false);
-  const [externalMoveOperation, setExternalMoveOperation] = useState<EditOperation | null>(null);
-  const [localViolations, setLocalViolations] = useState<ConstraintViolation[]>([]);
+  const [externalMoveOperation, setExternalMoveOperation] =
+    useState<EditOperation | null>(null);
+  const [localViolations, setLocalViolations] = useState<ConstraintViolation[]>(
+    [],
+  );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>({
     base_map: true,
@@ -46,13 +59,14 @@ export const ResultsPage: React.FC = () => {
     constraints: true,
     buildable_areas: true,
     earthwork: false,
+    existing_conditions: true,
   });
 
   // Fetch results from API - poll status first, then fetch results
   useEffect(() => {
     const fetchResults = async () => {
       if (!projectId) {
-        setError('No project ID provided');
+        setError("No project ID provided");
         setLoading(false);
         return;
       }
@@ -62,27 +76,31 @@ export const ResultsPage: React.FC = () => {
         setError(null);
 
         // Poll project status until completion
-        let status = 'processing';
+        let status = "processing";
         let attempts = 0;
         const maxAttempts = 120; // 2 minutes max (120 * 1s)
 
-        while (status !== 'completed' && status !== 'failed' && attempts < maxAttempts) {
+        while (
+          status !== "completed" &&
+          status !== "failed" &&
+          attempts < maxAttempts
+        ) {
           const statusData = await checkProjectStatus(projectId);
           status = statusData.status;
 
-          if (status === 'failed') {
-            throw new Error(statusData.error || 'Optimization failed');
+          if (status === "failed") {
+            throw new Error(statusData.error || "Optimization failed");
           }
 
-          if (status !== 'completed') {
+          if (status !== "completed") {
             // Wait 1 second before next poll
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             attempts++;
           }
         }
 
         if (attempts >= maxAttempts) {
-          throw new Error('Optimization timed out. Please try again.');
+          throw new Error("Optimization timed out. Please try again.");
         }
 
         // Fetch final results
@@ -92,15 +110,18 @@ export const ResultsPage: React.FC = () => {
         setSelectedAlternativeId(data.alternatives[0]?.id);
         setLoading(false);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load results';
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load results";
         // Check if it's a network error (server restart, etc.)
-        const isNetworkError = errorMessage.includes('Network') ||
-                              errorMessage.includes('timeout') ||
-                              errorMessage.includes('ECONNREFUSED');
+        const isNetworkError =
+          errorMessage.includes("Network") ||
+          errorMessage.includes("timeout") ||
+          errorMessage.includes("ECONNREFUSED");
 
-        setError(isNetworkError
-          ? 'Server connection lost. The server may be restarting.'
-          : errorMessage
+        setError(
+          isNetworkError
+            ? "Server connection lost. The server may be restarting."
+            : errorMessage,
         );
         setLoading(false);
       }
@@ -119,14 +140,14 @@ export const ResultsPage: React.FC = () => {
 
   // Get current alternative
   const currentAlternative = results?.alternatives.find(
-    (alt) => alt.id === selectedAlternativeId
+    (alt) => alt.id === selectedAlternativeId,
   );
 
   // Hide roads when entering edit mode (they're outdated after moving assets)
   useEffect(() => {
     if (editMode) {
       // Hide roads in edit mode
-      setLayerVisibility(prev => ({ ...prev, roads: false }));
+      setLayerVisibility((prev) => ({ ...prev, roads: false }));
     }
   }, [editMode]);
 
@@ -138,15 +159,17 @@ export const ResultsPage: React.FC = () => {
     }
 
     // Ensure all asset polygons are synced with their positions
-    const assetsWithUpdatedPolygons = currentAlternative.assets.map(asset => ({
-      ...asset,
-      polygon: recalculateAssetPolygon(asset)
-    }));
+    const assetsWithUpdatedPolygons = currentAlternative.assets.map(
+      (asset) => ({
+        ...asset,
+        polygon: recalculateAssetPolygon(asset),
+      }),
+    );
 
     const violations = checkConstraintViolations(
       assetsWithUpdatedPolygons,
       currentAlternative.constraint_zones,
-      results.property_boundary
+      results.property_boundary,
     );
     setLocalViolations(violations);
   };
@@ -173,7 +196,7 @@ export const ResultsPage: React.FC = () => {
     setResults({
       ...results,
       alternatives: results.alternatives.map((alt) =>
-        alt.id === selectedAlternativeId ? updatedAlternative : alt
+        alt.id === selectedAlternativeId ? updatedAlternative : alt,
       ),
     });
 
@@ -211,7 +234,7 @@ export const ResultsPage: React.FC = () => {
 
     // Create edit operation for tracking in history
     setExternalMoveOperation({
-      type: 'move_asset',
+      type: "move_asset",
       assetId,
       before: { position: beforePosition },
       after: { position: newPosition },
@@ -242,31 +265,42 @@ export const ResultsPage: React.FC = () => {
     try {
       await exportLayout(format, results, selectedAlternativeId);
     } catch (error) {
-      console.error('Export failed:', error);
-      alert(`Failed to export: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Export failed:", error);
+      alert(
+        `Failed to export: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
   // Handle save
   const handleSave = async () => {
-    console.log('handleSave called:', {
+    console.log("handleSave called:", {
       hasResults: !!results,
       hasCurrentAlternative: !!currentAlternative,
       projectId,
       selectedAlternativeId,
       alternativeIdType: typeof selectedAlternativeId,
       alternativesCount: results?.alternatives?.length,
-      alternativeIds: results?.alternatives?.map(a => a.id),
+      alternativeIds: results?.alternatives?.map((a) => a.id),
     });
 
-    if (!results || !currentAlternative || !projectId || !selectedAlternativeId) {
-      console.error('Save blocked - missing required data');
+    if (
+      !results ||
+      !currentAlternative ||
+      !projectId ||
+      !selectedAlternativeId
+    ) {
+      console.error("Save blocked - missing required data");
       return;
     }
 
     try {
       // Save the updated assets to the backend
-      await saveLayout(projectId, selectedAlternativeId, currentAlternative.assets);
+      await saveLayout(
+        projectId,
+        selectedAlternativeId,
+        currentAlternative.assets,
+      );
 
       // Clear any pending debounced checks
       if (violationCheckTimeoutRef.current) {
@@ -281,8 +315,10 @@ export const ResultsPage: React.FC = () => {
 
       // No alert needed - the save is successful and persisted
     } catch (error) {
-      console.error('Save failed:', error);
-      alert(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Save failed:", error);
+      alert(
+        `Failed to save changes: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -310,7 +346,7 @@ export const ResultsPage: React.FC = () => {
     if (!projectId) return;
 
     const confirmed = window.confirm(
-      'This will run a new optimization with the current configuration. The process may take a moment. Continue?'
+      "This will run a new optimization with the current configuration. The process may take a moment. Continue?",
     );
 
     if (!confirmed) return;
@@ -323,27 +359,31 @@ export const ResultsPage: React.FC = () => {
       await reoptimizeLayout(projectId);
 
       // Poll project status until completion
-      let status = 'processing';
+      let status = "processing";
       let attempts = 0;
       const maxAttempts = 120; // 2 minutes max (120 * 1s)
 
-      while (status !== 'completed' && status !== 'failed' && attempts < maxAttempts) {
+      while (
+        status !== "completed" &&
+        status !== "failed" &&
+        attempts < maxAttempts
+      ) {
         const statusData = await checkProjectStatus(projectId);
         status = statusData.status;
 
-        if (status === 'failed') {
-          throw new Error(statusData.error || 'Re-optimization failed');
+        if (status === "failed") {
+          throw new Error(statusData.error || "Re-optimization failed");
         }
 
-        if (status !== 'completed') {
+        if (status !== "completed") {
           // Wait 1 second before next poll
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           attempts++;
         }
       }
 
       if (attempts >= maxAttempts) {
-        throw new Error('Re-optimization timed out. Please try again.');
+        throw new Error("Re-optimization timed out. Please try again.");
       }
 
       // Fetch updated results
@@ -351,14 +391,14 @@ export const ResultsPage: React.FC = () => {
       setResults(data);
       setSelectedAlternativeId(data.alternatives[0]?.id);
       setEditMode(false); // Exit edit mode to show new results
-      setLayerVisibility(prev => ({ ...prev, roads: true })); // Show new roads
+      setLayerVisibility((prev) => ({ ...prev, roads: true })); // Show new roads
       setLoading(false);
 
       // Show success message
-      alert('Re-optimization completed successfully!');
+      alert("Re-optimization completed successfully!");
     } catch (err) {
-      console.error('Re-optimization failed:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error("Re-optimization failed:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError(`Re-optimization failed: ${errorMessage}`);
       setLoading(false);
     }
@@ -376,16 +416,19 @@ export const ResultsPage: React.FC = () => {
   }
 
   if (error || !results || !currentAlternative) {
-    const isServerError = error?.includes('Server connection lost') ||
-                          error?.includes('Network') ||
-                          error?.includes('timeout');
+    const isServerError =
+      error?.includes("Server connection lost") ||
+      error?.includes("Network") ||
+      error?.includes("timeout");
 
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg p-8 shadow-md max-w-md">
           <div className="text-red-600 text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Results</h2>
-          <p className="text-gray-600 mb-4">{error || 'No results found'}</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Error Loading Results
+          </h2>
+          <p className="text-gray-600 mb-4">{error || "No results found"}</p>
           <div className="flex gap-3">
             {isServerError && projectId && (
               <button
@@ -396,7 +439,7 @@ export const ResultsPage: React.FC = () => {
               </button>
             )}
             <button
-              onClick={() => (window.location.href = '/')}
+              onClick={() => (window.location.href = "/")}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
             >
               Go Home
@@ -418,11 +461,11 @@ export const ResultsPage: React.FC = () => {
               onClick={handleEditModeToggle}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 editMode
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {editMode ? 'Exit Edit Mode' : 'Edit Layout'}
+              {editMode ? "Exit Edit Mode" : "Edit Layout"}
             </button>
           </>
         }
@@ -447,13 +490,15 @@ export const ResultsPage: React.FC = () => {
                   onAssetMove={handleAssetMove}
                   editable={editMode}
                   selectedAssetId={selectedAssetId}
-                  violatingAssetIds={localViolations.map(v => v.asset_id)}
+                  violatingAssetIds={localViolations.map((v) => v.asset_id)}
                 />
               </div>
 
               {/* Layer Controls */}
               <div className="mt-4 border-t border-gray-200 pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Map Layers</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Map Layers
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(layerVisibility).map(([layer, visible]) => (
                     <button
@@ -461,17 +506,19 @@ export const ResultsPage: React.FC = () => {
                       onClick={() => toggleLayer(layer as LayerType)}
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                         visible
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                       }`}
                     >
-                      {layer.replace('_', ' ')}
+                      {layer.replace("_", " ")}
                     </button>
                   ))}
                 </div>
                 {editMode && (
                   <div className="mt-2 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded p-2">
-                    ℹ️ Roads are from the original layout and won't update as you move assets. Toggle them on to see original paths, or re-optimize to generate new roads.
+                    ℹ️ Roads are from the original layout and won't update as
+                    you move assets. Toggle them on to see original paths, or
+                    re-optimize to generate new roads.
                   </div>
                 )}
               </div>
@@ -496,12 +543,16 @@ export const ResultsPage: React.FC = () => {
               <div className="space-y-4">
                 {/* Quick Stats */}
                 <div className="bg-white rounded-lg shadow-md p-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Stats</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Quick Stats
+                  </h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-blue-50 rounded p-2">
                       <p className="text-xs text-blue-600">Score</p>
                       <p className="text-lg font-bold text-blue-900">
-                        {currentAlternative.metrics.optimization_score.toFixed(1)}
+                        {currentAlternative.metrics.optimization_score.toFixed(
+                          1,
+                        )}
                       </p>
                     </div>
                     <div className="bg-green-50 rounded p-2">
@@ -513,21 +564,26 @@ export const ResultsPage: React.FC = () => {
                     <div className="bg-purple-50 rounded p-2">
                       <p className="text-xs text-purple-600">Cost</p>
                       <p className="text-lg font-bold text-purple-900">
-                        ${(currentAlternative.metrics.estimated_cost.total / 1000000).toFixed(2)}M
+                        $
+                        {(
+                          currentAlternative.metrics.estimated_cost.total /
+                          1000000
+                        ).toFixed(2)}
+                        M
                       </p>
                     </div>
                     <div
                       className={`rounded p-2 ${
                         localViolations.length === 0
-                          ? 'bg-green-50'
-                          : 'bg-red-50'
+                          ? "bg-green-50"
+                          : "bg-red-50"
                       }`}
                     >
                       <p
                         className={`text-xs ${
                           localViolations.length === 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
+                            ? "text-green-600"
+                            : "text-red-600"
                         }`}
                       >
                         Violations
@@ -535,8 +591,8 @@ export const ResultsPage: React.FC = () => {
                       <p
                         className={`text-lg font-bold ${
                           localViolations.length === 0
-                            ? 'text-green-900'
-                            : 'text-red-900'
+                            ? "text-green-900"
+                            : "text-red-900"
                         }`}
                       >
                         {localViolations.length}
@@ -563,7 +619,9 @@ export const ResultsPage: React.FC = () => {
                     </div>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {localViolations.map((violation, index) => {
-                        const violatingAsset = currentAlternative.assets.find(a => a.id === violation.asset_id);
+                        const violatingAsset = currentAlternative.assets.find(
+                          (a) => a.id === violation.asset_id,
+                        );
                         return (
                           <div
                             key={index}
@@ -578,17 +636,23 @@ export const ResultsPage: React.FC = () => {
                                 <div className="flex items-center gap-2 mb-1">
                                   <span
                                     className={`inline-block w-2 h-2 rounded-full ${
-                                      violation.severity === 'error' ? 'bg-red-600' : 'bg-yellow-600'
+                                      violation.severity === "error"
+                                        ? "bg-red-600"
+                                        : "bg-yellow-600"
                                     }`}
                                   />
                                   <span className="text-xs font-medium text-red-900">
-                                    {violatingAsset?.type.replace('_', ' ').toUpperCase() || 'Asset'}
+                                    {violatingAsset?.type
+                                      .replace("_", " ")
+                                      .toUpperCase() || "Asset"}
                                   </span>
                                   <span className="text-xs text-gray-500">
                                     ({violation.asset_id.substring(0, 8)})
                                   </span>
                                 </div>
-                                <p className="text-xs text-red-700 ml-4">{violation.message}</p>
+                                <p className="text-xs text-red-700 ml-4">
+                                  {violation.message}
+                                </p>
                               </div>
                               <button
                                 onClick={(e) => {
@@ -606,7 +670,8 @@ export const ResultsPage: React.FC = () => {
                       })}
                     </div>
                     <p className="text-xs text-red-600 mt-3 italic">
-                      Click on a violation to select and fix the asset in the editor
+                      Click on a violation to select and fix the asset in the
+                      editor
                     </p>
                   </div>
                 )}

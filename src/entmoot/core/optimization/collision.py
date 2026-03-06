@@ -5,13 +5,13 @@ This module provides fast collision detection using bounding boxes and
 spatial indexing (R-tree) for efficient queries on large sites.
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from shapely.geometry.base import BaseGeometry
-from shapely.geometry import box, Point
 from shapely import STRtree
+from shapely.geometry import Point, box
+from shapely.geometry.base import BaseGeometry
 
 from entmoot.models.asset import AssetType, PlacedAsset, get_required_spacing
 
@@ -52,7 +52,7 @@ class Violation:
 
     def to_dict(self) -> Dict:
         """Convert violation to dictionary."""
-        result = {
+        result: Dict[str, Any] = {
             "violation_type": self.violation_type.value,
             "asset_id": self.asset_id,
             "description": self.description,
@@ -211,7 +211,7 @@ class CollisionDetector:
         """
         geom1 = asset1.get_geometry()
         geom2 = asset2.get_geometry()
-        return geom1.intersects(geom2)
+        return bool(geom1.intersects(geom2) and not geom1.touches(geom2))
 
     def check_spacing(self, asset1: PlacedAsset, asset2: PlacedAsset) -> Tuple[bool, float, float]:
         """
@@ -374,7 +374,7 @@ class CollisionDetector:
         exclusion_zones: Optional[List[BaseGeometry]] = None,
         buildable_area: Optional[BaseGeometry] = None,
         max_slope: Optional[float] = None,
-        slope_raster: Optional[any] = None,
+        slope_raster: Optional[Any] = None,
     ) -> ValidationResult:
         """
         Comprehensive validation of asset placement.

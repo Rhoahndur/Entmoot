@@ -5,20 +5,23 @@ This module provides the ConstraintCollection class for managing multiple constr
 with spatial indexing for efficient queries.
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+import logging
 from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
+from shapely import wkt
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry.base import BaseGeometry
 from shapely.strtree import STRtree
-from shapely import wkt
+
+logger = logging.getLogger(__name__)
 
 from entmoot.models.constraints import (
     Constraint,
-    ConstraintType,
-    ConstraintSeverity,
     ConstraintPriority,
+    ConstraintSeverity,
+    ConstraintType,
 )
 
 
@@ -157,7 +160,7 @@ class ConstraintCollection:
                 geom = constraint.get_geometry()
                 geometries.append(geom)
             except Exception:
-                # Skip constraints with invalid geometries
+                logger.debug("Skipping constraint with invalid geometry during index rebuild")
                 continue
 
         if geometries:
@@ -202,6 +205,7 @@ class ConstraintCollection:
                         matching_constraints.append(constraint)
                         break
                 except Exception:
+                    logger.debug("Skipping constraint during spatial query comparison")
                     continue
 
         return matching_constraints
@@ -316,9 +320,9 @@ class ConstraintCollection:
         stats.total_constraints = len(self._constraints)
 
         # Count by type
-        type_counts = defaultdict(int)
-        severity_counts = defaultdict(int)
-        priority_counts = defaultdict(int)
+        type_counts: defaultdict[ConstraintType, int] = defaultdict(int)
+        severity_counts: defaultdict[ConstraintSeverity, int] = defaultdict(int)
+        priority_counts: defaultdict[ConstraintPriority, int] = defaultdict(int)
         blocking_count = 0
 
         for constraint in self._constraints.values():
@@ -329,9 +333,9 @@ class ConstraintCollection:
             if constraint.severity == ConstraintSeverity.BLOCKING:
                 blocking_count += 1
 
-        stats.by_type = dict(type_counts)
-        stats.by_severity = dict(severity_counts)
-        stats.by_priority = dict(priority_counts)
+        stats.by_type = {k.value: v for k, v in type_counts.items()}
+        stats.by_severity = {k.value: v for k, v in severity_counts.items()}
+        stats.by_priority = {k.value: v for k, v in priority_counts.items()}
         stats.blocking_constraints = blocking_count
 
         # Calculate total constrained area (union of all geometries)
@@ -343,6 +347,7 @@ class ConstraintCollection:
                 try:
                     geometries.append(constraint.get_geometry())
                 except Exception:
+                    logger.debug("Skipping constraint with invalid geometry in statistics")
                     continue
 
             if geometries:
@@ -359,7 +364,7 @@ class ConstraintCollection:
                             coverage = (union.area / site_area) * 100
                             stats.constraint_coverage_percent = min(coverage, 100.0)
                     except Exception:
-                        pass
+                        logger.debug("Failed to parse site boundary WKT for coverage calc")
 
         # Count overlaps
         stats.overlapping_constraints = len(self.find_overlapping_constraints())
@@ -463,7 +468,7 @@ class ConstraintCollection:
             try:
                 features.append(constraint.to_geojson())
             except Exception:
-                # Skip constraints that can't be serialized
+                logger.debug("Skipping constraint that could not be serialized to GeoJSON")
                 continue
 
         return {

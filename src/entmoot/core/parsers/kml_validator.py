@@ -6,10 +6,12 @@ and required KML elements before parsing.
 """
 
 import logging
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Union
+from xml.etree.ElementTree import Element
+
+import defusedxml.ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +142,7 @@ class KMLValidator:
             self.result.add_error(f"Validation failed: {e}")
             return self.result
 
-    def _validate_root(self, root: ET.Element) -> bool:
+    def _validate_root(self, root: Element) -> bool:
         """
         Validate root element is 'kml'.
 
@@ -150,6 +152,7 @@ class KMLValidator:
         Returns:
             True if root is valid, False otherwise
         """
+        assert self.result is not None  # nosec B101
         # Check root tag (with or without namespace)
         tag = root.tag.split("}")[1] if "}" in root.tag else root.tag
 
@@ -161,25 +164,27 @@ class KMLValidator:
 
         return True
 
-    def _extract_namespace(self, root: ET.Element) -> None:
+    def _extract_namespace(self, root: Element) -> None:
         """
         Extract KML namespace from root element.
 
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         if "}" in root.tag:
             self.result.namespace = root.tag.split("}")[0] + "}"
         else:
             self.result.add_warning("No namespace found in KML file")
 
-    def _validate_structure(self, root: ET.Element) -> None:
+    def _validate_structure(self, root: Element) -> None:
         """
         Validate KML structure (Document, Folder, Placemark hierarchy).
 
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         ns = self.result.namespace or ""
 
         # Look for Document or Folder elements
@@ -197,13 +202,14 @@ class KMLValidator:
         else:
             self.result.add_warning("No Placemark elements found")
 
-    def _validate_geometries(self, root: ET.Element) -> None:
+    def _validate_geometries(self, root: Element) -> None:
         """
         Validate geometry elements in KML.
 
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         ns = self.result.namespace or ""
         geometry_count = 0
 
@@ -218,7 +224,7 @@ class KMLValidator:
         self.result.geometry_count = geometry_count
         self.result.has_geometries = geometry_count > 0
 
-    def _validate_geometry_element(self, element: ET.Element, geom_type: str) -> None:
+    def _validate_geometry_element(self, element: Element, geom_type: str) -> None:
         """
         Validate individual geometry element.
 
@@ -226,6 +232,7 @@ class KMLValidator:
             element: Geometry XML element
             geom_type: Type of geometry
         """
+        assert self.result is not None  # nosec B101
         ns = self.result.namespace or ""
 
         # Check for coordinates element
@@ -264,7 +271,7 @@ class KMLValidator:
 
 def validate_kml_file(file_path: Union[str, Path]) -> KMLValidationResult:
     """
-    Convenience function to validate a KML file.
+    Validate a KML file.
 
     Args:
         file_path: Path to KML file
@@ -278,7 +285,7 @@ def validate_kml_file(file_path: Union[str, Path]) -> KMLValidationResult:
 
 def validate_kml_string(kml_content: str) -> KMLValidationResult:
     """
-    Convenience function to validate KML string content.
+    Validate KML string content.
 
     Args:
         kml_content: KML content as string

@@ -28,6 +28,7 @@ export interface ConstraintConfig {
   respect_easements: boolean;
   wetland_buffer: number;
   slope_limit: number;
+  use_existing_conditions: boolean;
 }
 
 export interface RoadConfig {

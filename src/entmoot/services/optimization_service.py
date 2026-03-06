@@ -105,23 +105,24 @@ def run_optimization_sync(  # noqa: C901
     Raises:
         Exception: If optimization fails
     """
-    from entmoot.core.storage import storage_service
+    from entmoot.core.optimization.genetic_algorithm import (
+        GeneticAlgorithmConfig,
+        GeneticOptimizer,
+        InitializationStrategy,
+    )
+    from entmoot.core.optimization.problem import (
+        ObjectiveWeights,
+        OptimizationConstraints,
+        OptimizationObjective,
+    )
     from entmoot.core.parsers.kml_parser import KMLParser
+    from entmoot.core.storage import storage_service
     from entmoot.models.assets import (
+        Asset,
         BuildingAsset,
         EquipmentYardAsset,
         ParkingLotAsset,
         StorageTankAsset,
-    )
-    from entmoot.core.optimization.genetic_algorithm import (
-        GeneticOptimizer,
-        GeneticAlgorithmConfig,
-        InitializationStrategy,
-    )
-    from entmoot.core.optimization.problem import (
-        OptimizationObjective,
-        OptimizationConstraints,
-        ObjectiveWeights,
     )
 
     logger.info(f"Running optimization for project {project_id}")
@@ -180,8 +181,8 @@ def run_optimization_sync(  # noqa: C901
 
         if not is_kmz:
             try:
-                with open(kml_file_path, "rb") as f:
-                    header = f.read(2)
+                with open(kml_file_path, "rb") as fb:
+                    header = fb.read(2)
                     if header == b"PK":
                         logger.info("File has ZIP signature (PK), treating as KMZ")
                         is_kmz = True
@@ -192,12 +193,12 @@ def run_optimization_sync(  # noqa: C901
             from entmoot.core.parsers.kmz_parser import KMZParser
 
             logger.info("Using KMZParser for KMZ file")
-            parser = KMZParser(validate=False)
+            kmz_parser = KMZParser(validate=False)
+            parsed_kml = kmz_parser.parse(kml_file_path)
         else:
             logger.info("Using KMLParser for KML file")
-            parser = KMLParser(validate=False)
-
-        parsed_kml = parser.parse(kml_file_path)
+            kml_parser = KMLParser(validate=False)
+            parsed_kml = kml_parser.parse(kml_file_path)
         property_boundaries = parsed_kml.get_property_boundaries()
         if property_boundaries and property_boundaries[0].geometry:
             raw_boundary = property_boundaries[0].geometry
@@ -205,16 +206,18 @@ def run_optimization_sync(  # noqa: C901
     # ------------------------------------------------------------------
     # Step 2b: CRS transformation
     # ------------------------------------------------------------------
+    transformer = None
     inverse_transformer = None
 
     if not raw_boundary:
         logger.warning("No property boundary found in file, using default 500x500 ft boundary")
         site_boundary = box(0, 0, 500 * 0.3048, 500 * 0.3048)
     else:
-        from entmoot.core.crs.detector import detect_crs_from_kml, detect_crs_from_geojson
+        from shapely.ops import transform as shapely_transform
+
+        from entmoot.core.crs.detector import detect_crs_from_geojson, detect_crs_from_kml
         from entmoot.core.crs.transformer import CRSTransformer
         from entmoot.core.crs.utm import get_utm_crs_info
-        from shapely.ops import transform as shapely_transform
 
         logger.info(
             f"Found property boundary with area in source CRS: "
@@ -332,13 +335,69 @@ def run_optimization_sync(  # noqa: C901
                     tc = get_utm_crs_info(cx, cy)
                     target_crs_epsg = tc.epsg
 
-                terrain_data = prepare_terrain_data(dem_file_path, site_boundary, target_crs_epsg)
-                logger.info("Terrain data loaded successfully")
+                if target_crs_epsg is not None:
+                    terrain_data = prepare_terrain_data(
+                        dem_file_path, site_boundary, target_crs_epsg
+                    )
+                    logger.info("Terrain data loaded successfully")
+                else:
+                    logger.warning("Could not determine target CRS EPSG, skipping DEM")
             else:
                 logger.warning(f"DEM file not found for dem_upload_id: {config.dem_upload_id}")
         except Exception as e:
             logger.warning(f"Failed to load DEM, continuing without terrain data: {e}")
             terrain_data = None
+
+    # ------------------------------------------------------------------
+    # Step 2d: Fetch existing conditions from OpenStreetMap
+    # ------------------------------------------------------------------
+    existing_conditions_zones: list = []
+    existing_conditions_display: list = []
+    road_entry_override = None
+
+    if (
+        config.constraints.use_existing_conditions
+        and raw_boundary is not None
+        and transformer is not None
+        and inverse_transformer is not None
+    ):
+        try:
+            from entmoot.services.existing_conditions_service import ExistingConditionsService
+
+            logger.info("Fetching existing conditions from OpenStreetMap")
+            ec_service = ExistingConditionsService()
+
+            ec_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(ec_loop)
+            ec_result = ec_loop.run_until_complete(
+                ec_service.fetch_and_process(
+                    site_boundary_wgs84=raw_boundary,
+                    transformer=transformer,
+                    inverse_transformer=inverse_transformer,
+                    site_boundary_utm=site_boundary,
+                )
+            )
+            ec_loop.close()
+
+            existing_conditions_zones = ec_result.exclusion_zones
+            existing_conditions_display = ec_result.display_features
+            road_entry_override = ec_result.road_entry_point
+
+            logger.info(
+                f"Existing conditions: {ec_result.feature_count} features -> "
+                f"{len(existing_conditions_zones)} exclusion zones"
+            )
+
+            # Store display features for the API response
+            project = storage.get_project(project_id)
+            if project:
+                project["existing_conditions"] = [
+                    z.model_dump() for z in existing_conditions_display
+                ]
+                storage.set_project(project_id, project)
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch existing conditions, continuing without: {e}")
 
     # Update progress
     _update_progress(project_id, 10)
@@ -347,7 +406,7 @@ def run_optimization_sync(  # noqa: C901
     # Step 3: Create Asset instances from config
     # ------------------------------------------------------------------
     logger.info(f"Creating {len(config.assets)} asset instances")
-    assets = []
+    assets: List[Asset] = []
     for i, asset_config in enumerate(config.assets):
         width_m = asset_config.width * 0.3048
         length_m = asset_config.length * 0.3048
@@ -366,22 +425,23 @@ def run_optimization_sync(  # noqa: C901
             if asset_config.height:
                 asset_data["building_height_m"] = asset_config.height * 0.3048
 
+            created_asset: Asset
             if asset_config.type.value == "buildings":
-                asset = BuildingAsset(**asset_data)
+                created_asset = BuildingAsset(**asset_data)
             elif asset_config.type.value == "equipment_yard":
-                asset = EquipmentYardAsset(**asset_data)
+                created_asset = EquipmentYardAsset(**asset_data)
             elif asset_config.type.value == "parking_lot":
                 num_spaces = max(1, int(asset_data["area_sqm"] / 25))
                 asset_data["num_spaces"] = num_spaces
-                asset = ParkingLotAsset(**asset_data)
+                created_asset = ParkingLotAsset(**asset_data)
             elif asset_config.type.value == "storage_tanks":
                 asset_data["capacity_liters"] = 50000
                 asset_data["tank_height_m"] = 5.0
-                asset = StorageTankAsset(**asset_data)
+                created_asset = StorageTankAsset(**asset_data)
             else:
-                asset = BuildingAsset(**asset_data)
+                created_asset = BuildingAsset(**asset_data)
 
-            assets.append(asset)
+            assets.append(created_asset)
 
     logger.info(f"Created {len(assets)} total asset instances")
 
@@ -394,7 +454,7 @@ def run_optimization_sync(  # noqa: C901
     constraints = OptimizationConstraints(
         site_boundary=site_boundary,
         buildable_zones=[],
-        exclusion_zones=[],
+        exclusion_zones=list(existing_conditions_zones),
         regulatory_constraints=[],
         min_setback_m=config.constraints.setback_distance * 0.3048,
         min_asset_spacing_m=config.constraints.min_distance_between_assets * 0.3048,
@@ -455,7 +515,11 @@ def run_optimization_sync(  # noqa: C901
         elevation_data=terrain_data.elevation if terrain_data else None,
         slope_data=terrain_data.slope_percent if terrain_data else None,
         transform=terrain_data.transform if terrain_data else None,
-        road_entry_point=(site_boundary.centroid.x, site_boundary.centroid.y),
+        road_entry_point=(
+            road_entry_override
+            if road_entry_override is not None
+            else (site_boundary.centroid.x, site_boundary.centroid.y)
+        ),
         terrain_data=terrain_data,
     )
 
@@ -539,7 +603,9 @@ def run_optimization_sync(  # noqa: C901
 
     placed_assets = []
     for asset in result.best_solution.assets:
-        project_asset_type = asset_type_mapping.get(asset.asset_type, AssetType.BUILDINGS)
+        project_asset_type = asset_type_mapping.get(
+            asset.asset_type, AssetType.BUILDINGS  # type: ignore[call-overload]
+        )
 
         if inverse_transformer:
             lon, lat = inverse_transformer.transform(asset.position[0], asset.position[1])
@@ -557,6 +623,7 @@ def run_optimization_sync(  # noqa: C901
         # Compute footprint polygon (resolves TODO: polygon=[])
         footprint_coords = _compute_asset_footprint(asset, lon, lat, inverse_transformer)
 
+        height_m = getattr(asset, "building_height_m", None)
         placed_asset = PlacedAsset(
             id=asset.id,
             type=project_asset_type,
@@ -564,11 +631,7 @@ def run_optimization_sync(  # noqa: C901
             rotation=asset.rotation,
             width=asset.dimensions[0] * 3.28084,
             length=asset.dimensions[1] * 3.28084,
-            height=(
-                getattr(asset, "building_height_m", None) * 3.28084
-                if hasattr(asset, "building_height_m")
-                else None
-            ),
+            height=(float(height_m) * 3.28084 if height_m is not None else None),
             polygon=footprint_coords,
         )
         placed_assets.append(placed_asset)

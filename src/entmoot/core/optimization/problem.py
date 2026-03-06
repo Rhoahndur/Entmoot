@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
     from entmoot.services.terrain_service import TerrainData
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 import numpy as np
 from numpy.typing import NDArray
 from shapely.geometry import Point as ShapelyPoint
-from shapely.geometry import Polygon as ShapelyPolygon, LineString
+from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.ops import unary_union
 
 from entmoot.models.assets import Asset
@@ -577,7 +577,7 @@ class OptimizationObjective:
         # Compactness ratio (higher = more compact)
         compactness_ratio = actual_area / bbox_area if bbox_area > 0 else 0.0
         score = compactness_ratio * 100.0
-        return min(score, 100.0)
+        return float(min(score, 100.0))
 
     def _evaluate_slope_variance(self, solution: PlacementSolution) -> float:
         """
@@ -623,5 +623,6 @@ class OptimizationObjective:
         variance = np.var(xs) + np.var(ys)
 
         max_variance = 10000.0
-        score = 100.0 * (1.0 - min(variance / max_variance, 1.0))
-        return max(score, 0.0)
+        ratio = float(variance / max_variance)
+        score = 100.0 * (1.0 - min(ratio, 1.0))
+        return float(max(score, 0.0))

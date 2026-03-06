@@ -50,6 +50,26 @@ repos:
       - id: isort
         args: ["--profile", "black", "--line-length", "100"]
 
+  # Frontend code formatting with prettier
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier (frontend)
+        entry: npx --prefix frontend prettier --write
+        language: system
+        files: '^frontend/src/.*\.(ts|tsx|css|json)$'
+        pass_filenames: true
+
+  # Frontend linting with eslint
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npx eslint "${@#frontend/}"' --
+        language: system
+        files: '^frontend/src/.*\.(ts|tsx)$'
+        pass_filenames: true
+
   # OpenAPI schema freshness check
   - repo: local
     hooks:

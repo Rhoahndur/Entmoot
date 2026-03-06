@@ -8,7 +8,7 @@ import logging
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from .kml_parser import KMLParser, ParsedKML
 from .kmz_validator import KMZValidator
@@ -173,7 +173,7 @@ class KMZParser:
             logger.error(f"Failed to extract KMZ: {e}")
             raise
 
-    def list_contents(self, kmz_path: Union[str, Path]) -> dict:
+    def list_contents(self, kmz_path: Union[str, Path]) -> Dict[str, Any]:
         """
         List all files in KMZ archive without extracting.
 
@@ -193,7 +193,7 @@ class KMZParser:
             raise FileNotFoundError(f"KMZ file not found: {kmz_path}")
 
         try:
-            contents = {
+            contents: Dict[str, Any] = {
                 "kml_files": [],
                 "image_files": [],
                 "other_files": [],
@@ -232,7 +232,7 @@ class KMZParser:
 
 def parse_kmz_file(file_path: Union[str, Path], validate: bool = True) -> ParsedKML:
     """
-    Convenience function to parse a KMZ file.
+    Parse a KMZ file.
 
     Args:
         file_path: Path to KMZ file
