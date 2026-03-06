@@ -14,12 +14,12 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from entmoot.models.assets import Asset, RotationAngle
 from entmoot.core.optimization.problem import (
-    OptimizationObjective,
     OptimizationConstraints,
+    OptimizationObjective,
     PlacementSolution,
 )
+from entmoot.models.assets import Asset, RotationAngle
 
 
 class InitializationStrategy(str, Enum):
@@ -282,7 +282,7 @@ class GeneticOptimizer:
             asset_copies = [asset.model_copy(deep=True) for asset in assets]
 
             # Place assets one at a time, checking for overlaps
-            placed_assets = []
+            placed_assets: List[Asset] = []
             for asset in asset_copies:
                 # Random rotation (0, 90, 180, 270)
                 asset.set_rotation(random.choice([0, 90, 180, 270]))

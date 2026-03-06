@@ -361,6 +361,21 @@ export const ConfigPage: React.FC = () => {
               <label className="flex items-center">
                 <input
                   type="checkbox"
+                  checked={constraints.use_existing_conditions}
+                  onChange={(e) =>
+                    handleConstraintChange('use_existing_conditions', e.target.checked)
+                  }
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Use existing conditions from OpenStreetMap (auto-detects buildings, roads,
+                  utilities, water)
+                </span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
                   checked={constraints.exclusion_zones_enabled}
                   onChange={(e) =>
                     handleConstraintChange('exclusion_zones_enabled', e.target.checked)

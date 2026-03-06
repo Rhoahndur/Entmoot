@@ -1,14 +1,12 @@
-"""
-Redis storage service for persisting project data across container restarts.
-"""
+"""Redis storage service for persisting project data across container restarts."""
 
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
-import redis
-from redis.exceptions import RedisError
+import redis  # type: ignore[import-untyped]
+from redis.exceptions import RedisError  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +64,12 @@ class RedisStorage:
             if self.use_fallback:
                 return self._fallback_projects.get(project_id)
 
+            assert self.client is not None  # nosec B101
             key = f"project:{project_id}"
-            data = self.client.get(key)
+            data = cast(Optional[str], self.client.get(key))
             if data:
-                return json.loads(data)
+                result: Dict[str, Any] = json.loads(data)
+                return result
             return None
         except Exception as e:
             logger.error(f"Error getting project {project_id}: {e}")
@@ -91,6 +91,7 @@ class RedisStorage:
                 self._fallback_projects[project_id] = data
                 return True
 
+            assert self.client is not None  # nosec B101
             key = f"project:{project_id}"
             self.client.set(key, json.dumps(data))
             return True
@@ -113,6 +114,7 @@ class RedisStorage:
                 self._fallback_projects.pop(project_id, None)
                 return True
 
+            assert self.client is not None  # nosec B101
             key = f"project:{project_id}"
             self.client.delete(key)
             return True
@@ -131,10 +133,11 @@ class RedisStorage:
             if self.use_fallback:
                 return list(self._fallback_projects.values())
 
+            assert self.client is not None  # nosec B101
             projects = []
             # Scan for all project keys
             for key in self.client.scan_iter("project:*"):
-                data = self.client.get(key)
+                data = cast(Optional[str], self.client.get(key))
                 if data:
                     projects.append(json.loads(data))
             return projects
@@ -156,8 +159,9 @@ class RedisStorage:
             if self.use_fallback:
                 return project_id in self._fallback_projects
 
+            assert self.client is not None  # nosec B101
             key = f"project:{project_id}"
-            return self.client.exists(key) > 0
+            return cast(int, self.client.exists(key)) > 0
         except Exception as e:
             logger.error(f"Error checking project existence {project_id}: {e}")
             return False
@@ -179,10 +183,12 @@ class RedisStorage:
                 data = self._fallback_results.get(project_id)
                 return json.loads(data) if data else None
 
+            assert self.client is not None  # nosec B101
             key = f"results:{project_id}"
-            data = self.client.get(key)
+            data = cast(Optional[str], self.client.get(key))
             if data:
-                return json.loads(data)
+                result: Dict[str, Any] = json.loads(data)
+                return result
             return None
         except Exception as e:
             logger.error(f"Error getting results for project {project_id}: {e}")
@@ -204,6 +210,7 @@ class RedisStorage:
                 self._fallback_results[project_id] = json.dumps(results)
                 return True
 
+            assert self.client is not None  # nosec B101
             key = f"results:{project_id}"
             self.client.set(key, json.dumps(results))
             return True
@@ -226,6 +233,7 @@ class RedisStorage:
                 self._fallback_results.pop(project_id, None)
                 return True
 
+            assert self.client is not None  # nosec B101
             key = f"results:{project_id}"
             self.client.delete(key)
             return True
@@ -247,8 +255,9 @@ class RedisStorage:
             if self.use_fallback:
                 return project_id in self._fallback_results
 
+            assert self.client is not None  # nosec B101
             key = f"results:{project_id}"
-            return self.client.exists(key) > 0
+            return cast(int, self.client.exists(key)) > 0
         except Exception as e:
             logger.error(f"Error checking results existence for project {project_id}: {e}")
             return False

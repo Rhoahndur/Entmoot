@@ -38,6 +38,9 @@ class ConstraintConfig(BaseModel):
     respect_easements: bool = Field(True, description="Respect easements")
     wetland_buffer: float = Field(50, ge=0, description="Wetland buffer distance in feet")
     slope_limit: float = Field(15, ge=0, le=30, description="Maximum buildable slope percentage")
+    use_existing_conditions: bool = Field(
+        True, description="Fetch existing conditions from OpenStreetMap"
+    )
 
 
 class RoadConfig(BaseModel):
@@ -188,6 +191,10 @@ class ConstraintType(str, Enum):
     EASEMENT = "easement"
     EXCLUSION = "exclusion"
     PROPERTY_LINE = "property_line"
+    EXISTING_BUILDING = "existing_building"
+    EXISTING_ROAD = "existing_road"
+    EXISTING_UTILITY = "existing_utility"
+    EXISTING_WATER = "existing_water"
 
 
 class ConstraintZone(BaseModel):

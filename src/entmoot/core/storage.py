@@ -1,17 +1,15 @@
-"""
-File storage service for managing uploaded files.
-"""
+"""File storage service for managing uploaded files."""
 
 import json
 import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 from uuid import UUID, uuid4
 
 from entmoot.core.config import settings
-from entmoot.models.upload import UploadMetadata, UploadStatus
+from entmoot.models.upload import FileType, UploadMetadata, UploadStatus
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +131,7 @@ class FileStorageService:
             metadata = UploadMetadata(
                 upload_id=upload_id,
                 filename=filename,
-                file_type=file_type,  # type: ignore
+                file_type=FileType(file_type),
                 file_size=len(file_content),
                 content_type=content_type,
                 upload_time=datetime.utcnow(),
@@ -255,7 +253,7 @@ class FileStorageService:
         Returns:
             List of upload UUIDs
         """
-        upload_ids = []
+        upload_ids: list[UUID] = []
 
         if not self.base_dir.exists():
             return upload_ids

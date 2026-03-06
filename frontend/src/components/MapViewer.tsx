@@ -308,13 +308,22 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       source: sourceId,
       paint: {
         'fill-color': [
-          'match',
-          ['get', 'severity'],
-          'low',
+          'case',
+          // Existing conditions: type-based colors
+          ['==', ['get', 'type'], 'existing_building'],
+          '#8B4513', // brown
+          ['==', ['get', 'type'], 'existing_road'],
+          '#666666', // gray
+          ['==', ['get', 'type'], 'existing_utility'],
+          '#FF8C00', // dark orange
+          ['==', ['get', 'type'], 'existing_water'],
+          '#4169E1', // royal blue
+          // Fallback: severity-based colors
+          ['==', ['get', 'severity'], 'low'],
           severityColors.low,
-          'medium',
+          ['==', ['get', 'severity'], 'medium'],
           severityColors.medium,
-          'high',
+          ['==', ['get', 'severity'], 'high'],
           severityColors.high,
           '#CCCCCC',
         ],

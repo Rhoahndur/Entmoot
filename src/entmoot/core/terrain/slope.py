@@ -11,7 +11,8 @@ in degrees or percentage.
 """
 
 from enum import Enum
-from typing import Optional, Tuple, Dict, Any
+from typing import Any, Dict, Optional, Tuple
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -250,7 +251,7 @@ def calculate_slope(
     z_factor: float = 1.0,
 ) -> NDArray[np.floating[Any]]:
     """
-    Convenience function to calculate slope from a DEM.
+    Calculate slope from a DEM.
 
     Args:
         dem: 2D numpy array representing the Digital Elevation Model
@@ -352,7 +353,7 @@ def calculate_slope_statistics(
     Returns:
         Dictionary containing slope statistics and class distribution
     """
-    stats = {
+    stats: Dict[str, Any] = {
         "min": float(np.min(slope)),
         "max": float(np.max(slope)),
         "mean": float(np.mean(slope)),

@@ -5,11 +5,11 @@ Parses KML files and extracts Placemarks with geometries, metadata, and properti
 """
 
 import logging
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+import defusedxml.ElementTree as ET
 from shapely.geometry.base import BaseGeometry
 
 from .geometry import (
@@ -220,6 +220,7 @@ class KMLParser:
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         document = root.find(f"{self.namespace}Document")
         if document is not None:
             # Get document name
@@ -242,6 +243,7 @@ class KMLParser:
         Args:
             root: XML root element
         """
+        assert self.result is not None  # nosec B101
         # Parse Style elements
         for style in root.findall(f".//{self.namespace}Style"):
             style_id = style.get("id")
@@ -297,6 +299,7 @@ class KMLParser:
             element: XML element to search
             folder_path: Current folder hierarchy path
         """
+        assert self.result is not None  # nosec B101
         # Parse direct child placemarks
         for placemark_elem in element.findall(f"{self.namespace}Placemark"):
             try:
@@ -482,7 +485,7 @@ class KMLParser:
 
 def parse_kml_file(file_path: Union[str, Path], validate: bool = True) -> ParsedKML:
     """
-    Convenience function to parse a KML file.
+    Parse a KML file.
 
     Args:
         file_path: Path to KML file
@@ -497,7 +500,7 @@ def parse_kml_file(file_path: Union[str, Path], validate: bool = True) -> Parsed
 
 def parse_kml_string(kml_content: str, validate: bool = True) -> ParsedKML:
     """
-    Convenience function to parse KML string content.
+    Parse KML string content.
 
     Args:
         kml_content: KML content as string

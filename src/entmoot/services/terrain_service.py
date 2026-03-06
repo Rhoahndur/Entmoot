@@ -16,8 +16,8 @@ from rasterio.transform import Affine
 from shapely.geometry import Point, Polygon
 
 from entmoot.core.terrain.dem_loader import DEMLoader
-from entmoot.core.terrain.dem_validator import DEMValidator
 from entmoot.core.terrain.dem_processor import DEMProcessor
+from entmoot.core.terrain.dem_validator import DEMValidator
 from entmoot.core.terrain.slope import SlopeCalculator
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ class TerrainData:
         cell_size: float,
         bounds: Tuple[float, float, float, float],
     ) -> None:
+        """Initialize TerrainData with elevation, slope, transform, cell size, and bounds."""
         self.elevation = elevation
         self.slope_percent = slope_percent
         self.transform = transform
@@ -57,7 +58,7 @@ class TerrainData:
         return row, col
 
     def _in_bounds(self, row: int, col: int) -> bool:
-        return 0 <= row < self.elevation.shape[0] and 0 <= col < self.elevation.shape[1]
+        return bool(0 <= row < self.elevation.shape[0] and 0 <= col < self.elevation.shape[1])
 
     # ---- public sampling API ----
 
@@ -139,8 +140,8 @@ def prepare_terrain_data(
         TerrainPreparationError: If validation fails critically.
     """
     import rasterio
-    from rasterio.warp import reproject, Resampling, calculate_default_transform
     from pyproj import CRS
+    from rasterio.warp import Resampling, calculate_default_transform, reproject
 
     logger.info(f"Preparing terrain data from {dem_file_path}")
 

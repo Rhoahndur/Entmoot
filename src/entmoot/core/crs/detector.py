@@ -7,9 +7,10 @@ from KML, GeoTIFF, GeoJSON, and other geospatial file formats.
 
 import json
 import re
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Optional, Union
+
+import defusedxml.ElementTree as ET
 
 try:
     from osgeo import gdal, osr
@@ -20,7 +21,7 @@ except ImportError:
 
 from pyproj import CRS
 
-from entmoot.models.crs import CRSInfo, CoordinateOrder, DistanceUnit
+from entmoot.models.crs import CoordinateOrder, CRSInfo, DistanceUnit
 
 
 class CRSDetectionError(Exception):
@@ -378,7 +379,7 @@ def crs_to_info(crs: CRS) -> CRSInfo:
         auth_tuple = crs.to_authority()
         if auth_tuple:
             authority, code = auth_tuple
-            if authority == "EPSG":
+            if authority == "EPSG" and code is not None:
                 try:
                     epsg = int(code)
                 except ValueError:

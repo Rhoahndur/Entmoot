@@ -139,6 +139,7 @@ class KMZValidator:
         Returns:
             True if valid ZIP, False otherwise
         """
+        assert self.result is not None  # nosec B101
         try:
             with zipfile.ZipFile(kmz_path, "r") as zf:
                 # Test ZIP integrity
@@ -180,6 +181,7 @@ class KMZValidator:
         Args:
             kmz_path: Path to KMZ file
         """
+        assert self.result is not None  # nosec B101
         try:
             with zipfile.ZipFile(kmz_path, "r") as zf:
                 for file_info in zf.infolist():
@@ -223,7 +225,7 @@ class KMZValidator:
 
 def validate_kmz_file(file_path: Union[str, Path]) -> KMZValidationResult:
     """
-    Convenience function to validate a KMZ file.
+    Validate a KMZ file.
 
     Args:
         file_path: Path to KMZ file
