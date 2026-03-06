@@ -7,7 +7,7 @@ regulatory constraints.
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -292,8 +292,12 @@ class ExclusionZoneConstraint(Constraint):
             raise ValueError("Permanent exclusions cannot have expiration dates")
         if not info.data.get("is_permanent") and v is None:
             raise ValueError("Temporary exclusions must have expiration dates")
-        if v and v < datetime.utcnow():
-            raise ValueError("Expiration date cannot be in the past")
+        if v:
+            now = datetime.now(timezone.utc)
+            # Treat naive datetimes as UTC
+            v_aware = v if v.tzinfo is not None else v.replace(tzinfo=timezone.utc)
+            if v_aware < now:
+                raise ValueError("Expiration date cannot be in the past")
         return v
 
     def validate_constraint(self) -> tuple[bool, List[str]]:
@@ -482,7 +486,11 @@ def create_standard_setback(
     Returns:
         Configured SetbackConstraint
     """
-    distance = distance_override or STANDARD_SETBACKS.get(constraint_type, 10.0)
+    distance = (
+        STANDARD_SETBACKS.get(constraint_type, 10.0)
+        if distance_override is None
+        else distance_override
+    )
 
     if name is None:
         name = f"{constraint_type.value.replace('_', ' ').title()} Setback"
