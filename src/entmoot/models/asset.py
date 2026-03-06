@@ -5,13 +5,13 @@ This module defines the asset framework for managing physical site elements
 like buildings, equipment yards, roads, and other infrastructure.
 """
 
-from enum import Enum
-from typing import Optional, Dict, Any
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field, field_validator
-from shapely.geometry.base import BaseGeometry
 from shapely import wkt
+from shapely.geometry.base import BaseGeometry
 from shapely.validation import make_valid
 
 
@@ -66,7 +66,7 @@ class PlacedAsset(BaseModel):
                 if not geom.is_valid:
                     raise ValueError("Geometry is invalid and could not be repaired")
                 # Return repaired WKT
-                return geom.wkt
+                return str(geom.wkt)
             return v
         except Exception as e:
             raise ValueError(f"Invalid geometry WKT: {str(e)}")
@@ -79,12 +79,13 @@ class PlacedAsset(BaseModel):
         """Calculate area in square meters."""
         geom = self.get_geometry()
         if hasattr(geom, "area"):
-            return geom.area
+            return float(geom.area)
         return 0.0
 
     def get_bounds(self) -> tuple[float, float, float, float]:
         """Get bounding box (minx, miny, maxx, maxy)."""
-        return self.get_geometry().bounds
+        bounds = self.get_geometry().bounds
+        return (float(bounds[0]), float(bounds[1]), float(bounds[2]), float(bounds[3]))
 
     def get_buffered_geometry(self, buffer_distance: float = 0.0) -> BaseGeometry:
         """

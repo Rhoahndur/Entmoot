@@ -15,9 +15,9 @@ from entmoot.models.project import (
     Bounds,
     BuildableArea,
     ConstraintType,
+    ConstraintViolation,
     ConstraintZone,
     Coordinate,
-    ConstraintViolation,
     CostBreakdown,
     EarthworkVolumes,
     LayoutAlternative,
@@ -66,7 +66,6 @@ class ProjectService:
         project_id: str,
     ) -> OptimizationResults:
         """Assemble the full ``OptimizationResults`` response from stored data."""
-
         property_boundary_coords: List[Dict[str, float]] = project.get("property_boundary", [])
         bounds_data: Dict[str, float] = project.get("bounds", {})
 
@@ -269,7 +268,7 @@ class ProjectService:
     def _compute_constraint_zones(
         property_boundary_coords: List[Dict[str, float]],
         setback_ft: float = 20,
-    ) -> list:
+    ) -> List[ConstraintZone]:
         """Generate setback zone as an inward buffer of the property boundary."""
         if not property_boundary_coords or len(property_boundary_coords) < 3:
             return []
@@ -285,8 +284,7 @@ class ProjectService:
                 return []
 
             coords = [
-                Coordinate(latitude=y, longitude=x)
-                for x, y in setback_zone.exterior.coords[:-1]
+                Coordinate(latitude=y, longitude=x) for x, y in setback_zone.exterior.coords[:-1]
             ]
             return [
                 ConstraintZone(
@@ -309,7 +307,7 @@ class ProjectService:
     def _compute_buildable_areas(
         property_boundary_coords: List[Dict[str, float]],
         setback_ft: float = 20,
-    ) -> list:
+    ) -> List[BuildableArea]:
         """Property boundary minus setback buffer."""
         if not property_boundary_coords or len(property_boundary_coords) < 3:
             return []
@@ -331,7 +329,7 @@ class ProjectService:
                     polygon=coords,
                     area=buildable.area / (LAT_PER_FOOT * LNG_PER_FOOT),
                     usable=True,
-                ).model_dump()
+                )
             ]
         except Exception as e:
             logger.warning(f"Could not compute buildable areas: {e}")
