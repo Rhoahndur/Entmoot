@@ -11,10 +11,12 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from shapely.affinity import rotate as shapely_rotate
+from shapely.affinity import translate as shapely_translate
 from shapely.geometry import Point as ShapelyPoint
-from shapely.geometry import Polygon as ShapelyPolygon, box
+from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import box
 from shapely.geometry.base import BaseGeometry
-from shapely.affinity import rotate as shapely_rotate, translate as shapely_translate
 
 
 class AssetType(str, Enum):
@@ -94,7 +96,7 @@ class Asset(BaseModel, ABC):
 
     @field_validator("area_sqm")
     @classmethod
-    def validate_area(cls, v: float, info) -> float:
+    def validate_area(cls, v: float, info: Any) -> float:
         """Validate area matches dimensions."""
         if "dimensions" in info.data:
             width, length = info.data["dimensions"]
@@ -177,7 +179,7 @@ class Asset(BaseModel, ABC):
         Returns:
             True if geometries intersect
         """
-        return self.get_geometry().intersects(other_geometry)
+        return bool(self.get_geometry().intersects(other_geometry))
 
     def contains_point(self, point: ShapelyPoint) -> bool:
         """
@@ -189,7 +191,7 @@ class Asset(BaseModel, ABC):
         Returns:
             True if point is within asset footprint
         """
-        return self.get_geometry().contains(point)
+        return bool(self.get_geometry().contains(point))
 
     @abstractmethod
     def validate_constraints(self) -> Tuple[bool, List[str]]:
@@ -246,7 +248,7 @@ class BuildingAsset(Asset):
     foundation_type: str = Field(default="slab", description="Foundation type")
     requires_utilities: bool = Field(default=True, description="Requires utility access")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """Initialize with building defaults."""
         if "asset_type" not in data:
             data["asset_type"] = AssetType.BUILDING
@@ -284,9 +286,9 @@ class BuildingAsset(Asset):
                 "id": "building_001",
                 "name": "Main Office Building",
                 "asset_type": "building",
-                "position": (100.0, 100.0),
+                "position": [100.0, 100.0],
                 "rotation": 0.0,
-                "dimensions": (30.0, 50.0),
+                "dimensions": [30.0, 50.0],
                 "area_sqm": 1500.0,
                 "num_stories": 2,
                 "building_height_m": 7.0,
@@ -310,7 +312,7 @@ class EquipmentYardAsset(Asset):
     drainage_required: bool = Field(default=True, description="Drainage required")
     fenced: bool = Field(default=True, description="Requires fencing")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """Initialize with equipment yard defaults."""
         if "asset_type" not in data:
             data["asset_type"] = AssetType.EQUIPMENT_YARD
@@ -340,8 +342,8 @@ class EquipmentYardAsset(Asset):
                 "id": "yard_001",
                 "name": "Equipment Storage Yard",
                 "asset_type": "equipment_yard",
-                "position": (200.0, 150.0),
-                "dimensions": (40.0, 60.0),
+                "position": [200.0, 150.0],
+                "dimensions": [40.0, 60.0],
                 "area_sqm": 2400.0,
                 "surface_type": "gravel",
                 "fenced": True,
@@ -366,7 +368,7 @@ class ParkingLotAsset(Asset):
     ada_compliant: bool = Field(default=True, description="ADA compliant")
     lighting_required: bool = Field(default=True, description="Requires lighting")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """Initialize with parking lot defaults."""
         if "asset_type" not in data:
             data["asset_type"] = AssetType.PARKING_LOT
@@ -410,8 +412,8 @@ class ParkingLotAsset(Asset):
                 "id": "parking_001",
                 "name": "Main Parking Lot",
                 "asset_type": "parking_lot",
-                "position": (150.0, 200.0),
-                "dimensions": (30.0, 50.0),
+                "position": [150.0, 200.0],
+                "dimensions": [30.0, 50.0],
                 "area_sqm": 1500.0,
                 "num_spaces": 60,
                 "surface_type": "asphalt",
@@ -437,7 +439,7 @@ class StorageTankAsset(Asset):
     tank_type: str = Field(default="fuel", description="Type of contents")
     containment_required: bool = Field(default=True, description="Secondary containment required")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """Initialize with storage tank defaults."""
         if "asset_type" not in data:
             data["asset_type"] = AssetType.STORAGE_TANK
@@ -480,8 +482,8 @@ class StorageTankAsset(Asset):
                 "id": "tank_001",
                 "name": "Fuel Storage Tank",
                 "asset_type": "storage_tank",
-                "position": (250.0, 250.0),
-                "dimensions": (10.0, 10.0),
+                "position": [250.0, 250.0],
+                "dimensions": [10.0, 10.0],
                 "area_sqm": 100.0,
                 "capacity_liters": 50000,
                 "tank_height_m": 5.0,
@@ -494,7 +496,7 @@ class StorageTankAsset(Asset):
 
 def create_asset_from_dict(asset_data: Dict[str, Any]) -> Asset:
     """
-    Factory function to create an asset from a dictionary.
+    Create an asset from a dictionary.
 
     Args:
         asset_data: Dictionary containing asset data

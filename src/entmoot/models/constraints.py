@@ -7,15 +7,15 @@ regulatory constraints.
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from shapely import wkt
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry.base import BaseGeometry
-from shapely import wkt, ops
 from shapely.validation import make_valid
 
 
@@ -117,7 +117,7 @@ class Constraint(BaseModel, ABC):
                 if not geom.is_valid:
                     raise ValueError("Geometry is invalid and could not be repaired")
                 # Return repaired WKT
-                return geom.wkt
+                return str(geom.wkt)
             return v
         except Exception as e:
             raise ValueError(f"Invalid geometry WKT: {str(e)}")
@@ -130,7 +130,7 @@ class Constraint(BaseModel, ABC):
         """Calculate area in square meters."""
         geom = self.get_geometry()
         if hasattr(geom, "area"):
-            return geom.area
+            return float(geom.area)
         return 0.0
 
     def get_area_acres(self) -> float:
@@ -139,11 +139,11 @@ class Constraint(BaseModel, ABC):
 
     def intersects(self, other_geometry: BaseGeometry) -> bool:
         """Check if constraint intersects with another geometry."""
-        return self.get_geometry().intersects(other_geometry)
+        return bool(self.get_geometry().intersects(other_geometry))
 
     def contains(self, point: ShapelyPoint) -> bool:
         """Check if constraint contains a point."""
-        return self.get_geometry().contains(point)
+        return bool(self.get_geometry().contains(point))
 
     @abstractmethod
     def validate_constraint(self) -> tuple[bool, List[str]]:
@@ -204,7 +204,7 @@ class SetbackConstraint(Constraint):
         buffer_type: Type of buffer (flat, rounded, etc.)
     """
 
-    setback_distance_m: float = Field(..., description="Required setback distance in meters", gt=0)
+    setback_distance_m: float = Field(..., description="Required setback distance in meters", ge=0)
     source_feature_wkt: Optional[str] = Field(
         None, description="WKT of source feature (e.g., property line)"
     )
@@ -220,7 +220,7 @@ class SetbackConstraint(Constraint):
             geom = wkt.loads(v)
             if not geom.is_valid:
                 geom = make_valid(geom)
-            return geom.wkt
+            return str(geom.wkt)
         except Exception as e:
             raise ValueError(f"Invalid source feature geometry: {str(e)}")
 
@@ -286,14 +286,18 @@ class ExclusionZoneConstraint(Constraint):
 
     @field_validator("expiration_date")
     @classmethod
-    def validate_expiration(cls, v: Optional[datetime], info) -> Optional[datetime]:
+    def validate_expiration(cls, v: Optional[datetime], info: Any) -> Optional[datetime]:
         """Validate expiration date logic."""
         if v and info.data.get("is_permanent"):
             raise ValueError("Permanent exclusions cannot have expiration dates")
         if not info.data.get("is_permanent") and v is None:
             raise ValueError("Temporary exclusions must have expiration dates")
-        if v and v < datetime.utcnow():
-            raise ValueError("Expiration date cannot be in the past")
+        if v:
+            now = datetime.now(timezone.utc)
+            # Treat naive datetimes as UTC
+            v = v if v.tzinfo is not None else v.replace(tzinfo=timezone.utc)
+            if v < now:
+                raise ValueError("Expiration date cannot be in the past")
         return v
 
     def validate_constraint(self) -> tuple[bool, List[str]]:
@@ -466,7 +470,7 @@ def create_standard_setback(
     source_geometry: BaseGeometry,
     name: Optional[str] = None,
     distance_override: Optional[float] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> SetbackConstraint:
     """
     Create a standard setback constraint with default distances.
@@ -482,7 +486,11 @@ def create_standard_setback(
     Returns:
         Configured SetbackConstraint
     """
-    distance = distance_override or STANDARD_SETBACKS.get(constraint_type, 10.0)
+    distance = (
+        STANDARD_SETBACKS.get(constraint_type, 10.0)
+        if distance_override is None
+        else distance_override
+    )
 
     if name is None:
         name = f"{constraint_type.value.replace('_', ' ').title()} Setback"

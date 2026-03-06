@@ -15,8 +15,9 @@ from entmoot.models.project import (
     Bounds,
     BuildableArea,
     ConstraintType,
-    Coordinate,
     ConstraintViolation,
+    ConstraintZone,
+    Coordinate,
     CostBreakdown,
     EarthworkVolumes,
     LayoutAlternative,
@@ -65,7 +66,6 @@ class ProjectService:
         project_id: str,
     ) -> OptimizationResults:
         """Assemble the full ``OptimizationResults`` response from stored data."""
-
         property_boundary_coords: List[Dict[str, float]] = project.get("property_boundary", [])
         bounds_data: Dict[str, float] = project.get("bounds", {})
 
@@ -268,7 +268,7 @@ class ProjectService:
     def _compute_constraint_zones(
         property_boundary_coords: List[Dict[str, float]],
         setback_ft: float = 20,
-    ) -> list:
+    ) -> List[ConstraintZone]:
         """Generate setback zone as an inward buffer of the property boundary."""
         if not property_boundary_coords or len(property_boundary_coords) < 3:
             return []
@@ -283,13 +283,17 @@ class ProjectService:
             if setback_zone.is_empty:
                 return []
 
-            coords = [{"latitude": y, "longitude": x} for x, y in setback_zone.exterior.coords[:-1]]
+            coords = [
+                Coordinate(latitude=y, longitude=x) for x, y in setback_zone.exterior.coords[:-1]
+            ]
             return [
-                {
-                    "type": "setback",
-                    "label": f"{setback_ft}ft setback zone",
-                    "coordinates": coords,
-                }
+                ConstraintZone(
+                    id="setback-zone-1",
+                    type=ConstraintType.SETBACK,
+                    polygon=coords,
+                    severity="medium",
+                    description=f"{setback_ft}ft setback zone",
+                )
             ]
         except Exception as e:
             logger.warning(f"Could not compute constraint zones: {e}")
@@ -303,7 +307,7 @@ class ProjectService:
     def _compute_buildable_areas(
         property_boundary_coords: List[Dict[str, float]],
         setback_ft: float = 20,
-    ) -> list:
+    ) -> List[BuildableArea]:
         """Property boundary minus setback buffer."""
         if not property_boundary_coords or len(property_boundary_coords) < 3:
             return []
@@ -325,7 +329,7 @@ class ProjectService:
                     polygon=coords,
                     area=buildable.area / (LAT_PER_FOOT * LNG_PER_FOOT),
                     usable=True,
-                ).model_dump()
+                )
             ]
         except Exception as e:
             logger.warning(f"Could not compute buildable areas: {e}")
