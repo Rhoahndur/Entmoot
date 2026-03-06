@@ -10,7 +10,7 @@ import logging
 import logging.handlers
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from entmoot.core.config import settings
 
@@ -186,6 +186,7 @@ def setup_logging(
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(level)
 
+        console_formatter: logging.Formatter
         if settings.environment == "development":
             # Colored output for development
             console_format = "%(levelname)s | %(asctime)s | %(name)s:%(lineno)d | %(message)s"
@@ -211,6 +212,7 @@ def setup_logging(
         )
         file_handler.setLevel(level)
 
+        file_formatter: logging.Formatter
         if json_logs:
             # JSON format for production/log aggregation
             file_formatter = JSONFormatter()
@@ -271,14 +273,15 @@ class LogContext:
             **kwargs: Key-value pairs to add to log records
         """
         self.context = kwargs
-        self.old_factory = None
+        self.old_factory: Optional[Callable[..., logging.LogRecord]] = None
 
     def __enter__(self) -> "LogContext":
         """Enter the context."""
         self.old_factory = logging.getLogRecordFactory()
+        saved_factory = self.old_factory
 
         def record_factory(*args: Any, **kwargs: Any) -> logging.LogRecord:
-            record = self.old_factory(*args, **kwargs)
+            record = saved_factory(*args, **kwargs)
             for key, value in self.context.items():
                 setattr(record, key, value)
             return record

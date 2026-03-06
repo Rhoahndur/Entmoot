@@ -117,6 +117,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       zoom: 15,
       pitch: 0,
       bearing: 0,
+      preserveDrawingBuffer: true,
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), "top-right");
@@ -223,17 +224,20 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
   // Update buildable areas layer
   useEffect(() => {
-    if (!map.current || !mapLoaded || !layerVisibility.buildable_areas) return;
+    if (!map.current || !mapLoaded) return;
 
     const sourceId = "buildable-areas";
     const layerId = "buildable-areas-layer";
 
+    // Always clean up existing layer/source first
     if (map.current.getLayer(layerId)) {
       map.current.removeLayer(layerId);
     }
     if (map.current.getSource(sourceId)) {
       map.current.removeSource(sourceId);
     }
+
+    if (!layerVisibility.buildable_areas) return;
 
     const features = buildableAreas.map((area, index) => {
       const coordinates = area.polygon.map((c) => [c.longitude, c.latitude]);
@@ -609,7 +613,21 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
   // Update asset polygons (runs on every asset change for smooth rotation)
   useEffect(() => {
-    if (!map.current || !mapLoaded || !layerVisibility.assets) return;
+    if (!map.current || !mapLoaded) return;
+
+    // Clean up when assets layer is toggled off
+    if (!layerVisibility.assets) {
+      if (map.current.getLayer("asset-polygons-outline")) {
+        map.current.removeLayer("asset-polygons-outline");
+      }
+      if (map.current.getLayer("asset-polygons-fill")) {
+        map.current.removeLayer("asset-polygons-fill");
+      }
+      if (map.current.getSource("asset-polygons")) {
+        map.current.removeSource("asset-polygons");
+      }
+      return;
+    }
 
     // Create GeoJSON features for asset footprints
     const features = assets.map((asset) => {
@@ -749,7 +767,15 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
   // Update asset markers (only when assets are added/removed or selection changes)
   useEffect(() => {
-    if (!map.current || !mapLoaded || !layerVisibility.assets) return;
+    if (!map.current || !mapLoaded) return;
+
+    // Clean up markers when assets layer is toggled off
+    if (!layerVisibility.assets) {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      return;
+    }
+
     const currentMarkers = markersRef.current;
 
     // Global drag handlers

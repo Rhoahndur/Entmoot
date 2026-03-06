@@ -355,6 +355,13 @@ def run_optimization_sync(  # noqa: C901
     existing_conditions_display: list = []
     road_entry_override = None
 
+    if config.constraints.use_existing_conditions and raw_boundary is not None:
+        if transformer is None or inverse_transformer is None:
+            logger.info(
+                "Skipping OSM existing conditions: no WGS84↔projected transformer "
+                "(source CRS is already projected)"
+            )
+
     if (
         config.constraints.use_existing_conditions
         and raw_boundary is not None
@@ -369,15 +376,17 @@ def run_optimization_sync(  # noqa: C901
 
             ec_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(ec_loop)
-            ec_result = ec_loop.run_until_complete(
-                ec_service.fetch_and_process(
-                    site_boundary_wgs84=raw_boundary,
-                    transformer=transformer,
-                    inverse_transformer=inverse_transformer,
-                    site_boundary_utm=site_boundary,
+            try:
+                ec_result = ec_loop.run_until_complete(
+                    ec_service.fetch_and_process(
+                        site_boundary_wgs84=raw_boundary,
+                        transformer=transformer,
+                        inverse_transformer=inverse_transformer,
+                        site_boundary_utm=site_boundary,
+                    )
                 )
-            )
-            ec_loop.close()
+            finally:
+                ec_loop.close()
 
             existing_conditions_zones = ec_result.exclusion_zones
             existing_conditions_display = ec_result.display_features
@@ -501,6 +510,12 @@ def run_optimization_sync(  # noqa: C901
     # ------------------------------------------------------------------
     logger.info("Setting up optimization objectives")
 
+    resolved_entrance = (
+        road_entry_override
+        if road_entry_override is not None
+        else (site_boundary.centroid.x, site_boundary.centroid.y)
+    )
+
     objective_weights = ObjectiveWeights(
         cut_fill_weight=config.optimization_weights.cost / 100.0,
         accessibility_weight=config.optimization_weights.accessibility / 100.0,
@@ -515,11 +530,7 @@ def run_optimization_sync(  # noqa: C901
         elevation_data=terrain_data.elevation if terrain_data else None,
         slope_data=terrain_data.slope_percent if terrain_data else None,
         transform=terrain_data.transform if terrain_data else None,
-        road_entry_point=(
-            road_entry_override
-            if road_entry_override is not None
-            else (site_boundary.centroid.x, site_boundary.centroid.y)
-        ),
+        road_entry_point=resolved_entrance,
         terrain_data=terrain_data,
     )
 
@@ -643,7 +654,7 @@ def run_optimization_sync(  # noqa: C901
     # ------------------------------------------------------------------
     logger.info("Generating road network")
     road_segments = []
-    entrance_pos = (site_boundary.centroid.x, site_boundary.centroid.y)
+    entrance_pos = resolved_entrance
 
     for i, asset in enumerate(result.best_solution.assets):
         if inverse_transformer:

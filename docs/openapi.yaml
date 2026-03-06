@@ -423,8 +423,8 @@ paths:
   /health:
     get:
       summary: Health Check
-      description: "Health check endpoint.\n\nReturns:\n    dict[str, str]: Health\
-        \ status."
+      description: "Health check endpoint with storage diagnostics.\n\nReturns:\n\
+        \    dict: Health status including storage backend info."
       operationId: health_check_health_get
       responses:
         '200':
@@ -432,8 +432,7 @@ paths:
           content:
             application/json:
               schema:
-                additionalProperties:
-                  type: string
+                additionalProperties: true
                 type: object
                 title: Response Health Check Health Get
 components:
@@ -585,6 +584,11 @@ components:
           title: Slope Limit
           description: Maximum buildable slope percentage
           default: 15
+        use_existing_conditions:
+          type: boolean
+          title: Use Existing Conditions
+          description: Fetch existing conditions from OpenStreetMap
+          default: true
       type: object
       title: ConstraintConfig
       description: Constraint configuration for site layout.
@@ -597,6 +601,10 @@ components:
       - easement
       - exclusion
       - property_line
+      - existing_building
+      - existing_road
+      - existing_utility
+      - existing_water
       title: ConstraintType
       description: Types of constraints for site layout.
     ConstraintViolation:
@@ -1148,6 +1156,12 @@ components:
         optimization_weights:
           $ref: '#/components/schemas/OptimizationWeights'
           description: Optimization weights
+        dem_upload_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dem Upload Id
+          description: Upload ID for DEM file (optional)
       type: object
       required:
       - project_name

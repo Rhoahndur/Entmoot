@@ -8,7 +8,7 @@ and propagating them through logging.
 import logging
 import time
 import uuid
-from typing import Callable
+from typing import Any, Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -24,7 +24,7 @@ class RequestCorrelationMiddleware(BaseHTTPMiddleware):
     available throughout the request lifecycle for logging and error tracking.
     """
 
-    def __init__(self, app, header_name: str = "X-Request-ID"):
+    def __init__(self, app: Any, header_name: str = "X-Request-ID"):
         """
         Initialize RequestCorrelationMiddleware.
 
@@ -117,7 +117,7 @@ class LoggingContextMiddleware(BaseHTTPMiddleware):
         # Create a custom log record factory that adds request context
         old_factory = logging.getLogRecordFactory()
 
-        def record_factory(*args, **kwargs):
+        def record_factory(*args: Any, **kwargs: Any) -> logging.LogRecord:
             record = old_factory(*args, **kwargs)
             # Set request context on log records. We use setattr with hasattr
             # guards to avoid overwriting attributes that may be set later by

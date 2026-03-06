@@ -82,7 +82,7 @@ class ErrorResponse(BaseModel):
     )
 
     @field_serializer("timestamp")
-    def serialize_timestamp(self, timestamp: datetime, _info) -> str:
+    def serialize_timestamp(self, timestamp: datetime, _info: Any) -> str:
         """Serialize timestamp to ISO format string."""
         return timestamp.isoformat() + "Z" if timestamp.tzinfo is None else timestamp.isoformat()
 
