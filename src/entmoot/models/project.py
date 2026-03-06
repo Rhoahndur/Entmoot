@@ -67,7 +67,7 @@ class OptimizationWeights(BaseModel):
         "cost", "buildable_area", "accessibility", "environmental_impact", "aesthetics"
     )
     @classmethod
-    def validate_total_weight(cls, v: float, info: Any) -> float:
+    def validate_total_weight(cls, v: float, _info: Any) -> float:
         """Validate that weights sum to 100."""
         # This will be checked in a model_validator instead
         return v
