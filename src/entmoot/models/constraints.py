@@ -204,7 +204,7 @@ class SetbackConstraint(Constraint):
         buffer_type: Type of buffer (flat, rounded, etc.)
     """
 
-    setback_distance_m: float = Field(..., description="Required setback distance in meters", gt=0)
+    setback_distance_m: float = Field(..., description="Required setback distance in meters", ge=0)
     source_feature_wkt: Optional[str] = Field(
         None, description="WKT of source feature (e.g., property line)"
     )
