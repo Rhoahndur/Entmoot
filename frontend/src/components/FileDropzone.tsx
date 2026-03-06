@@ -98,19 +98,21 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
       const acceptError = checkAcceptedExtension(file);
       if (acceptError) {
+        e.target.value = '';
         setValidationError(acceptError);
         return;
       }
 
       const error = validateFile(file);
       if (error) {
+        e.target.value = '';
         setValidationError(error);
         return;
       }
 
       setValidationError(null);
       onFileSelect(file);
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     },
     [onFileSelect, checkAcceptedExtension]
   );

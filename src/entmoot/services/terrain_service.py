@@ -8,7 +8,7 @@ DEMValidator, DEMProcessor, and SlopeCalculator.
 
 import logging
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -77,58 +77,46 @@ class TerrainData:
         val = float(self.slope_percent[row, col])
         return None if np.isnan(val) else val
 
+    def _get_values_under_footprint(
+        self, polygon: Polygon, array: NDArray[np.floating]
+    ) -> List[float]:
+        """Sample raster values from *array* whose pixel centres fall within *polygon*."""
+        minx, miny, maxx, maxy = polygon.bounds
+
+        r_min, c_min = self._xy_to_rowcol(minx, maxy)  # top-left
+        r_max, c_max = self._xy_to_rowcol(maxx, miny)  # bottom-right
+
+        r_min = max(0, r_min)
+        c_min = max(0, c_min)
+        r_max = min(array.shape[0] - 1, r_max)
+        c_max = min(array.shape[1] - 1, c_max)
+
+        if r_min > r_max or c_min > c_max:
+            return []
+
+        values: List[float] = []
+        for r in range(r_min, r_max + 1):
+            for c in range(c_min, c_max + 1):
+                px, py = self.transform * (c + 0.5, r + 0.5)
+                if polygon.contains(Point(px, py)):
+                    v = array[r, c]
+                    if not np.isnan(v):
+                        values.append(float(v))
+
+        return values
+
     def get_mean_slope_in_footprint(self, polygon: Polygon) -> Optional[float]:
         """Return mean slope % under a Shapely polygon (UTM coords).
 
         Samples the raster pixels whose centres fall within the polygon.
         Returns None when no pixels overlap.
         """
-        minx, miny, maxx, maxy = polygon.bounds
-
-        # Convert corners to pixel space
-        r_min, c_min = self._xy_to_rowcol(minx, maxy)  # top-left
-        r_max, c_max = self._xy_to_rowcol(maxx, miny)  # bottom-right
-
-        r_min = max(0, r_min)
-        c_min = max(0, c_min)
-        r_max = min(self.slope_percent.shape[0] - 1, r_max)
-        c_max = min(self.slope_percent.shape[1] - 1, c_max)
-
-        if r_min > r_max or c_min > c_max:
-            return None
-
-        values = []
-        for r in range(r_min, r_max + 1):
-            for c in range(c_min, c_max + 1):
-                # Pixel centre in UTM
-                px, py = self.transform * (c + 0.5, r + 0.5)
-                if polygon.contains(Point(px, py)):
-                    v = self.slope_percent[r, c]
-                    if not np.isnan(v):
-                        values.append(float(v))
-
+        values = self._get_values_under_footprint(polygon, self.slope_percent)
         return float(np.mean(values)) if values else None
 
     def get_elevation_under_footprint(self, polygon: Polygon) -> NDArray[np.floating]:
         """Return 1-D array of elevation values under a polygon (UTM)."""
-        minx, miny, maxx, maxy = polygon.bounds
-        r_min, c_min = self._xy_to_rowcol(minx, maxy)
-        r_max, c_max = self._xy_to_rowcol(maxx, miny)
-
-        r_min = max(0, r_min)
-        c_min = max(0, c_min)
-        r_max = min(self.elevation.shape[0] - 1, r_max)
-        c_max = min(self.elevation.shape[1] - 1, c_max)
-
-        values = []
-        for r in range(r_min, r_max + 1):
-            for c in range(c_min, c_max + 1):
-                px, py = self.transform * (c + 0.5, r + 0.5)
-                if polygon.contains(Point(px, py)):
-                    v = self.elevation[r, c]
-                    if not np.isnan(v):
-                        values.append(float(v))
-
+        values = self._get_values_under_footprint(polygon, self.elevation)
         return np.array(values, dtype=np.float64) if values else np.array([], dtype=np.float64)
 
 

@@ -202,12 +202,9 @@ class TestObjectiveWithTerrain:
 
     def test_no_terrain_returns_neutral_cut_fill(self):
         obj = self._make_objective(terrain_data=None)
-        assert obj._evaluate_cut_fill.__func__  # method exists
-        # With no elevation_data, should return 50.0
         from entmoot.core.optimization.problem import PlacementSolution
 
         sol = PlacementSolution(assets=[], fitness=0.0)
-        # elevation_data is None, so the guard returns 50.0
         score = obj._evaluate_cut_fill(sol)
         assert score == 50.0
 
@@ -268,6 +265,9 @@ class TestObjectiveWithTerrain:
 
         asset = MagicMock()
         asset.position = (100.0, 100.0)
+        asset.dimensions = (20.0, 20.0)
+        asset.rotation = 0.0
+        asset.area_sqm = 400.0
         asset.get_geometry.return_value = box(90, 90, 110, 110)
 
         sol = PlacementSolution(assets=[asset], fitness=0.0)

@@ -59,7 +59,7 @@ export const UploadPage: React.FC = () => {
   };
 
   const handleUploadDem = async () => {
-    if (!selectedDemFile || !uploadResponse) return;
+    if (!selectedDemFile || !uploadResponse || demUpload.uploading) return;
 
     const demResponse = await demUpload.uploadFile(selectedDemFile);
 
@@ -287,7 +287,8 @@ export const UploadPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleUploadDem}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    disabled={demUpload.uploading}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Upload DEM & Continue
                   </button>
