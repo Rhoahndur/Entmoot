@@ -47,11 +47,32 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
   const checkAcceptedExtension = useCallback(
     (file: File): string | null => {
-      const allowedExts = accept.split(',').map((ext) => ext.trim().toLowerCase());
+      const tokens = accept.split(',').map((t) => t.trim().toLowerCase());
       const fileName = file.name.toLowerCase();
-      const matches = allowedExts.some((ext) => fileName.endsWith(ext));
+      const fileType = file.type?.toLowerCase() || '';
+
+      const matches = tokens.some((token) => {
+        if (token.startsWith('.')) {
+          // Extension token: ".tif", ".kmz", etc.
+          return fileName.endsWith(token);
+        }
+        if (token.includes('/')) {
+          if (!fileType) {
+            // Browser couldn't determine MIME — fall back to extension-based tokens only
+            return false;
+          }
+          if (token.endsWith('/*')) {
+            // Wildcard MIME: "image/*" matches "image/tiff", "image/png", etc.
+            return fileType.split('/')[0] === token.split('/')[0];
+          }
+          // Exact MIME: "image/tiff" === "image/tiff"
+          return fileType === token;
+        }
+        return false;
+      });
+
       if (!matches) {
-        return `File type not accepted. Allowed: ${allowedExts.join(', ')}`;
+        return `File type not accepted. Allowed: ${tokens.join(', ')}`;
       }
       return null;
     },

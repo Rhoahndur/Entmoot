@@ -30,7 +30,7 @@ export const UploadPage: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || uploading) return;
 
     const response = await uploadFile(selectedFile);
 
