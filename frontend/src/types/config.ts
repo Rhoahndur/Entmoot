@@ -49,6 +49,7 @@ export interface OptimizationWeights {
 export interface ProjectConfig {
   project_name: string;
   upload_id: string;
+  dem_upload_id?: string;
   assets: AssetConfig[];
   constraints: ConstraintConfig;
   road_design: RoadConfig;

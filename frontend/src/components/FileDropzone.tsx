@@ -8,9 +8,18 @@ import { formatFileSize, getFileIcon, validateFile } from '../utils/validators';
 interface FileDropzoneProps {
   onFileSelect: (file: File) => void;
   disabled?: boolean;
+  accept?: string;
+  label?: string;
+  inputId?: string;
 }
 
-export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabled = false }) => {
+export const FileDropzone: React.FC<FileDropzoneProps> = ({
+  onFileSelect,
+  disabled = false,
+  accept = '.kmz,.kml,.geojson,.tif,.tiff',
+  label = 'Supported formats: KMZ, KML, GeoJSON, GeoTIFF (max 50MB)',
+  inputId = 'file-input',
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -36,6 +45,40 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabl
     e.stopPropagation();
   }, []);
 
+  const checkAcceptedExtension = useCallback(
+    (file: File): string | null => {
+      const tokens = accept.split(',').map((t) => t.trim().toLowerCase());
+      const fileName = file.name.toLowerCase();
+      const fileType = file.type?.toLowerCase() || '';
+
+      const matches = tokens.some((token) => {
+        if (token.startsWith('.')) {
+          // Extension token: ".tif", ".kmz", etc.
+          return fileName.endsWith(token);
+        }
+        if (token.includes('/')) {
+          if (!fileType) {
+            // Browser couldn't determine MIME — fall back to extension-based tokens only
+            return false;
+          }
+          if (token.endsWith('/*')) {
+            // Wildcard MIME: "image/*" matches "image/tiff", "image/png", etc.
+            return fileType.split('/')[0] === token.split('/')[0];
+          }
+          // Exact MIME: "image/tiff" === "image/tiff"
+          return fileType === token;
+        }
+        return false;
+      });
+
+      if (!matches) {
+        return `File type not accepted. Allowed: ${tokens.join(', ')}`;
+      }
+      return null;
+    },
+    [accept]
+  );
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -48,8 +91,14 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabl
       if (files.length === 0) return;
 
       const file = files[0];
-      const error = validateFile(file);
 
+      const acceptError = checkAcceptedExtension(file);
+      if (acceptError) {
+        setValidationError(acceptError);
+        return;
+      }
+
+      const error = validateFile(file);
       if (error) {
         setValidationError(error);
         return;
@@ -58,7 +107,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabl
       setValidationError(null);
       onFileSelect(file);
     },
-    [disabled, onFileSelect]
+    [disabled, onFileSelect, checkAcceptedExtension]
   );
 
   const handleFileInput = useCallback(
@@ -67,18 +116,26 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabl
       if (!files || files.length === 0) return;
 
       const file = files[0];
-      const error = validateFile(file);
 
+      const acceptError = checkAcceptedExtension(file);
+      if (acceptError) {
+        e.target.value = '';
+        setValidationError(acceptError);
+        return;
+      }
+
+      const error = validateFile(file);
       if (error) {
+        e.target.value = '';
         setValidationError(error);
         return;
       }
 
       setValidationError(null);
       onFileSelect(file);
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     },
-    [onFileSelect]
+    [onFileSelect, checkAcceptedExtension]
   );
 
   return (
@@ -93,15 +150,15 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabl
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        onClick={() => !disabled && document.getElementById('file-input')?.click()}
+        onClick={() => !disabled && document.getElementById(inputId)?.click()}
       >
         <input
-          id="file-input"
+          id={inputId}
           type="file"
           className="hidden"
           onChange={handleFileInput}
           disabled={disabled}
-          accept=".kmz,.kml,.geojson,.tif,.tiff"
+          accept={accept}
         />
 
         <div className="flex flex-col items-center">
@@ -131,14 +188,14 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onFileSelect, disabl
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation();
-              document.getElementById('file-input')?.click();
+              document.getElementById(inputId)?.click();
             }}
           >
             Browse Files
           </button>
 
           <p className="text-xs text-gray-400 mt-4">
-            Supported formats: KMZ, KML, GeoJSON, GeoTIFF (max 50MB)
+            {label}
           </p>
         </div>
       </div>

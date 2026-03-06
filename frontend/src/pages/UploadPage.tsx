@@ -1,8 +1,8 @@
 /**
- * Upload Page - File upload wizard
+ * Upload Page - File upload wizard with optional DEM upload
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { FileDropzone, FilePreview, UploadProgress } from '../components/FileDropzone';
@@ -13,6 +13,22 @@ export const UploadPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { uploading, progress, error, success, uploadResponse, uploadFile, resetState } =
     useFileUpload();
+
+  // DEM upload state
+  const [showDemUpload, setShowDemUpload] = useState(false);
+  const [selectedDemFile, setSelectedDemFile] = useState<File | null>(null);
+  const demUpload = useFileUpload();
+  const uploadingRef = useRef(false);
+  const demUploadingRef = useRef(false);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -25,15 +41,55 @@ export const UploadPage: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || uploadingRef.current) return;
+    uploadingRef.current = true;
+    try {
+      const response = await uploadFile(selectedFile);
 
-    const response = await uploadFile(selectedFile);
+      if (response) {
+        // Show DEM upload step instead of auto-redirecting
+        setShowDemUpload(true);
+      }
+    } finally {
+      uploadingRef.current = false;
+    }
+  };
 
-    if (response) {
-      // Wait a moment to show success, then navigate to config page
-      setTimeout(() => {
-        navigate(`/config?upload_id=${response.upload_id}`);
-      }, 1500);
+  const handleDemFileSelect = (file: File) => {
+    setSelectedDemFile(file);
+    demUpload.resetState();
+  };
+
+  const handleRemoveDemFile = () => {
+    setSelectedDemFile(null);
+    demUpload.resetState();
+  };
+
+  const handleSkipDem = () => {
+    if (uploadResponse) {
+      const params = new URLSearchParams();
+      params.set('upload_id', uploadResponse.upload_id);
+      navigate(`/config?${params.toString()}`);
+    }
+  };
+
+  const handleUploadDem = async () => {
+    if (!selectedDemFile || !uploadResponse || demUploadingRef.current) return;
+    demUploadingRef.current = true;
+    try {
+      const demResponse = await demUpload.uploadFile(selectedDemFile);
+
+      if (demResponse) {
+        redirectTimerRef.current = setTimeout(() => {
+          redirectTimerRef.current = null;
+          const params = new URLSearchParams();
+          params.set('upload_id', uploadResponse.upload_id);
+          params.set('dem_upload_id', demResponse.upload_id);
+          navigate(`/config?${params.toString()}`);
+        }, 1000);
+      }
+    } finally {
+      demUploadingRef.current = false;
     }
   };
 
@@ -73,17 +129,22 @@ export const UploadPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Upload Section */}
+        {/* Boundary Upload Section */}
         <div className="bg-white rounded-lg shadow-md p-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Upload Site Boundary</h2>
           <p className="text-gray-600 mb-6">
-            Upload a geospatial file (KMZ, KML, GeoJSON, or GeoTIFF) containing your property
-            boundary.
+            Upload a geospatial file (KMZ, KML, or GeoJSON) containing your property boundary.
           </p>
 
           {/* Dropzone */}
           {!selectedFile && !success && (
-            <FileDropzone onFileSelect={handleFileSelect} disabled={uploading} />
+            <FileDropzone
+              onFileSelect={handleFileSelect}
+              disabled={uploading}
+              accept=".kmz,.kml,.geojson,.json"
+              label="Supported formats: KMZ, KML, GeoJSON (max 50MB)"
+              inputId="boundary-file-input"
+            />
           )}
 
           {/* File Preview */}
@@ -97,7 +158,7 @@ export const UploadPage: React.FC = () => {
           )}
 
           {/* Success Message */}
-          {success && uploadResponse && (
+          {success && uploadResponse && !showDemUpload && (
             <div className="p-6 bg-green-50 border-2 border-green-400 rounded-lg shadow-lg">
               <div className="flex items-start space-x-4">
                 <svg
@@ -113,15 +174,7 @@ export const UploadPage: React.FC = () => {
                 </svg>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-green-800 mb-1">Upload Successful!</h3>
-                  <p className="text-sm text-green-700 mb-2">
-                    {uploadResponse.message}
-                  </p>
-                  <div className="flex items-center space-x-2 mt-3">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-300 border-t-green-600"></div>
-                    <p className="text-sm font-medium text-green-800">
-                      Redirecting to configuration...
-                    </p>
-                  </div>
+                  <p className="text-sm text-green-700 mb-2">{uploadResponse.message}</p>
                 </div>
               </div>
             </div>
@@ -171,14 +224,108 @@ export const UploadPage: React.FC = () => {
           )}
         </div>
 
+        {/* DEM Upload Section (shown after boundary upload succeeds) */}
+        {showDemUpload && (
+          <div className="bg-white rounded-lg shadow-md p-8 mt-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Upload Elevation Data (Optional)
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Upload a GeoTIFF DEM file for terrain-aware optimization. This enables real slope
+              analysis, cut/fill calculations, and road grade estimation.
+            </p>
+
+            {/* DEM Dropzone */}
+            {!selectedDemFile && !demUpload.success && (
+              <FileDropzone
+                onFileSelect={handleDemFileSelect}
+                disabled={demUpload.uploading}
+                accept=".tif,.tiff"
+                label="Supported format: GeoTIFF (.tif, .tiff) (max 50MB)"
+                inputId="dem-file-input"
+              />
+            )}
+
+            {/* DEM File Preview */}
+            {selectedDemFile && !demUpload.uploading && !demUpload.success && (
+              <FilePreview file={selectedDemFile} onRemove={handleRemoveDemFile} />
+            )}
+
+            {/* DEM Upload Progress */}
+            {demUpload.uploading && selectedDemFile && (
+              <UploadProgress progress={demUpload.progress} filename={selectedDemFile.name} />
+            )}
+
+            {/* DEM Success */}
+            {demUpload.success && demUpload.uploadResponse && (
+              <div className="p-6 bg-green-50 border-2 border-green-400 rounded-lg shadow-lg">
+                <div className="flex items-start space-x-4">
+                  <svg
+                    className="w-12 h-12 text-green-600 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-green-800 mb-1">
+                      DEM Upload Successful!
+                    </h3>
+                    <div className="flex items-center space-x-2 mt-3">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-300 border-t-green-600"></div>
+                      <p className="text-sm font-medium text-green-800">
+                        Redirecting to configuration...
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DEM Error */}
+            {demUpload.error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{demUpload.error}</p>
+              </div>
+            )}
+
+            {/* DEM Action Buttons */}
+            {!demUpload.uploading && !demUpload.success && (
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleSkipDem}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Skip & Continue
+                </button>
+                {selectedDemFile && (
+                  <button
+                    type="button"
+                    onClick={handleUploadDem}
+                    disabled={demUpload.uploading}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Upload DEM & Continue
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Help Section */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-blue-900 mb-2">Need Help?</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• KMZ/KML files are commonly exported from Google Earth</li>
-            <li>• GeoJSON files can be created from most GIS software</li>
-            <li>• GeoTIFF files should contain georeferenced boundary data</li>
-            <li>• Maximum file size is 50MB</li>
+            <li>- KMZ/KML files are commonly exported from Google Earth</li>
+            <li>- GeoJSON files can be created from most GIS software</li>
+            <li>- GeoTIFF DEM files provide elevation data for terrain analysis</li>
+            <li>- Maximum file size is 50MB</li>
           </ul>
         </div>
       </main>

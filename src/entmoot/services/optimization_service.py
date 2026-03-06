@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+import numpy as np
 from shapely.geometry import box, shape
 
 from entmoot.core.redis_storage import get_storage
@@ -293,6 +294,52 @@ def run_optimization_sync(  # noqa: C901
             )
             site_boundary = box(0, 0, 500 * 0.3048, 500 * 0.3048)
 
+    # ------------------------------------------------------------------
+    # Step 2c: Load DEM if provided
+    # ------------------------------------------------------------------
+    terrain_data = None
+    target_crs_epsg = None
+
+    if hasattr(config, "dem_upload_id") and config.dem_upload_id:
+        try:
+            from entmoot.services.terrain_service import prepare_terrain_data
+
+            logger.info(f"Loading DEM for dem_upload_id: {config.dem_upload_id}")
+            dem_upload_id = UUID(config.dem_upload_id)
+
+            dem_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(dem_loop)
+            dem_file_path = dem_loop.run_until_complete(
+                storage_service.get_file_path(dem_upload_id)
+            )
+            dem_loop.close()
+
+            if dem_file_path and dem_file_path.exists():
+                # Determine target CRS EPSG
+                if "target_crs" in dir() and hasattr(target_crs, "to_epsg"):
+                    target_crs_epsg = target_crs.to_epsg()
+                else:
+                    # Fallback: derive from boundary centroid in lon/lat
+                    from entmoot.core.crs.utm import get_utm_crs_info
+
+                    if raw_boundary:
+                        # raw_boundary is in geographic (lon/lat) coordinates
+                        cx, cy = raw_boundary.centroid.x, raw_boundary.centroid.y
+                    else:
+                        # site_boundary may be in projected coords; not suitable
+                        # for get_utm_crs_info which expects lon/lat
+                        cx, cy = site_boundary.centroid.x, site_boundary.centroid.y
+                    tc = get_utm_crs_info(cx, cy)
+                    target_crs_epsg = tc.epsg
+
+                terrain_data = prepare_terrain_data(dem_file_path, site_boundary, target_crs_epsg)
+                logger.info("Terrain data loaded successfully")
+            else:
+                logger.warning(f"DEM file not found for dem_upload_id: {config.dem_upload_id}")
+        except Exception as e:
+            logger.warning(f"Failed to load DEM, continuing without terrain data: {e}")
+            terrain_data = None
+
     # Update progress
     _update_progress(project_id, 10)
 
@@ -357,6 +404,39 @@ def run_optimization_sync(  # noqa: C901
     )
 
     # ------------------------------------------------------------------
+    # Step 4b: Generate slope exclusion zones from terrain data
+    # ------------------------------------------------------------------
+    if terrain_data is not None:
+        try:
+            import rasterio.features
+            from shapely.geometry import shape as shapely_shape
+
+            slope_limit = config.constraints.slope_limit
+            steep_mask = (terrain_data.slope_percent > slope_limit).astype(np.uint8)
+
+            if np.any(steep_mask):
+                shapes_gen = rasterio.features.shapes(
+                    steep_mask, mask=steep_mask == 1, transform=terrain_data.transform
+                )
+                for geom, _value in shapes_gen:
+                    exclusion_poly = shapely_shape(geom)
+                    clipped = exclusion_poly.intersection(site_boundary)
+                    if not clipped.is_empty and clipped.area > 1.0:
+                        if clipped.geom_type == "Polygon":
+                            constraints.exclusion_zones.append(clipped)
+                        elif clipped.geom_type == "MultiPolygon":
+                            for part in clipped.geoms:
+                                if part.area > 1.0:
+                                    constraints.exclusion_zones.append(part)
+
+                logger.info(
+                    f"Added {len(constraints.exclusion_zones)} slope exclusion zones "
+                    f"(slope > {slope_limit}%)"
+                )
+        except Exception as e:
+            logger.warning(f"Failed to generate slope exclusion zones: {e}")
+
+    # ------------------------------------------------------------------
     # Step 5: Set up optimization objectives
     # ------------------------------------------------------------------
     logger.info("Setting up optimization objectives")
@@ -372,10 +452,11 @@ def run_optimization_sync(  # noqa: C901
     objective = OptimizationObjective(
         constraints=constraints,
         weights=objective_weights,
-        elevation_data=None,
-        slope_data=None,
-        transform=None,
+        elevation_data=terrain_data.elevation if terrain_data else None,
+        slope_data=terrain_data.slope_percent if terrain_data else None,
+        transform=terrain_data.transform if terrain_data else None,
         road_entry_point=(site_boundary.centroid.x, site_boundary.centroid.y),
+        terrain_data=terrain_data,
     )
 
     _update_progress(project_id, 30)
@@ -518,6 +599,14 @@ def run_optimization_sync(  # noqa: C901
         length_m = math.sqrt(dx_m**2 + dy_m**2)
         length_ft = length_m * 3.28084
 
+        # Compute road grade from real elevation if terrain data is available
+        road_grade = 0.0
+        if terrain_data and length_m > 0:
+            elev_start = terrain_data.sample_elevation(entrance_pos[0], entrance_pos[1])
+            elev_end = terrain_data.sample_elevation(asset.position[0], asset.position[1])
+            if elev_start is not None and elev_end is not None:
+                road_grade = abs(elev_end - elev_start) / length_m * 100.0
+
         segment = RoadSegment(
             id=f"road_{i}",
             points=[
@@ -525,7 +614,7 @@ def run_optimization_sync(  # noqa: C901
                 Coordinate(latitude=asset_lat, longitude=asset_lon),
             ],
             width=config.road_design.min_width,
-            grade=0.0,
+            grade=round(road_grade, 2),
             surface_type=config.road_design.surface_type,
             length=length_ft,
         )
@@ -535,10 +624,32 @@ def run_optimization_sync(  # noqa: C901
     # Step 9: Calculate earthwork
     # ------------------------------------------------------------------
     logger.info("Calculating earthwork")
-    total_cut = sum(a.area_sqm * 0.5 for a in result.best_solution.assets)
-    total_fill = sum(a.area_sqm * 0.3 for a in result.best_solution.assets)
-    total_cut_cy = total_cut * 1.30795
-    total_fill_cy = total_fill * 1.30795
+
+    if terrain_data:
+        # Real earthwork: sample elevation under each asset footprint, compute cut/fill
+        # against median target elevation
+        total_cut_m3 = 0.0
+        total_fill_m3 = 0.0
+        for asset in result.best_solution.assets:
+            footprint = asset.get_geometry()
+            elevations = terrain_data.get_elevation_under_footprint(footprint)
+            if len(elevations) > 0:
+                target_elev = float(np.median(elevations))
+                cuts = elevations[elevations > target_elev] - target_elev
+                fills = target_elev - elevations[elevations < target_elev]
+                pixel_area = terrain_data.cell_size**2
+                total_cut_m3 += float(np.sum(cuts)) * pixel_area
+                total_fill_m3 += float(np.sum(fills)) * pixel_area
+            else:
+                # Fallback for assets outside DEM extent
+                total_cut_m3 += asset.area_sqm * 0.5
+                total_fill_m3 += asset.area_sqm * 0.3
+    else:
+        total_cut_m3 = sum(a.area_sqm * 0.5 for a in result.best_solution.assets)
+        total_fill_m3 = sum(a.area_sqm * 0.3 for a in result.best_solution.assets)
+
+    total_cut_cy = total_cut_m3 * 1.30795
+    total_fill_cy = total_fill_m3 * 1.30795
 
     earthwork = EarthworkSummary(
         total_cut_volume=total_cut_cy,
