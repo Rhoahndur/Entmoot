@@ -52,7 +52,9 @@ export const UploadPage: React.FC = () => {
 
   const handleSkipDem = () => {
     if (uploadResponse) {
-      navigate(`/config?upload_id=${uploadResponse.upload_id}`);
+      const params = new URLSearchParams();
+      params.set('upload_id', uploadResponse.upload_id);
+      navigate(`/config?${params.toString()}`);
     }
   };
 
@@ -63,9 +65,10 @@ export const UploadPage: React.FC = () => {
 
     if (demResponse) {
       setTimeout(() => {
-        navigate(
-          `/config?upload_id=${uploadResponse.upload_id}&dem_upload_id=${demResponse.upload_id}`
-        );
+        const params = new URLSearchParams();
+        params.set('upload_id', uploadResponse.upload_id);
+        params.set('dem_upload_id', demResponse.upload_id);
+        navigate(`/config?${params.toString()}`);
       }, 1000);
     }
   };

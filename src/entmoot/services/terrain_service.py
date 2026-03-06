@@ -13,7 +13,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 from rasterio.transform import Affine
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 
 from entmoot.core.terrain.dem_loader import DEMLoader
 from entmoot.core.terrain.dem_validator import DEMValidator
@@ -21,6 +21,12 @@ from entmoot.core.terrain.dem_processor import DEMProcessor
 from entmoot.core.terrain.slope import SlopeCalculator
 
 logger = logging.getLogger(__name__)
+
+
+class TerrainPreparationError(Exception):
+    """Raised when DEM preparation fails (validation, reprojection, etc.)."""
+
+    pass
 
 
 class TerrainData:
@@ -96,8 +102,6 @@ class TerrainData:
             for c in range(c_min, c_max + 1):
                 # Pixel centre in UTM
                 px, py = self.transform * (c + 0.5, r + 0.5)
-                from shapely.geometry import Point
-
                 if polygon.contains(Point(px, py)):
                     v = self.slope_percent[r, c]
                     if not np.isnan(v):
@@ -120,8 +124,6 @@ class TerrainData:
         for r in range(r_min, r_max + 1):
             for c in range(c_min, c_max + 1):
                 px, py = self.transform * (c + 0.5, r + 0.5)
-                from shapely.geometry import Point
-
                 if polygon.contains(Point(px, py)):
                     v = self.elevation[r, c]
                     if not np.isnan(v):
@@ -146,7 +148,7 @@ def prepare_terrain_data(
         TerrainData ready for use by the optimiser.
 
     Raises:
-        ValueError: If validation fails critically.
+        TerrainPreparationError: If validation fails critically.
     """
     import rasterio
     from rasterio.warp import reproject, Resampling, calculate_default_transform
@@ -167,7 +169,7 @@ def prepare_terrain_data(
     validation = validator.validate(dem_data)
     if not validation.is_valid:
         issues = "; ".join(validation.issues)
-        raise ValueError(f"DEM validation failed: {issues}")
+        raise TerrainPreparationError(f"DEM validation failed: {issues}")
     for w in validation.warnings:
         logger.warning(f"DEM warning: {w}")
 

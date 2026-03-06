@@ -5,9 +5,14 @@ This module defines the optimization objectives, constraints, and solution
 representation for the asset placement problem.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from entmoot.services.terrain_service import TerrainData
 
 import numpy as np
 from numpy.typing import NDArray
@@ -320,7 +325,7 @@ class OptimizationObjective:
         slope_data: Optional[NDArray[np.floating[Any]]] = None,
         transform: Optional[Any] = None,
         road_entry_point: Optional[Tuple[float, float]] = None,
-        terrain_data: Optional[Any] = None,
+        terrain_data: Optional[TerrainData] = None,
     ):
         """
         Initialize optimization objectives.

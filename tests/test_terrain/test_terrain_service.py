@@ -156,8 +156,10 @@ class TestPrepareTerrainData:
         assert 1500.0 < elev < 2000.0
 
     def test_invalid_dem_path_raises(self):
+        from entmoot.core.errors import ValidationError
+
         utm_boundary = self._get_utm_boundary()
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             prepare_terrain_data(
                 Path("/nonexistent/fake.tif"),
                 utm_boundary,

@@ -319,12 +319,16 @@ def run_optimization_sync(  # noqa: C901
                 if "target_crs" in dir() and hasattr(target_crs, "to_epsg"):
                     target_crs_epsg = target_crs.to_epsg()
                 else:
-                    # Fallback: derive from boundary centroid
+                    # Fallback: derive from boundary centroid in lon/lat
                     from entmoot.core.crs.utm import get_utm_crs_info
 
-                    cx, cy = site_boundary.centroid.x, site_boundary.centroid.y
                     if raw_boundary:
+                        # raw_boundary is in geographic (lon/lat) coordinates
                         cx, cy = raw_boundary.centroid.x, raw_boundary.centroid.y
+                    else:
+                        # site_boundary may be in projected coords; not suitable
+                        # for get_utm_crs_info which expects lon/lat
+                        cx, cy = site_boundary.centroid.x, site_boundary.centroid.y
                     tc = get_utm_crs_info(cx, cy)
                     target_crs_epsg = tc.epsg
 
@@ -414,7 +418,7 @@ def run_optimization_sync(  # noqa: C901
                 shapes_gen = rasterio.features.shapes(
                     steep_mask, mask=steep_mask == 1, transform=terrain_data.transform
                 )
-                for geom, value in shapes_gen:
+                for geom, _value in shapes_gen:
                     exclusion_poly = shapely_shape(geom)
                     clipped = exclusion_poly.intersection(site_boundary)
                     if not clipped.is_empty and clipped.area > 1.0:

@@ -45,6 +45,19 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
     e.stopPropagation();
   }, []);
 
+  const checkAcceptedExtension = useCallback(
+    (file: File): string | null => {
+      const allowedExts = accept.split(',').map((ext) => ext.trim().toLowerCase());
+      const fileName = file.name.toLowerCase();
+      const matches = allowedExts.some((ext) => fileName.endsWith(ext));
+      if (!matches) {
+        return `File type not accepted. Allowed: ${allowedExts.join(', ')}`;
+      }
+      return null;
+    },
+    [accept]
+  );
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -57,8 +70,14 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       if (files.length === 0) return;
 
       const file = files[0];
-      const error = validateFile(file);
 
+      const acceptError = checkAcceptedExtension(file);
+      if (acceptError) {
+        setValidationError(acceptError);
+        return;
+      }
+
+      const error = validateFile(file);
       if (error) {
         setValidationError(error);
         return;
@@ -67,7 +86,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       setValidationError(null);
       onFileSelect(file);
     },
-    [disabled, onFileSelect]
+    [disabled, onFileSelect, checkAcceptedExtension]
   );
 
   const handleFileInput = useCallback(
@@ -76,8 +95,14 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       if (!files || files.length === 0) return;
 
       const file = files[0];
-      const error = validateFile(file);
 
+      const acceptError = checkAcceptedExtension(file);
+      if (acceptError) {
+        setValidationError(acceptError);
+        return;
+      }
+
+      const error = validateFile(file);
       if (error) {
         setValidationError(error);
         return;
@@ -87,7 +112,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       onFileSelect(file);
       e.target.value = ''; // Reset input
     },
-    [onFileSelect]
+    [onFileSelect, checkAcceptedExtension]
   );
 
   return (
