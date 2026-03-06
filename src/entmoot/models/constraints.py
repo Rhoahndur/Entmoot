@@ -295,8 +295,8 @@ class ExclusionZoneConstraint(Constraint):
         if v:
             now = datetime.now(timezone.utc)
             # Treat naive datetimes as UTC
-            v_aware = v if v.tzinfo is not None else v.replace(tzinfo=timezone.utc)
-            if v_aware < now:
+            v = v if v.tzinfo is not None else v.replace(tzinfo=timezone.utc)
+            if v < now:
                 raise ValueError("Expiration date cannot be in the past")
         return v
 

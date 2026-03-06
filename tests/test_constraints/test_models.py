@@ -8,21 +8,24 @@ Tests the Constraint base class and all derived constraint types including:
 - UserDefinedConstraint
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timedelta
-from shapely.geometry import Polygon, Point, LineString
 from shapely import wkt as shapely_wkt
+from shapely.geometry import LineString, Point, Polygon
 
 from entmoot.models.constraints import (
-    Constraint,
-    ConstraintType,
-    ConstraintSeverity,
-    ConstraintPriority,
-    SetbackConstraint,
-    ExclusionZoneConstraint,
-    RegulatoryConstraint as RegulatoryConstraintV2,
-    UserDefinedConstraint,
     STANDARD_SETBACKS,
+    Constraint,
+    ConstraintPriority,
+    ConstraintSeverity,
+    ConstraintType,
+    ExclusionZoneConstraint,
+)
+from entmoot.models.constraints import RegulatoryConstraint as RegulatoryConstraintV2
+from entmoot.models.constraints import (
+    SetbackConstraint,
+    UserDefinedConstraint,
     create_standard_setback,
 )
 
@@ -181,7 +184,7 @@ class TestExclusionZoneConstraint:
 
     def test_temporary_exclusion_zone(self, wetland_polygon):
         """Test temporary exclusion zone with expiration."""
-        expiration = datetime.utcnow() + timedelta(days=365)
+        expiration = datetime.now(timezone.utc) + timedelta(days=365)
 
         constraint = ExclusionZoneConstraint(
             id="exclusion_002",
@@ -195,11 +198,11 @@ class TestExclusionZoneConstraint:
 
         assert constraint.is_permanent is False
         assert constraint.expiration_date is not None
-        assert constraint.expiration_date > datetime.utcnow()
+        assert constraint.expiration_date > datetime.now(timezone.utc)
 
     def test_permanent_cannot_have_expiration(self, wetland_polygon):
         """Test that permanent exclusions cannot have expiration dates."""
-        expiration = datetime.utcnow() + timedelta(days=365)
+        expiration = datetime.now(timezone.utc) + timedelta(days=365)
 
         with pytest.raises(ValueError, match="Permanent exclusions cannot have expiration"):
             ExclusionZoneConstraint(
