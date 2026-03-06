@@ -2,7 +2,7 @@
  * Upload Page - File upload wizard with optional DEM upload
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { FileDropzone, FilePreview, UploadProgress } from '../components/FileDropzone';
@@ -18,6 +18,8 @@ export const UploadPage: React.FC = () => {
   const [showDemUpload, setShowDemUpload] = useState(false);
   const [selectedDemFile, setSelectedDemFile] = useState<File | null>(null);
   const demUpload = useFileUpload();
+  const uploadingRef = useRef(false);
+  const demUploadingRef = useRef(false);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -30,13 +32,17 @@ export const UploadPage: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || uploading) return;
+    if (!selectedFile || uploadingRef.current) return;
+    uploadingRef.current = true;
+    try {
+      const response = await uploadFile(selectedFile);
 
-    const response = await uploadFile(selectedFile);
-
-    if (response) {
-      // Show DEM upload step instead of auto-redirecting
-      setShowDemUpload(true);
+      if (response) {
+        // Show DEM upload step instead of auto-redirecting
+        setShowDemUpload(true);
+      }
+    } finally {
+      uploadingRef.current = false;
     }
   };
 
@@ -59,17 +65,21 @@ export const UploadPage: React.FC = () => {
   };
 
   const handleUploadDem = async () => {
-    if (!selectedDemFile || !uploadResponse || demUpload.uploading) return;
+    if (!selectedDemFile || !uploadResponse || demUploadingRef.current) return;
+    demUploadingRef.current = true;
+    try {
+      const demResponse = await demUpload.uploadFile(selectedDemFile);
 
-    const demResponse = await demUpload.uploadFile(selectedDemFile);
-
-    if (demResponse) {
-      setTimeout(() => {
-        const params = new URLSearchParams();
-        params.set('upload_id', uploadResponse.upload_id);
-        params.set('dem_upload_id', demResponse.upload_id);
-        navigate(`/config?${params.toString()}`);
-      }, 1000);
+      if (demResponse) {
+        setTimeout(() => {
+          const params = new URLSearchParams();
+          params.set('upload_id', uploadResponse.upload_id);
+          params.set('dem_upload_id', demResponse.upload_id);
+          navigate(`/config?${params.toString()}`);
+        }, 1000);
+      }
+    } finally {
+      demUploadingRef.current = false;
     }
   };
 
