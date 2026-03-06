@@ -623,6 +623,7 @@ def run_optimization_sync(  # noqa: C901
         # Compute footprint polygon (resolves TODO: polygon=[])
         footprint_coords = _compute_asset_footprint(asset, lon, lat, inverse_transformer)
 
+        height_m = getattr(asset, "building_height_m", None)
         placed_asset = PlacedAsset(
             id=asset.id,
             type=project_asset_type,
@@ -630,11 +631,7 @@ def run_optimization_sync(  # noqa: C901
             rotation=asset.rotation,
             width=asset.dimensions[0] * 3.28084,
             length=asset.dimensions[1] * 3.28084,
-            height=(
-                float(getattr(asset, "building_height_m")) * 3.28084
-                if getattr(asset, "building_height_m", None) is not None
-                else None
-            ),
+            height=(float(height_m) * 3.28084 if height_m is not None else None),
             polygon=footprint_coords,
         )
         placed_assets.append(placed_asset)

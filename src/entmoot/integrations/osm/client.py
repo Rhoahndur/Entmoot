@@ -100,7 +100,6 @@ class OSMClient:
             f"[out:json][timeout:{int(self.config.timeout)}];\n"
             f"(\n"
             f'  way["building"]({bbox_str});\n'
-            f'  relation["building"]({bbox_str});\n'
             f'  way["highway"]({bbox_str});\n'
             f'  way["power"="line"]({bbox_str});\n'
             f'  way["man_made"="pipeline"]({bbox_str});\n'
@@ -120,7 +119,7 @@ class OSMClient:
             logger.info(f"OSM query returned {result.feature_count} features")
             return result
 
-        except Exception as e:
+        except (httpx.HTTPError, ValueError, KeyError) as e:
             logger.warning(f"OSM query failed, returning empty data: {e}")
             return ExistingConditionsData(bbox=bbox)
 

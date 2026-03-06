@@ -171,6 +171,9 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     const sourceId = "property-boundary";
     const layerId = "property-boundary-layer";
 
+    if (map.current.getLayer(`${layerId}-fill`)) {
+      map.current.removeLayer(`${layerId}-fill`);
+    }
     if (map.current.getLayer(layerId)) {
       map.current.removeLayer(layerId);
     }
@@ -442,15 +445,14 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
   // Update roads layer
   useEffect(() => {
-    if (!map.current || !mapLoaded || !layerVisibility.roads || !roadNetwork)
-      return;
+    if (!map.current || !mapLoaded) return;
 
     const sourceId = "roads";
     const baseLayerId = "roads-base-layer";
     const borderLayerId = "roads-border-layer";
     const centerlineLayerId = "roads-centerline-layer";
 
-    // Remove existing layers
+    // Always clean up existing layers
     [centerlineLayerId, baseLayerId, borderLayerId].forEach((layerId) => {
       if (map.current!.getLayer(layerId)) {
         map.current!.removeLayer(layerId);
@@ -459,6 +461,8 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     if (map.current.getSource(sourceId)) {
       map.current.removeSource(sourceId);
     }
+
+    if (!layerVisibility.roads || !roadNetwork) return;
 
     // Helper function to find the asset closest to a road endpoint
     const findAssetAtPoint = (

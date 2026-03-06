@@ -200,12 +200,13 @@ class OSMResponseParser:
         """Classify a utility feature from its OSM tags."""
         if tags.get("power") == "line":
             voltage_str = tags.get("voltage", "")
-            try:
-                voltage = int(voltage_str)
-                if voltage >= 100_000:
-                    return OSMUtilityType.HIGH_VOLTAGE
-            except (ValueError, TypeError):
-                pass
+            # Handle multi-value tags like "110000;220000"
+            for part in voltage_str.replace(",", ";").split(";"):
+                try:
+                    if int(part.strip()) >= 100_000:
+                        return OSMUtilityType.HIGH_VOLTAGE
+                except (ValueError, TypeError):
+                    continue
             return OSMUtilityType.POWER_LINE
 
         if tags.get("man_made") == "pipeline":
