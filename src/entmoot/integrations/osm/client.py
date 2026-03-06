@@ -149,6 +149,17 @@ class OSMClient:
             result: Dict[str, Any] = response.json()
             return result
 
+        except httpx.HTTPStatusError as e:
+            # Retry on 429 (rate limited) and 5xx (server errors); propagate 4xx
+            if e.response.status_code == 429 or e.response.status_code >= 500:
+                logger.warning(f"OSM request failed (attempt {retry_count + 1}): {e}")
+                if retry_count < self.config.max_retries:
+                    backoff = self.config.retry_backoff_factor * (2**retry_count)
+                    logger.info(f"Retrying OSM request in {backoff:.1f}s...")
+                    await asyncio.sleep(backoff)
+                    return await self._make_request(query, retry_count + 1)
+            raise
+
         except httpx.RequestError as e:
             logger.warning(f"OSM request failed (attempt {retry_count + 1}): {e}")
 
