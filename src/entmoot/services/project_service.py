@@ -15,6 +15,7 @@ from entmoot.models.project import (
     Bounds,
     BuildableArea,
     ConstraintType,
+    ConstraintZone,
     Coordinate,
     ConstraintViolation,
     CostBreakdown,
@@ -283,13 +284,18 @@ class ProjectService:
             if setback_zone.is_empty:
                 return []
 
-            coords = [{"latitude": y, "longitude": x} for x, y in setback_zone.exterior.coords[:-1]]
+            coords = [
+                Coordinate(latitude=y, longitude=x)
+                for x, y in setback_zone.exterior.coords[:-1]
+            ]
             return [
-                {
-                    "type": "setback",
-                    "label": f"{setback_ft}ft setback zone",
-                    "coordinates": coords,
-                }
+                ConstraintZone(
+                    id="setback-zone-1",
+                    type=ConstraintType.SETBACK,
+                    polygon=coords,
+                    severity="medium",
+                    description=f"{setback_ft}ft setback zone",
+                )
             ]
         except Exception as e:
             logger.warning(f"Could not compute constraint zones: {e}")
