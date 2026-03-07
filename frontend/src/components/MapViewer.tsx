@@ -117,7 +117,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       zoom: 15,
       pitch: 0,
       bearing: 0,
-      preserveDrawingBuffer: true,
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), "top-right");
@@ -782,8 +782,8 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     // Clean up markers when assets layer is toggled off
     if (!layerVisibility.assets) {
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
+      markersRef.current.forEach((m) => m.marker.remove());
+      markersRef.current.clear();
       return;
     }
 
