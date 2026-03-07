@@ -284,6 +284,7 @@ class RoadNetwork:
         # Build complete graph of paths
         all_nodes = [self.entrance_node] + asset_node_ids
         path_graph = nx.Graph()
+        path_graph.add_nodes_from(all_nodes)
 
         # Find paths between all pairs
         for i, node1 in enumerate(all_nodes):

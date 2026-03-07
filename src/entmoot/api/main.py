@@ -123,18 +123,22 @@ async def health_check() -> dict[str, Any]:
         "redis_url_set": store.redis_url is not None,
     }
 
+    health_status = "healthy"
+
     if not store.use_fallback and store.client is not None:
         try:
             store.client.ping()
             storage_info["redis_ping"] = "ok"
             storage_info["project_count"] = store.get_project_count()
         except Exception:
+            logger.warning("Redis health check failed", exc_info=True)
             storage_info["redis_ping"] = "failed"
+            health_status = "degraded"
     elif store.use_fallback:
         storage_info["project_count"] = store.get_project_count()
 
     return {
-        "status": "healthy",
+        "status": health_status,
         "version": __version__,
         "environment": settings.environment,
         "cors_origins": settings.cors_origins_list,

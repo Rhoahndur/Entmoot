@@ -152,11 +152,27 @@ class OptimizationConstraints:
 
         return buildable if isinstance(buildable, ShapelyPolygon) else ShapelyPolygon()
 
+    @staticmethod
+    def _geom_area(geom) -> float:  # type: ignore[no-untyped-def]
+        """Return area for any Shapely geometry, 0.0 if empty/degenerate."""
+        if geom is None or geom.is_empty:
+            return 0.0
+        return float(geom.area)
+
+    @staticmethod
+    def _geom_is_empty(geom) -> bool:  # type: ignore[no-untyped-def]
+        """Return True if a Shapely geometry is empty or has no area."""
+        if geom is None or geom.is_empty:
+            return True
+        return bool(geom.area == 0.0)
+
     def get_buildable_area_diagnostic(self) -> dict:
         """Return a diagnostic breakdown of why buildable area may be empty.
 
         Tracks the area remaining after each constraint stage so callers
-        can produce an actionable error message.
+        can produce an actionable error message.  The real geometry types
+        (MultiPolygon, GeometryCollection, etc.) are preserved throughout
+        the pipeline; only the reported area/empty flags are normalised.
         """
         site_area_sqm = self.site_boundary.area
         stages: list = []
@@ -164,10 +180,15 @@ class OptimizationConstraints:
 
         if self.min_setback_m > 0:
             buildable = buildable.buffer(-self.min_setback_m)
-            if not isinstance(buildable, ShapelyPolygon):
-                buildable = ShapelyPolygon()
-            stages.append(("setback", self.min_setback_m, buildable.area, buildable.is_empty))
-            if buildable.is_empty:
+            stages.append(
+                (
+                    "setback",
+                    self.min_setback_m,
+                    self._geom_area(buildable),
+                    self._geom_is_empty(buildable),
+                )
+            )
+            if self._geom_is_empty(buildable):
                 return {
                     "site_area_sqm": site_area_sqm,
                     "stages": stages,
@@ -177,19 +198,25 @@ class OptimizationConstraints:
         if self.buildable_zones:
             buildable_union = unary_union(self.buildable_zones)
             buildable = buildable.intersection(buildable_union)
-            if not isinstance(buildable, ShapelyPolygon):
-                buildable = ShapelyPolygon()
             stages.append(
-                ("buildable_zones", len(self.buildable_zones), buildable.area, buildable.is_empty)
+                (
+                    "buildable_zones",
+                    len(self.buildable_zones),
+                    self._geom_area(buildable),
+                    self._geom_is_empty(buildable),
+                )
             )
 
         if self.exclusion_zones:
             exclusion_union = unary_union(self.exclusion_zones)
             buildable = buildable.difference(exclusion_union)
-            if not isinstance(buildable, ShapelyPolygon):
-                buildable = ShapelyPolygon()
             stages.append(
-                ("exclusion_zones", len(self.exclusion_zones), buildable.area, buildable.is_empty)
+                (
+                    "exclusion_zones",
+                    len(self.exclusion_zones),
+                    self._geom_area(buildable),
+                    self._geom_is_empty(buildable),
+                )
             )
 
         for constraint in self.regulatory_constraints:
@@ -197,16 +224,19 @@ class OptimizationConstraints:
             buildable = buildable.difference(constraint_geom)
 
         if self.regulatory_constraints:
-            if not isinstance(buildable, ShapelyPolygon):
-                buildable = ShapelyPolygon()
             stages.append(
-                ("regulatory", len(self.regulatory_constraints), buildable.area, buildable.is_empty)
+                (
+                    "regulatory",
+                    len(self.regulatory_constraints),
+                    self._geom_area(buildable),
+                    self._geom_is_empty(buildable),
+                )
             )
 
         return {
             "site_area_sqm": site_area_sqm,
             "stages": stages,
-            "remaining_sqm": buildable.area if not buildable.is_empty else 0.0,
+            "remaining_sqm": self._geom_area(buildable),
         }
 
     def is_position_valid(self, asset: Asset, position: Tuple[float, float]) -> bool:

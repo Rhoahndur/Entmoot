@@ -69,6 +69,11 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     marker: maplibregl.Marker;
     element: HTMLElement;
   } | null>(null);
+  const polygonHandlersRef = useRef<{
+    click: ((e: maplibregl.MapMouseEvent) => void) | null;
+    mouseenter: (() => void) | null;
+    mouseleave: (() => void) | null;
+  }>({ click: null, mouseenter: null, mouseleave: null });
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -581,11 +586,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     lengthFeet: number,
     rotationDegrees: number,
   ): [number, number][] => {
-    // Convert feet to approximate degrees (very rough approximation)
-    // At equator: 1 degree latitude ≈ 364,000 feet, 1 degree longitude ≈ 288,200 feet
-    // This is a simplification - in production you'd use proper projection math
+    // Convert feet to approximate degrees with latitude correction.
+    // 1 degree latitude ≈ 364,000 feet everywhere.
+    // Longitude degrees shrink by cos(lat) at higher latitudes.
     const latPerFoot = 1 / 364000;
-    const lngPerFoot = 1 / 288200;
+    const cosLat = Math.cos((centerLat * Math.PI) / 180);
+    const lngPerFoot = latPerFoot / (cosLat || 1);
 
     const halfWidth = (widthFeet / 2) * lngPerFoot;
     const halfLength = (lengthFeet / 2) * latPerFoot;
@@ -617,6 +623,31 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     // Clean up when assets layer is toggled off
     if (!layerVisibility.assets) {
+      // Remove layer event handlers before removing layers
+      const handlers = polygonHandlersRef.current;
+      if (handlers.click) {
+        map.current.off("click", "asset-polygons-fill", handlers.click);
+      }
+      if (handlers.mouseenter) {
+        map.current.off(
+          "mouseenter",
+          "asset-polygons-fill",
+          handlers.mouseenter,
+        );
+      }
+      if (handlers.mouseleave) {
+        map.current.off(
+          "mouseleave",
+          "asset-polygons-fill",
+          handlers.mouseleave,
+        );
+      }
+      polygonHandlersRef.current = {
+        click: null,
+        mouseenter: null,
+        mouseleave: null,
+      };
+
       if (map.current.getLayer("asset-polygons-outline")) {
         map.current.removeLayer("asset-polygons-outline");
       }
@@ -730,29 +761,38 @@ export const MapViewer: React.FC<MapViewerProps> = ({
         },
       });
 
-      // Add click handler for polygons (only once)
-      map.current.on("click", "asset-polygons-fill", (e) => {
-        if (e.features && e.features.length > 0 && onAssetClick) {
-          const assetId = e.features[0].properties?.id;
+      // Add click handler for polygons (store ref for cleanup)
+      const clickHandler = (e: maplibregl.MapMouseEvent) => {
+        const me = e as maplibregl.MapMouseEvent & {
+          features?: maplibregl.GeoJSONFeature[];
+        };
+        if (me.features && me.features.length > 0 && onAssetClick) {
+          const assetId = me.features[0].properties?.id;
           const asset = assets.find((a) => a.id === assetId);
           if (asset) {
             onAssetClick(asset);
           }
         }
-      });
-
-      // Change cursor on hover (only once)
-      map.current.on("mouseenter", "asset-polygons-fill", () => {
+      };
+      const mouseenterHandler = () => {
         if (map.current) {
           map.current.getCanvas().style.cursor = "pointer";
         }
-      });
-
-      map.current.on("mouseleave", "asset-polygons-fill", () => {
+      };
+      const mouseleaveHandler = () => {
         if (map.current) {
           map.current.getCanvas().style.cursor = "";
         }
-      });
+      };
+
+      map.current.on("click", "asset-polygons-fill", clickHandler);
+      map.current.on("mouseenter", "asset-polygons-fill", mouseenterHandler);
+      map.current.on("mouseleave", "asset-polygons-fill", mouseleaveHandler);
+      polygonHandlersRef.current = {
+        click: clickHandler,
+        mouseenter: mouseenterHandler,
+        mouseleave: mouseleaveHandler,
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -787,6 +827,11 @@ export const MapViewer: React.FC<MapViewerProps> = ({
         marker.remove();
       });
       markersRef.current.clear();
+      // Reset any in-progress drag so map panning is restored
+      if (dragStateRef.current) {
+        dragStateRef.current = null;
+        map.current.dragPan.enable();
+      }
       return;
     }
 
@@ -990,6 +1035,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       document.removeEventListener("mouseup", onGlobalMouseUp);
       document.removeEventListener("keydown", onGlobalKeyDown);
       document.removeEventListener("keyup", onGlobalKeyUp);
+
+      // Reset any in-progress drag so map panning is restored
+      if (dragStateRef.current) {
+        dragStateRef.current = null;
+        map.current?.dragPan.enable();
+      }
 
       // Clean up all markers and popups when unmounting or dependencies change
       currentMarkers.forEach((markerData) => {
