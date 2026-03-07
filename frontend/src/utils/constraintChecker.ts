@@ -8,7 +8,7 @@ import type {
   ConstraintZone,
   ConstraintViolation,
   Coordinate,
-} from '../types/results';
+} from "../types/results";
 
 /**
  * Check if a point is inside a polygon using ray casting algorithm
@@ -32,7 +32,10 @@ function isPointInPolygon(point: Coordinate, polygon: Coordinate[]): boolean {
 /**
  * Check if two polygons intersect (simple check: if any vertex of one is inside the other)
  */
-function doPolygonsIntersect(poly1: Coordinate[], poly2: Coordinate[]): boolean {
+function doPolygonsIntersect(
+  poly1: Coordinate[],
+  poly2: Coordinate[],
+): boolean {
   // Check if any vertex of poly1 is inside poly2
   for (const point of poly1) {
     if (isPointInPolygon(point, poly2)) {
@@ -60,7 +63,7 @@ function doAssetsOverlap(asset1: PlacedAsset, asset2: PlacedAsset): boolean {
  */
 function isAssetInConstraintZone(
   asset: PlacedAsset,
-  zone: ConstraintZone
+  zone: ConstraintZone,
 ): boolean {
   return doPolygonsIntersect(asset.polygon, zone.polygon);
 }
@@ -70,7 +73,7 @@ function isAssetInConstraintZone(
  */
 function getViolationMessage(
   _assetType: string,
-  constraintType: string
+  constraintType: string,
 ): string {
   const messages: Record<string, string> = {
     setback: `Asset violates setback requirement`,
@@ -80,7 +83,9 @@ function getViolationMessage(
     exclusion: `Asset is in excluded area`,
     property_line: `Asset crosses property boundary`,
   };
-  return messages[constraintType] || `Asset violates ${constraintType} constraint`;
+  return (
+    messages[constraintType] || `Asset violates ${constraintType} constraint`
+  );
 }
 
 /**
@@ -88,7 +93,7 @@ function getViolationMessage(
  */
 function isAssetInsideProperty(
   asset: PlacedAsset,
-  propertyBoundary: Coordinate[]
+  propertyBoundary: Coordinate[],
 ): boolean {
   // Check if all corners of the asset are inside the property boundary
   for (const corner of asset.polygon) {
@@ -105,7 +110,7 @@ function isAssetInsideProperty(
 export function checkConstraintViolations(
   assets: PlacedAsset[],
   constraintZones: ConstraintZone[],
-  propertyBoundary?: Coordinate[]
+  propertyBoundary?: Coordinate[],
 ): ConstraintViolation[] {
   const violations: ConstraintViolation[] = [];
 
@@ -115,9 +120,9 @@ export function checkConstraintViolations(
       if (!isAssetInsideProperty(asset, propertyBoundary)) {
         violations.push({
           asset_id: asset.id,
-          constraint_type: 'property_line',
-          severity: 'error',
-          message: 'Asset extends beyond property boundary',
+          constraint_type: "property_line",
+          severity: "error",
+          message: "Asset extends beyond property boundary",
           location: asset.position,
         });
       }
@@ -131,7 +136,7 @@ export function checkConstraintViolations(
         violations.push({
           asset_id: asset.id,
           constraint_type: zone.type,
-          severity: zone.severity === 'high' ? 'error' : 'warning',
+          severity: zone.severity === "high" ? "error" : "warning",
           message: getViolationMessage(asset.type, zone.type),
           location: asset.position,
         });
@@ -145,15 +150,15 @@ export function checkConstraintViolations(
       if (doAssetsOverlap(assets[i], assets[j])) {
         violations.push({
           asset_id: assets[i].id,
-          constraint_type: 'exclusion',
-          severity: 'error',
+          constraint_type: "exclusion",
+          severity: "error",
           message: `Asset overlaps with another asset (${assets[j].type})`,
           location: assets[i].position,
         });
         violations.push({
           asset_id: assets[j].id,
-          constraint_type: 'exclusion',
-          severity: 'error',
+          constraint_type: "exclusion",
+          severity: "error",
           message: `Asset overlaps with another asset (${assets[i].type})`,
           location: assets[j].position,
         });
@@ -165,20 +170,31 @@ export function checkConstraintViolations(
 }
 
 /**
- * Recalculate asset polygon based on position and rotation
- * This is a simplified version - assumes rectangular assets
+ * Recalculate asset polygon based on position and rotation.
+ *
+ * When the asset already carries a backend-computed polygon **and** its
+ * position has not been changed by a drag operation, we return the backend
+ * polygon directly (accurate UTM→WGS84 via pyproj).
+ *
+ * During drag-preview (position changed but backend hasn't re-computed yet)
+ * we fall back to the local approximation so the user gets instant feedback.
  */
 export function recalculateAssetPolygon(asset: PlacedAsset): Coordinate[] {
+  // If backend polygon exists and position hasn't shifted, trust it.
+  if (asset.polygon && asset.polygon.length >= 3) {
+    return asset.polygon;
+  }
+
+  // Fallback: local approximation for drag preview
   const { position, width, length, rotation } = asset;
   const halfWidth = width / 2;
   const halfLength = length / 2;
 
-  // Convert feet to approximate degrees (very rough approximation)
-  // 1 degree latitude ≈ 364,000 feet at equator
+  // Latitude-corrected conversion (cos correction for longitude shrinkage)
   const latScale = 1 / 364000;
-  const lngScale = 1 / 288200; // longitude varies by latitude, this is approximate
+  const cosLat = Math.cos((position.latitude * Math.PI) / 180);
+  const lngScale = latScale / (cosLat || 1);
 
-  // Create corners in local coordinate system (feet)
   const corners = [
     { x: -halfLength, y: -halfWidth },
     { x: halfLength, y: -halfWidth },
@@ -186,17 +202,14 @@ export function recalculateAssetPolygon(asset: PlacedAsset): Coordinate[] {
     { x: -halfLength, y: halfWidth },
   ];
 
-  // Rotate and translate corners
   const radians = (rotation * Math.PI) / 180;
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
 
   return corners.map((corner) => {
-    // Rotate
     const rotatedX = corner.x * cos - corner.y * sin;
     const rotatedY = corner.x * sin + corner.y * cos;
 
-    // Translate to world coordinates
     return {
       latitude: position.latitude + rotatedY * latScale,
       longitude: position.longitude + rotatedX * lngScale,

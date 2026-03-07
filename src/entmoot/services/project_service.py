@@ -78,12 +78,7 @@ class ProjectService:
             intersections=intersections,
         )
 
-        # Constraint violations
-        violations = ProjectService._detect_constraint_violations(
-            layout_results.placed_assets, property_boundary_coords
-        )
-
-        # Constraint / buildable zones
+        # Constraint / buildable zones (must be computed before violations)
         constraint_zones = ProjectService._compute_constraint_zones(
             property_boundary_coords,
             setback_ft=project.get("config", {}).get("constraints", {}).get("setback_distance", 20),
@@ -97,6 +92,11 @@ class ProjectService:
                 logger.warning(
                     f"Skipping existing condition zone {ec_data.get('id', 'unknown')}: {e}"
                 )
+
+        # Constraint violations (now checked against zones too)
+        violations = ProjectService._detect_constraint_violations(
+            layout_results.placed_assets, property_boundary_coords, constraint_zones
+        )
         buildable_areas = ProjectService._compute_buildable_areas(
             property_boundary_coords,
             setback_ft=project.get("config", {}).get("constraints", {}).get("setback_distance", 20),
@@ -135,7 +135,7 @@ class ProjectService:
                 contingency=contingency_cost,
                 total=layout_results.total_cost,
             ),
-            constraint_violations=0 if layout_results.constraints_satisfied else 1,
+            constraint_violations=len(violations),
             optimization_score=layout_results.fitness_score * 100,
         )
 
@@ -179,8 +179,9 @@ class ProjectService:
     def _detect_constraint_violations(
         placed_assets: list,
         property_boundary_coords: List[Dict[str, float]],
+        constraint_zones: Optional[List[ConstraintZone]] = None,
     ) -> List[ConstraintViolation]:
-        """Check every asset for overlaps and boundary breaches."""
+        """Check every asset for overlaps, boundary breaches, and zone violations."""
         violations: List[ConstraintViolation] = []
 
         asset_polys = []
@@ -242,6 +243,32 @@ class ProjectService:
                             )
                 except Exception as e:
                     logger.warning(f"Could not check boundary violation: {e}")
+
+            # Check constraint zones (setback, exclusion, existing conditions)
+            if constraint_zones:
+                for zone in constraint_zones:
+                    try:
+                        zone_poly = ShapelyPolygon(
+                            [(c.longitude, c.latitude) for c in zone.polygon]
+                        )
+                        if asset_poly.intersects(zone_poly):
+                            intersection_area = asset_poly.intersection(zone_poly).area
+                            if intersection_area > 0:
+                                severity = "error" if zone.severity == "high" else "warning"
+                                violations.append(
+                                    ConstraintViolation(
+                                        asset_id=asset.id,
+                                        constraint_type=zone.type,
+                                        severity=severity,
+                                        message=(
+                                            f"Asset intersects {zone.type.value} zone"
+                                            f"{': ' + zone.description if zone.description else ''}"
+                                        ),
+                                        location=None,
+                                    )
+                                )
+                    except Exception as e:
+                        logger.warning(f"Could not check zone {zone.id} violation: {e}")
 
         logger.info(f"Detected {len(violations)} constraint violations")
         return violations

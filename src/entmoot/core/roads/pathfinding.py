@@ -259,7 +259,7 @@ class AStarPathfinder:
         elevation_change = abs(node2.elevation - node1.elevation)
         elevation_penalty = elevation_change * 0.5
 
-        return distance + elevation_penalty
+        return float(distance + elevation_penalty)
 
     def _check_grade_constraint(self, node1_id: str, node2_id: str) -> bool:
         """
@@ -286,7 +286,7 @@ class AStarPathfinder:
         elevation_change = abs(node2.elevation - node1.elevation)
         grade_percent = (elevation_change / horizontal_distance) * 100.0
 
-        return grade_percent <= self.config.max_grade_percent
+        return bool(grade_percent <= self.config.max_grade_percent)
 
     def _reconstruct_path(
         self, came_from: Dict[str, str], current_id: str, total_cost: float

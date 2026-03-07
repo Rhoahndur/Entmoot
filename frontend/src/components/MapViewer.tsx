@@ -630,14 +630,25 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     }
 
     // Create GeoJSON features for asset footprints
+    // Use backend-computed polygon when available (accurate UTM→WGS84 transform);
+    // fall back to local approximation only for drag preview.
     const features = assets.map((asset) => {
-      const corners = getAssetPolygon(
-        asset.position.latitude,
-        asset.position.longitude,
-        asset.width,
-        asset.length,
-        asset.rotation,
-      );
+      let corners: [number, number][];
+      if (asset.polygon && asset.polygon.length >= 3) {
+        // Backend-computed polygon (accurate pyproj inverse transform)
+        corners = asset.polygon.map(
+          (c) => [c.longitude, c.latitude] as [number, number],
+        );
+      } else {
+        // Fallback: local approximation (drag preview or missing polygon)
+        corners = getAssetPolygon(
+          asset.position.latitude,
+          asset.position.longitude,
+          asset.width,
+          asset.length,
+          asset.rotation,
+        );
+      }
 
       // Close the polygon
       corners.push(corners[0]);

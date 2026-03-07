@@ -11,8 +11,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString, Point as ShapelyPoint, Polygon as ShapelyPolygon
-from shapely.geometry import MultiLineString, box
+from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import Point as ShapelyPoint
+from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import box
 from shapely.ops import unary_union
 
 try:
@@ -306,8 +308,9 @@ class RoadNetwork:
             # Classify road type based on proximity to entrance
             road_type = self._classify_road_type(node1, node2, asset_node_ids)
 
-            # Create segment
-            self._create_segment_from_path(path, road_type)
+            # Create segment (skip if pathfinding failed for this edge)
+            if path is not None:
+                self._create_segment_from_path(path, road_type)
 
         return True
 
@@ -529,7 +532,7 @@ class RoadNetwork:
         Returns:
             Dictionary with network statistics
         """
-        segments_by_type = {
+        segments_by_type: Dict[RoadType, list] = {
             RoadType.PRIMARY: [],
             RoadType.SECONDARY: [],
             RoadType.ACCESS: [],

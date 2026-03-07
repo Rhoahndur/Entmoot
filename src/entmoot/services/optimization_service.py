@@ -519,8 +519,8 @@ def run_optimization_sync(  # noqa: C901
     objective_weights = ObjectiveWeights(
         cut_fill_weight=config.optimization_weights.cost / 100.0,
         accessibility_weight=config.optimization_weights.accessibility / 100.0,
-        road_length_weight=config.optimization_weights.buildable_area / 100.0,
-        compactness_weight=config.optimization_weights.aesthetics / 100.0,
+        road_length_weight=config.optimization_weights.aesthetics / 100.0,
+        compactness_weight=config.optimization_weights.buildable_area / 100.0,
         slope_variance_weight=config.optimization_weights.environmental_impact / 100.0,
     )
 
@@ -653,46 +653,31 @@ def run_optimization_sync(  # noqa: C901
     # Step 8: Generate road network
     # ------------------------------------------------------------------
     logger.info("Generating road network")
-    road_segments = []
-    entrance_pos = resolved_entrance
 
-    for i, asset in enumerate(result.best_solution.assets):
-        if inverse_transformer:
-            entrance_lon, entrance_lat = inverse_transformer.transform(
-                entrance_pos[0], entrance_pos[1]
-            )
-            asset_lon, asset_lat = inverse_transformer.transform(
-                asset.position[0], asset.position[1]
-            )
-        else:
-            entrance_lon, entrance_lat = entrance_pos[0], entrance_pos[1]
-            asset_lon, asset_lat = asset.position[0], asset.position[1]
+    asset_positions_utm = [a.position for a in result.best_solution.assets]
+    asset_ids = [a.id for a in result.best_solution.assets]
 
-        dx_m = asset.position[0] - entrance_pos[0]
-        dy_m = asset.position[1] - entrance_pos[1]
-        length_m = math.sqrt(dx_m**2 + dy_m**2)
-        length_ft = length_m * 3.28084
-
-        # Compute road grade from real elevation if terrain data is available
-        road_grade = 0.0
-        if terrain_data and length_m > 0:
-            elev_start = terrain_data.sample_elevation(entrance_pos[0], entrance_pos[1])
-            elev_end = terrain_data.sample_elevation(asset.position[0], asset.position[1])
-            if elev_start is not None and elev_end is not None:
-                road_grade = abs(elev_end - elev_start) / length_m * 100.0
-
-        segment = RoadSegment(
-            id=f"road_{i}",
-            points=[
-                Coordinate(latitude=entrance_lat, longitude=entrance_lon),
-                Coordinate(latitude=asset_lat, longitude=asset_lon),
-            ],
-            width=config.road_design.min_width,
-            grade=round(road_grade, 2),
-            surface_type=config.road_design.surface_type,
-            length=length_ft,
+    try:
+        road_segments = _generate_road_network(
+            entrance_pos=resolved_entrance,
+            asset_positions=asset_positions_utm,
+            asset_ids=asset_ids,
+            site_boundary=site_boundary,
+            exclusion_zones=constraints.exclusion_zones,
+            terrain_data=terrain_data,
+            inverse_transformer=inverse_transformer,
+            config=config,
         )
-        road_segments.append(segment)
+        logger.info(f"Intelligent road network generated: {len(road_segments)} segments")
+    except Exception as e:
+        logger.warning(f"Intelligent road network failed, falling back to straight lines: {e}")
+        road_segments = _generate_straight_line_roads(
+            entrance_pos=resolved_entrance,
+            assets=result.best_solution.assets,
+            inverse_transformer=inverse_transformer,
+            config=config,
+            terrain_data=terrain_data,
+        )
 
     # ------------------------------------------------------------------
     # Step 9: Calculate earthwork
@@ -814,3 +799,199 @@ def _compute_asset_footprint(
         coords.append(Coordinate(latitude=clat, longitude=clon))
 
     return coords
+
+
+def _generate_straight_line_roads(
+    entrance_pos: tuple,
+    assets: list,
+    inverse_transformer: Any,
+    config: "ProjectConfig",
+    terrain_data: Any,
+) -> List[RoadSegment]:
+    """Generate simple star-topology roads (straight lines from entrance to each asset).
+
+    This is the original algorithm, preserved as a fallback if the intelligent
+    road network module fails.
+    """
+    road_segments: List[RoadSegment] = []
+
+    for i, asset in enumerate(assets):
+        if inverse_transformer:
+            entrance_lon, entrance_lat = inverse_transformer.transform(
+                entrance_pos[0], entrance_pos[1]
+            )
+            asset_lon, asset_lat = inverse_transformer.transform(
+                asset.position[0], asset.position[1]
+            )
+        else:
+            entrance_lon, entrance_lat = entrance_pos[0], entrance_pos[1]
+            asset_lon, asset_lat = asset.position[0], asset.position[1]
+
+        dx_m = asset.position[0] - entrance_pos[0]
+        dy_m = asset.position[1] - entrance_pos[1]
+        length_m = math.sqrt(dx_m**2 + dy_m**2)
+        length_ft = length_m * 3.28084
+
+        road_grade = 0.0
+        if terrain_data and length_m > 0:
+            elev_start = terrain_data.sample_elevation(entrance_pos[0], entrance_pos[1])
+            elev_end = terrain_data.sample_elevation(asset.position[0], asset.position[1])
+            if elev_start is not None and elev_end is not None:
+                road_grade = abs(elev_end - elev_start) / length_m * 100.0
+
+        segment = RoadSegment(
+            id=f"road_{i}",
+            points=[
+                Coordinate(latitude=entrance_lat, longitude=entrance_lon),
+                Coordinate(latitude=asset_lat, longitude=asset_lon),
+            ],
+            width=config.road_design.min_width,
+            grade=round(road_grade, 2),
+            surface_type=config.road_design.surface_type,
+            length=length_ft,
+        )
+        road_segments.append(segment)
+
+    return road_segments
+
+
+def _generate_road_network(
+    entrance_pos: tuple,
+    asset_positions: list,
+    asset_ids: List[str],
+    site_boundary: Any,
+    exclusion_zones: list,
+    terrain_data: Any,
+    inverse_transformer: Any,
+    config: "ProjectConfig",
+) -> List[RoadSegment]:
+    """Generate an intelligent road network using the core.roads module.
+
+    Uses MST-optimised pathfinding on a navigation grid, producing multi-waypoint
+    roads with proper classification, intersection generation, and exclusion-zone
+    avoidance.  For sites without DEM data a flat synthetic terrain grid is created
+    so the same pathfinding code works (grid-aligned roads → right-angle turns).
+    """
+    from entmoot.core.roads import NavigationGraph, PathfinderConfig
+    from entmoot.core.roads import RoadNetwork as CoreRoadNetwork
+
+    # Road width mapping: core RoadType → feet
+    ROAD_WIDTH_FT = {
+        "primary": 24.0,
+        "secondary": 18.0,
+        "access": 12.0,
+    }
+
+    bounds = site_boundary.bounds  # (min_x, min_y, max_x, max_y)
+    grid_spacing = 25.0  # metres
+
+    # ---- Build terrain arrays ----
+    if terrain_data is not None:
+        elevation_data = terrain_data.elevation
+        slope_data = terrain_data.slope_percent
+        transform = terrain_data.transform
+        cell_size = terrain_data.cell_size
+    else:
+        # Flat synthetic terrain – constant elevation, zero slope
+        import rasterio.transform
+
+        extent_x = bounds[2] - bounds[0]
+        extent_y = bounds[3] - bounds[1]
+        cell_size = 10.0  # metres
+        cols = max(int(extent_x / cell_size) + 1, 2)
+        rows = max(int(extent_y / cell_size) + 1, 2)
+        elevation_data = np.full((rows, cols), 100.0, dtype=np.float64)
+        slope_data = np.zeros((rows, cols), dtype=np.float64)
+        transform = rasterio.transform.from_bounds(
+            bounds[0], bounds[1], bounds[2], bounds[3], cols, rows
+        )
+
+    # ---- Build navigation graph ----
+    nav_graph = NavigationGraph(
+        elevation_data=elevation_data,
+        slope_data=slope_data,
+        transform=transform,
+        cell_size=cell_size,
+        grid_spacing=grid_spacing,
+    )
+
+    nav_graph.build_grid_graph(bounds, excluded_zones=exclusion_zones or None)
+
+    # Add entrance
+    nav_graph.add_strategic_node(
+        position=entrance_pos,
+        is_entrance=True,
+        node_id="entrance",
+        connection_radius=grid_spacing * 2,
+    )
+
+    # Add each asset
+    for asset_id, pos in zip(asset_ids, asset_positions):
+        nav_graph.add_strategic_node(
+            position=pos,
+            is_asset=True,
+            node_id=asset_id,
+            connection_radius=grid_spacing * 2,
+        )
+
+    stats = nav_graph.get_graph_stats()
+    logger.info(
+        f"Navigation graph built: {stats.get('num_nodes', 0)} nodes, "
+        f"{stats.get('num_edges', 0)} edges"
+    )
+
+    # ---- Generate network ----
+    pathfinder_config = PathfinderConfig(
+        max_grade_percent=config.road_design.max_grade,
+        smoothing_enabled=True,
+    )
+
+    core_network = CoreRoadNetwork(
+        navigation_graph=nav_graph,
+        entrance_position=entrance_pos,
+        pathfinder_config=pathfinder_config,
+    )
+
+    success = core_network.generate_network(
+        asset_positions=asset_positions,
+        asset_ids=asset_ids,
+        optimize=True,
+    )
+
+    if not success:
+        raise RuntimeError("core.roads.RoadNetwork.generate_network() returned False")
+
+    net_stats = core_network.get_network_stats()
+    logger.info(
+        f"Core road network: {net_stats.get('num_segments', 0)} segments, "
+        f"total length {net_stats.get('total_length_m', 0):.1f}m"
+    )
+
+    # ---- Convert core RoadSegments → models.project.RoadSegment ----
+    road_segments: List[RoadSegment] = []
+
+    for seg_id, core_seg in core_network.segments.items():
+        # Extract waypoints from centerline and transform to WGS84
+        points: List[Coordinate] = []
+        for utm_x, utm_y in core_seg.centerline.coords:
+            if inverse_transformer:
+                lon, lat = inverse_transformer.transform(utm_x, utm_y)
+            else:
+                lon, lat = utm_x, utm_y
+            points.append(Coordinate(latitude=lat, longitude=lon))
+
+        # Convert metres → feet
+        width_ft = ROAD_WIDTH_FT.get(core_seg.road_type.value, config.road_design.min_width)
+        length_ft = core_seg.length_m * 3.28084
+
+        segment = RoadSegment(
+            id=seg_id,
+            points=points,
+            width=width_ft,
+            grade=round(core_seg.avg_grade, 2),
+            surface_type=config.road_design.surface_type,
+            length=length_ft,
+        )
+        road_segments.append(segment)
+
+    return road_segments

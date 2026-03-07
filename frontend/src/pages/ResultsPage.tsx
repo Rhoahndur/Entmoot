@@ -177,9 +177,17 @@ export const ResultsPage: React.FC = () => {
   // Debounced violation check ref
   const violationCheckTimeoutRef = useRef<number | null>(null);
 
-  // Initialize violations on first load or alternative switch
+  // Initialize violations on first load or alternative switch.
+  // Use backend-computed violations when available; fall back to local check.
   useEffect(() => {
-    recalculateViolations();
+    if (
+      currentAlternative?.violations &&
+      currentAlternative.violations.length > 0
+    ) {
+      setLocalViolations(currentAlternative.violations);
+    } else {
+      recalculateViolations();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAlternativeId]); // Only when alternative ID changes
 
