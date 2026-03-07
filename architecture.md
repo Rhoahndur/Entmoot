@@ -27,7 +27,7 @@ System architecture for Entmoot — an AI-driven site layout automation platform
 │                                                              │
 │  ┌─────────────────┐  ┌──────────────────────────────────┐  │
 │  │ Integrations    │  │ Infrastructure                    │  │
-│  │ FEMA · USGS     │  │ Redis storage · File storage     │  │
+│  │ OSM · FEMA · USGS│ │ Redis storage · File storage     │  │
 │  │ rate_limiter    │  │ Cleanup service · Logging/Middleware│
 │  └─────────────────┘  └──────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -35,8 +35,9 @@ System architecture for Entmoot — an AI-driven site layout automation platform
     ┌────▼────┐         ┌────▼────┐         ┌────▼────┐
     │  Redis  │         │  Disk   │         │ External│
     │ project │         │ uploads │         │  APIs   │
-    │ results │         │ exports │         │FEMA/USGS│
-    └─────────┘         └─────────┘         └─────────┘
+    │ results │         │ exports │         │OSM/FEMA │
+    └─────────┘         └─────────┘         │  /USGS  │
+                                            └─────────┘
 ```
 
 ---
@@ -62,11 +63,13 @@ projects.py  create_project()
   optimization_service.py  run_optimization_sync()
        ├─ Parse file (KML / KMZ / GeoJSON)
        ├─ Detect CRS → transform to UTM
+       ├─ Load DEM → compute slope grid → slope exclusion zones (optional)
+       ├─ Query OpenStreetMap → classify features → typed buffers → exclusion zones (optional)
        ├─ Build Asset instances from config
        ├─ Set up constraints + objectives
        ├─ Run GeneticOptimizer (GA)
-       ├─ Inverse-transform results → WGS84
-       ├─ Generate road network (A* pathfinding)
+       ├─ Inverse-transform results → WGS84, compute asset footprint polygons
+       ├─ Generate road network (MST-optimized A* pathfinding, fallback: straight lines)
        ├─ Calculate earthwork (cut/fill)
        └─ Store LayoutResults in Redis
 
@@ -107,7 +110,9 @@ Business logic extracted from routes — testable without HTTP.
 | File | Responsibility |
 |---|---|
 | `project_service.py` | Weight validation, result assembly, constraint violation detection, road intersection computation, setback zone / buildable area geometry |
-| `optimization_service.py` | `generate_layout_async` (background task), `run_optimization_sync` (file parsing → CRS → GA → road gen → earthwork → results) |
+| `optimization_service.py` | `generate_layout_async` (background task), `run_optimization_sync` (file parsing → CRS → DEM → OSM → GA → road gen → earthwork → results) |
+| `terrain_service.py` | `prepare_terrain_data()` — DEM loading, validation, reprojection to UTM, cropping, slope computation; `TerrainData` container with elevation/slope sampling methods |
+| `existing_conditions_service.py` | `fetch_and_process()` — OSM Overpass query, feature classification, typed buffer generation (buildings, roads, utilities, water), road entry point identification |
 
 ### Core Modules (`src/entmoot/core/`)
 
@@ -117,10 +122,10 @@ Domain-specific processing engines.
 |---|---|
 | `parsers/` | KML/KMZ parsing and validation; coordinate/geometry extraction |
 | `crs/` | CRS detection from file content, UTM zone selection, coordinate transformation (PyProj) |
-| `terrain/` | DEM loading/validation, slope calculation, aspect analysis, solar/wind exposure, buildability scoring |
-| `constraints/` | Setback buffers, exclusion zones, regulatory constraints; spatial validation with Shapely |
-| `optimization/` | `GeneticOptimizer` — population-based multi-objective optimization with collision detection, tournament selection, elitism, convergence detection |
-| `roads/` | Graph-based road network, A\* pathfinding with grade constraints and turning-radius awareness |
+| `terrain/` | DEM loading/validation, slope calculation, aspect analysis, buildability scoring |
+| `constraints/` | Setback buffers, exclusion zones, regulatory constraints; typed buffer generation (property lines 25ft, roads 25–100ft, water 100–150ft, utilities 30–100ft) |
+| `optimization/` | `GeneticOptimizer` — population-based multi-objective optimization with collision detection, tournament selection, elitism, convergence detection; `get_buildable_area_diagnostic()` for actionable error messages |
+| `roads/` | `NavigationGraph` (grid-based), `AStarPathfinder` (grade-aware), `RoadNetwork` (MST-optimized topology with road classification PRIMARY/SECONDARY/ACCESS, intersection generation, exclusion zone avoidance) |
 | `earthwork/` | Pre/post-grading models, cut/fill volume calculation, cost estimation |
 | `export/` | `KMZExporter`, `GeoJSONExporter`, `DXFExporter` — georeferenced output for Google Earth, QGIS, AutoCAD |
 | `reports/` | PDF site report generation (ReportLab) |
@@ -137,6 +142,7 @@ Rate-limited async HTTP clients for external data sources.
 
 | Module | API | Data |
 |---|---|---|
+| `osm/` | OpenStreetMap Overpass API | Buildings, highways, power lines, pipelines, water features within site bbox; in-memory cache (24h TTL); retry on 429/5xx |
 | `fema/` | FEMA NFHL REST API | Flood zone designations by point or bounding box |
 | `usgs/` | USGS EPQS / 3DEP | Point elevation, batch queries, DEM tile download & mosaic |
 | `rate_limiter.py` | *(shared)* | Token-bucket `RateLimiter` with `wait_if_needed()` async convenience method |
@@ -199,6 +205,37 @@ Pydantic v2 data models — serialization boundary between layers.
 
 ---
 
+## Road Network Generation
+
+```
+                    ┌──────────────────────┐
+                    │  optimization_service │
+                    │  _generate_road_      │
+                    │  network()            │
+                    └──────────┬───────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              ▼                ▼                 ▼
+     ┌────────────────┐ ┌──────────────┐ ┌────────────────┐
+     │ NavigationGraph│ │ AStarPath-   │ │ RoadNetwork    │
+     │ (graph.py)     │ │ finder       │ │ (network.py)   │
+     │                │ │ (pathfind.)  │ │                │
+     │ Build grid from│ │ Grade-aware  │ │ MST topology   │
+     │ DEM or flat    │ │ least-cost   │ │ Road classify  │
+     │ synthetic grid │ │ path search  │ │ Intersections  │
+     └────────────────┘ └──────────────┘ └────────────────┘
+```
+
+**Two-path strategy:**
+
+1. **Primary:** `_generate_road_network()` builds a `NavigationGraph` grid over the site (from DEM or flat synthetic terrain at 25m spacing), adds entrance and asset positions as strategic nodes, then uses `RoadNetwork.generate_network(optimize=True)` which computes all-pairs A\* shortest paths and selects a Minimum Spanning Tree for optimal topology.
+
+2. **Fallback:** If the MST solver fails for any reason, `_generate_straight_line_roads()` produces simple entrance-to-each-asset straight lines (star topology).
+
+**Road classification:** PRIMARY (24ft, entrance-connected), SECONDARY (18ft), ACCESS (12ft). Intersections are generated at T-junctions and crossings with proper circular geometry.
+
+---
+
 ## Frontend Architecture
 
 ```
@@ -226,7 +263,7 @@ Pydantic v2 data models — serialization boundary between layers.
 └──────────────────────────────────────────────────────────┘
 ```
 
-**MapViewer layers:** property boundary (red polygon), asset footprints (colored by type), constraint zones, buildable areas, road network (multi-layer: border + surface + centerline), measurement tool (Haversine), shift+drag asset repositioning, screenshot export.
+**MapViewer layers:** property boundary (red polygon), asset footprints (server-computed UTM polygons, colored by type), constraint zones, buildable areas, existing conditions (buildings, roads, utilities, water from OSM), road network (multi-layer: border + surface + centerline with multi-waypoint segments), measurement tool (Haversine), shift+drag asset repositioning, screenshot export.
 
 **LayoutEditor:** select asset → move / rotate (±5°, ±15°, slider) / delete. Full undo/redo history. Violation overlay per asset. Unsaved-changes tracking.
 
@@ -284,7 +321,7 @@ Multi-stage builds:
 
 | Image | Base | Size |
 |---|---|---|
-| Backend | `python:3.10-slim` + GDAL runtime | ~400 MB |
+| Backend | `python:3.12-slim` + GDAL runtime | ~400 MB |
 | Frontend | `nginx:alpine` serving Vite build | ~50 MB |
 
 ### Docker Compose Services
@@ -300,7 +337,7 @@ Multi-stage builds:
 
 | Job | What it does |
 |---|---|
-| **lint** | Black + Flake8 + mypy (enforced) across Python 3.10–3.12 |
+| **lint** | Black + Flake8 + mypy (enforced), Python 3.12 |
 | **test** | pytest with PostgreSQL + Redis services, coverage upload |
 | **security** | Bandit (SAST) + Safety (dependency audit) |
 | **build** | Docker image builds for backend + frontend |
@@ -342,6 +379,8 @@ graph TB
     subgraph "Service Layer"
         ProjSvc[ProjectService<br/>validation · results · violations]
         OptSvc[OptimizationService<br/>layout generation]
+        TerrSvc[TerrainService<br/>DEM · slope]
+        ExCondSvc[ExistingConditionsService<br/>OSM · buffers]
     end
 
     subgraph "Core Modules"
@@ -350,7 +389,7 @@ graph TB
         Terrain[Terrain<br/>DEM · slope · aspect]
         Constraints[Constraints<br/>setbacks · buffers · zones]
         GA[GeneticOptimizer<br/>multi-objective GA]
-        Roads[Roads<br/>graph · A* pathfinding]
+        Roads[Roads<br/>MST · A* pathfinding]
         Earthwork[Earthwork<br/>cut/fill · cost]
         ExportMod[Export<br/>KMZ · GeoJSON · DXF]
         Viz[Visualization<br/>2D · 3D maps]
@@ -359,6 +398,7 @@ graph TB
 
     subgraph "Integrations"
         RateLim[RateLimiter<br/>token bucket]
+        OSM[OSM Client<br/>buildings · roads · utilities]
         FEMA[FEMA Client<br/>flood zones]
         USGS[USGS Client<br/>elevation · DEM tiles]
     end
@@ -387,10 +427,14 @@ graph TB
     OptSvc --> Earthwork
     OptSvc --> Redis
 
+    OptSvc --> TerrSvc
+    OptSvc --> ExCondSvc
     GA --> Constraints
     GA --> Terrain
+    ExCondSvc --> OSM
     Constraints --> FEMA
     Terrain --> USGS
+    OSM --> RateLim
     FEMA --> RateLim
     USGS --> RateLim
 
@@ -407,9 +451,9 @@ graph TB
 
     class Upload,Config,Results,Projects,MapView,LayoutEd,Dashboard frontend
     class Auth,UploadAPI,ProjectsAPI,Middleware,ErrorH api
-    class ProjSvc,OptSvc service
+    class ProjSvc,OptSvc,TerrSvc,ExCondSvc service
     class Parsers,CRS,Terrain,Constraints,GA,Roads,Earthwork,ExportMod,Viz,Reports core
-    class RateLim,FEMA,USGS integration
+    class RateLim,OSM,FEMA,USGS integration
     class Redis,Disk storage
 ```
 
@@ -423,7 +467,10 @@ graph TB
 | **Redis with in-memory fallback** | Works in production (Redis) and local dev (dict fallback) without config changes |
 | **Genetic algorithm over linear solver** | Multi-objective spatial optimization with irregular constraints doesn't fit LP/MIP well; GA handles arbitrary fitness functions and produces diverse alternatives |
 | **CRS auto-detection + UTM projection** | Users upload in WGS84 (lat/lon); optimization runs in meters (UTM); results inverse-transform back to WGS84 |
-| **Shared RateLimiter** | FEMA and USGS clients had identical token-bucket implementations; extracted to single async-compatible module |
+| **Shared RateLimiter** | OSM, FEMA, and USGS clients share a token-bucket implementation; extracted to single async-compatible module |
 | **Background ThreadPoolExecutor for optimization** | CPU-bound GA must not block the async event loop; wraps sync code in a thread |
+| **MST road topology with straight-line fallback** | MST-optimized grid-based pathfinding produces realistic road layouts; automatic fallback to star-topology straight lines if pathfinding fails |
+| **Server-side asset polygons** | UTM footprint corners are inverse-transformed to WGS84 server-side; frontend uses these directly instead of approximating with equatorial constants |
+| **Graceful degradation** | DEM, OSM, FEMA, and USGS integrations are all optional — failures return empty data, never block optimization |
 | **Optional API key auth** | Disabled by default in development; enabled in production via env vars |
 | **Atomic file writes** | Upload files written to temp path then renamed — prevents partial files on crash |
