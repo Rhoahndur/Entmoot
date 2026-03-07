@@ -145,6 +145,10 @@ class RedisStorage:
             logger.error(f"Error getting all projects: {e}")
             return []
 
+    def get_project_count(self) -> int:
+        """Return the number of stored projects."""
+        return len(self.get_all_projects())
+
     def project_exists(self, project_id: str) -> bool:
         """
         Check if project exists.

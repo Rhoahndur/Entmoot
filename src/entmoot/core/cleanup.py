@@ -31,7 +31,9 @@ class CleanupService:
             retention_hours: Hours to retain files before deletion (defaults to settings)
             cleanup_interval_minutes: Minutes between cleanup runs
         """
-        self.retention_hours = retention_hours or settings.upload_retention_hours
+        self.retention_hours = (
+            retention_hours if retention_hours is not None else settings.upload_retention_hours
+        )
         self.cleanup_interval_minutes = cleanup_interval_minutes
         self._task: Optional[asyncio.Task[None]] = None
         self._running = False

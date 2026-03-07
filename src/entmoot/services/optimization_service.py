@@ -963,7 +963,7 @@ def _generate_road_network(
 
     net_stats = core_network.get_network_stats()
     logger.info(
-        f"Core road network: {net_stats.get('num_segments', 0)} segments, "
+        f"Core road network: {net_stats.get('total_segments', 0)} segments, "
         f"total length {net_stats.get('total_length_m', 0):.1f}m"
     )
 

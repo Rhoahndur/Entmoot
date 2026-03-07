@@ -172,15 +172,13 @@ export function checkConstraintViolations(
 /**
  * Recalculate asset polygon based on position and rotation.
  *
- * When the asset already carries a backend-computed polygon **and** its
- * position has not been changed by a drag operation, we return the backend
- * polygon directly (accurate UTM→WGS84 via pyproj).
- *
- * During drag-preview (position changed but backend hasn't re-computed yet)
- * we fall back to the local approximation so the user gets instant feedback.
+ * Returns the backend-computed polygon when present (accurate UTM→WGS84 via
+ * pyproj).  Callers must clear `asset.polygon` (set to `[]`) when mutating
+ * `asset.position` so this function falls back to local approximation for
+ * drag-preview.  See `handleAssetMove` in ResultsPage.tsx.
  */
 export function recalculateAssetPolygon(asset: PlacedAsset): Coordinate[] {
-  // If backend polygon exists and position hasn't shifted, trust it.
+  // Backend polygon present and not cleared by a drag → trust it.
   if (asset.polygon && asset.polygon.length >= 3) {
     return asset.polygon;
   }

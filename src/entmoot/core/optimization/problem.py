@@ -152,6 +152,55 @@ class OptimizationConstraints:
 
         return buildable if isinstance(buildable, ShapelyPolygon) else ShapelyPolygon()
 
+    def get_buildable_area_diagnostic(self) -> dict:
+        """Return a diagnostic breakdown of why buildable area may be empty.
+
+        Tracks the area remaining after each constraint stage so callers
+        can produce an actionable error message.
+        """
+        site_area_sqm = self.site_boundary.area
+        stages: list = []
+        buildable = self.site_boundary
+
+        if self.min_setback_m > 0:
+            buildable = buildable.buffer(-self.min_setback_m)
+            stages.append(("setback", self.min_setback_m, buildable.area, buildable.is_empty))
+            if buildable.is_empty:
+                return {
+                    "site_area_sqm": site_area_sqm,
+                    "stages": stages,
+                    "remaining_sqm": 0.0,
+                }
+
+        if self.buildable_zones:
+            buildable_union = unary_union(self.buildable_zones)
+            buildable = buildable.intersection(buildable_union)
+            stages.append(
+                ("buildable_zones", len(self.buildable_zones), buildable.area, buildable.is_empty)
+            )
+
+        if self.exclusion_zones:
+            exclusion_union = unary_union(self.exclusion_zones)
+            buildable = buildable.difference(exclusion_union)
+            stages.append(
+                ("exclusion_zones", len(self.exclusion_zones), buildable.area, buildable.is_empty)
+            )
+
+        for constraint in self.regulatory_constraints:
+            constraint_geom = constraint.get_geometry()
+            buildable = buildable.difference(constraint_geom)
+
+        if self.regulatory_constraints:
+            stages.append(
+                ("regulatory", len(self.regulatory_constraints), buildable.area, buildable.is_empty)
+            )
+
+        return {
+            "site_area_sqm": site_area_sqm,
+            "stages": stages,
+            "remaining_sqm": buildable.area if not buildable.is_empty else 0.0,
+        }
+
     def is_position_valid(self, asset: Asset, position: Tuple[float, float]) -> bool:
         """
         Check if an asset position satisfies constraints.

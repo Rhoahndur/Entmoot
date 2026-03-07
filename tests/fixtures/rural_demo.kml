@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Rural Demo Site</name>
+    <description>Rural parcel near Limon, CO — open rangeland with no structures</description>
+    <Placemark>
+      <name>Property Boundary</name>
+      <description>~40 acre rural parcel</description>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -103.6920,39.2640,0
+              -103.6870,39.2640,0
+              -103.6870,39.2680,0
+              -103.6920,39.2680,0
+              -103.6920,39.2640,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

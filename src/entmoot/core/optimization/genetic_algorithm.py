@@ -273,7 +273,37 @@ class GeneticOptimizer:
         buildable_area = self.constraints.get_buildable_area()
 
         if buildable_area.is_empty:
-            raise ValueError("No buildable area available for asset placement")
+            diag = self.constraints.get_buildable_area_diagnostic()
+            site_sqft = diag["site_area_sqm"] * 10.7639
+            hints = []
+            for stage_name, param, remaining, is_empty in diag["stages"]:
+                remaining_sqft = remaining * 10.7639
+                if stage_name == "setback" and is_empty:
+                    setback_ft = param * 3.28084
+                    hints.append(
+                        f"The {setback_ft:.0f}ft setback consumes the entire "
+                        f"{site_sqft:.0f} sq ft site. Try reducing the setback distance."
+                    )
+                elif stage_name == "exclusion_zones" and is_empty:
+                    hints.append(
+                        f"{param} exclusion zone(s) (existing buildings, roads, "
+                        f"water, utilities) cover the remaining buildable area. "
+                        f"Try disabling 'Use Existing Conditions' or choosing "
+                        f"a less developed site."
+                    )
+                elif stage_name == "exclusion_zones" and remaining_sqft < site_sqft * 0.1:
+                    hints.append(
+                        f"Exclusion zones reduced buildable area to only "
+                        f"{remaining_sqft:.0f} sq ft ({remaining_sqft / site_sqft * 100:.0f}% "
+                        f"of site). Consider a larger or less developed site."
+                    )
+            if not hints:
+                hints.append(
+                    "The combination of setback, exclusion zones, and other "
+                    "constraints leaves no usable area. Try reducing the setback "
+                    "distance, disabling existing conditions, or using a larger site."
+                )
+            raise ValueError("No buildable area available for asset placement. " + " ".join(hints))
 
         bounds = buildable_area.bounds  # (minx, miny, maxx, maxy)
 

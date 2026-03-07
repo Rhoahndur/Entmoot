@@ -782,7 +782,10 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
     // Clean up markers when assets layer is toggled off
     if (!layerVisibility.assets) {
-      markersRef.current.forEach((m) => m.marker.remove());
+      markersRef.current.forEach(({ marker, popup }) => {
+        popup.remove();
+        marker.remove();
+      });
       markersRef.current.clear();
       return;
     }

@@ -308,9 +308,11 @@ class RoadNetwork:
             # Classify road type based on proximity to entrance
             road_type = self._classify_road_type(node1, node2, asset_node_ids)
 
-            # Create segment (skip if pathfinding failed for this edge)
-            if path is not None:
-                self._create_segment_from_path(path, road_type)
+            # Fail the whole network if any path is missing
+            if path is None:
+                return False
+
+            self._create_segment_from_path(path, road_type)
 
         return True
 

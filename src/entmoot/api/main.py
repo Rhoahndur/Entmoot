@@ -131,7 +131,7 @@ async def health_check() -> dict[str, Any]:
         except Exception as e:
             storage_info["redis_ping"] = f"failed: {e}"
     elif store.use_fallback:
-        storage_info["project_count"] = len(store._fallback_projects)
+        storage_info["project_count"] = store.get_project_count()
 
     return {
         "status": "healthy",
