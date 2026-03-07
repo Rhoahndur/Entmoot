@@ -115,13 +115,13 @@ class OSMClient:
         try:
             data = await self._make_request(query)
             result = self._parser.parse_response(data, bbox=bbox)
-            self._cache.put(cache_key, result)
-            logger.info(f"OSM query returned {result.feature_count} features")
-            return result
-
-        except (httpx.HTTPError, ValueError, KeyError) as e:
-            logger.warning(f"OSM query failed, returning empty data: {e}")
+        except Exception:
+            logger.exception("OSM query/parse failed, returning empty data")
             return ExistingConditionsData(bbox=bbox)
+
+        self._cache.put(cache_key, result)
+        logger.info(f"OSM query returned {result.feature_count} features")
+        return result
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -1,6 +1,4 @@
-"""
-Background service for cleaning up expired uploaded files.
-"""
+"""Background service for cleaning up expired uploaded files."""
 
 import asyncio
 import logging
@@ -33,9 +31,11 @@ class CleanupService:
             retention_hours: Hours to retain files before deletion (defaults to settings)
             cleanup_interval_minutes: Minutes between cleanup runs
         """
-        self.retention_hours = retention_hours or settings.upload_retention_hours
+        self.retention_hours = (
+            retention_hours if retention_hours is not None else settings.upload_retention_hours
+        )
         self.cleanup_interval_minutes = cleanup_interval_minutes
-        self._task: Optional[asyncio.Task] = None  # type: ignore
+        self._task: Optional[asyncio.Task[None]] = None
         self._running = False
         logger.info(
             f"CleanupService initialized: retention={self.retention_hours}h, "
@@ -115,12 +115,7 @@ class CleanupService:
         return stats
 
     async def _cleanup_loop(self) -> None:
-        """
-        Main cleanup loop that runs periodically.
-
-        This loop runs continuously until stopped, performing cleanup
-        at the specified interval.
-        """
+        """Run periodic cleanup until stopped."""
         logger.info("Cleanup loop started")
 
         while self._running:

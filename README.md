@@ -11,25 +11,27 @@ Entmoot is a full-stack geospatial platform that automates site layout generatio
 - **Site boundary parsing** — KML, KMZ, GeoJSON, and GeoTIFF input with automatic CRS detection and UTM projection
 - **Genetic algorithm optimization** — multi-objective placement of buildings, parking lots, equipment yards, and storage tanks with configurable weights (cost, buildable area, accessibility, environmental impact, aesthetics)
 - **Constraint enforcement** — setback distances, property-line compliance, exclusion zones, wetland buffers, slope limits, and inter-asset spacing
-- **Road network generation** — A\* pathfinding with grade constraints and turning-radius awareness
+- **OpenStreetMap integration** — automatic detection of existing buildings, roads, utilities, and water features via Overpass API with typed buffer generation and road entry point identification
+- **Road network generation** — MST-optimized topology with A\* grid-based pathfinding, road classification (primary/secondary/access), intersection generation, and grade-aware routing; falls back to straight-line roads on failure
 - **Earthwork estimation** — cut/fill volume calculations with cost projections
-- **Terrain analysis** — DEM loading, slope/aspect computation, solar/wind exposure, and buildability scoring
+- **Terrain analysis** — DEM loading, slope/aspect computation, buildability scoring, and slope-based exclusion zones
 - **Regulatory data** — FEMA flood zone queries and USGS 3DEP elevation lookups via rate-limited async clients
 - **Export** — KMZ (Google Earth), GeoJSON (QGIS), DXF (AutoCAD), and PDF site reports
-- **Interactive frontend** — drag-and-drop upload, configuration wizard, MapLibre GL map viewer, and layout editor
+- **Interactive frontend** — drag-and-drop upload, configuration wizard, MapLibre GL map viewer, and layout editor with shift+drag asset repositioning
 - **API key authentication** — optional `X-API-Key` header protection for all `/api/v1` routes
 
 ## Technology Stack
 
 | Layer | Tools |
 |---|---|
-| **Backend** | Python 3.10+, FastAPI, Pydantic v2, Uvicorn |
-| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, MapLibre GL |
-| **Geospatial** | Shapely, GeoPandas, PyProj, GDAL/Rasterio, simplekml, ezdxf |
+| **Backend** | Python 3.12+, FastAPI, Pydantic v2, Uvicorn |
+| **Frontend** | React 19, TypeScript 5, Vite 7, Tailwind CSS 4, MapLibre GL 5 |
+| **Geospatial** | Shapely, PyProj, GDAL/Rasterio, NetworkX, simplekml, ezdxf |
 | **Optimization** | Custom genetic algorithm (population-based, multi-objective) |
-| **Storage** | Redis (project/result persistence), optional PostgreSQL + PostGIS |
-| **Testing** | pytest (unit/integration/e2e markers, 85 % coverage target) |
-| **Code quality** | Black, Flake8, mypy (enforced in CI), pre-commit hooks |
+| **External data** | OpenStreetMap Overpass API, FEMA NFHL, USGS 3DEP |
+| **Storage** | Redis (project/result persistence) with in-memory fallback |
+| **Testing** | pytest (unit/integration/e2e markers, 1285+ tests) |
+| **Code quality** | Black, Flake8, mypy (enforced in CI), Bandit, pre-commit hooks |
 | **Infrastructure** | Docker multi-stage builds, Docker Compose, GitHub Actions CI/CD |
 
 ## Prerequisites
@@ -41,7 +43,7 @@ Entmoot is a full-stack geospatial platform that automates site layout generatio
 
 ### Local development
 
-- Python 3.10+
+- Python 3.12+
 - Node.js 18+
 - pip, npm
 - Git
@@ -104,7 +106,9 @@ Entmoot/
 │   │   └── middleware.py     #   logging context & request correlation
 │   ├── services/             # Business logic layer
 │   │   ├── project_service.py      # validation, result assembly, violation detection
-│   │   └── optimization_service.py # layout generation & genetic algorithm orchestration
+│   │   ├── optimization_service.py # layout generation & genetic algorithm orchestration
+│   │   ├── terrain_service.py      # DEM loading, reprojection, slope computation
+│   │   └── existing_conditions_service.py # OSM data fetch, buffer generation
 │   ├── core/                 # Domain modules
 │   │   ├── constraints/      #   setbacks, buffers, exclusion zones
 │   │   ├── crs/              #   CRS detection, normalization, UTM projection
@@ -113,7 +117,7 @@ Entmoot/
 │   │   ├── optimization/     #   genetic algorithm, collision detection, problem defs
 │   │   ├── parsers/          #   KML / KMZ parsers & validators
 │   │   ├── reports/          #   PDF report generation
-│   │   ├── roads/            #   road graph, A* pathfinding, network generation
+│   │   ├── roads/            #   navigation graph, A* pathfinding, MST road network
 │   │   ├── terrain/          #   DEM loading, slope, aspect, buildability
 │   │   ├── visualization/    #   2D / 3D map rendering
 │   │   ├── config.py         #   pydantic-settings configuration
@@ -121,6 +125,7 @@ Entmoot/
 │   │   └── cleanup.py        #   upload retention / cleanup service
 │   ├── integrations/         # External API clients
 │   │   ├── rate_limiter.py   #   shared token-bucket rate limiter
+│   │   ├── osm/              #   OpenStreetMap Overpass API (buildings, roads, utilities, water)
 │   │   ├── fema/             #   FEMA NFHL flood zone queries
 │   │   └── usgs/             #   USGS 3DEP elevation queries & DEM tiles
 │   ├── models/               # Pydantic data models
@@ -132,7 +137,7 @@ Entmoot/
 │       ├── hooks/            # useFileUpload
 │       ├── api/              # Axios API client (with API key interceptor)
 │       └── types/            # TypeScript type definitions
-├── tests/                    # pytest suite (57 test files)
+├── tests/                    # pytest suite (64 test files, 1285+ tests)
 │   ├── conftest.py           #   shared fixtures, auto-assigned markers
 │   ├── test_constraints/     test_crs/       test_earthwork/
 │   ├── test_export/          test_integrations/  test_optimization/
@@ -235,7 +240,7 @@ Interactive documentation is available at `/docs` (Swagger UI) and `/redoc`.
 
 Runs on every push/PR to `main` and `develop`:
 
-1. **Lint** — Black, Flake8, mypy (Python 3.10–3.12 matrix)
+1. **Lint** — Black, Flake8, mypy (Python 3.12)
 2. **Test** — pytest with PostgreSQL + Redis services, coverage upload
 3. **Security** — Bandit (SAST) and Safety (dependency audit)
 4. **Build** — Docker image builds for backend and frontend
@@ -252,7 +257,7 @@ Runs on every push/PR to `main` and `develop`:
 
 Multi-stage builds produce slim images:
 
-- **Backend** — Python 3.10-slim with GDAL runtime (~400 MB)
+- **Backend** — Python 3.12-slim with GDAL runtime (~400 MB)
 - **Frontend** — Nginx-served React build (~50 MB)
 
 Docker Compose services: `postgres` (PostGIS 15), `redis` (7-alpine), `backend`, `frontend`.
@@ -273,7 +278,7 @@ git push origin feature/story-X.Y-description
 
 ## Documentation
 
-- [Architecture](architecture.md) — system architecture diagram
+- [Architecture](ARCHITECTURE.md) — system architecture and design decisions
 - [Development Guide](docs/development.md) — detailed local setup
 - [Deployment Guide](docs/deployment.md) — production deployment
 - [Contributing](CONTRIBUTING.md) — contributor guidelines

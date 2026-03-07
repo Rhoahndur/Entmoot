@@ -7,12 +7,14 @@ including road topology, geometry, intersections, and cut/fill calculations.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString, Point as ShapelyPoint, Polygon as ShapelyPolygon
-from shapely.geometry import MultiLineString, box
+from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import Point as ShapelyPoint
+from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import box
 from shapely.ops import unary_union
 
 try:
@@ -282,14 +284,16 @@ class RoadNetwork:
         # Build complete graph of paths
         all_nodes = [self.entrance_node] + asset_node_ids
         path_graph = nx.Graph()
+        path_graph.add_nodes_from(all_nodes)
 
         # Find paths between all pairs
         for i, node1 in enumerate(all_nodes):
             for node2 in all_nodes[i + 1 :]:
                 path = self.pathfinder.find_path(node1, node2)
-                if path:
-                    # Add edge with path length as weight
-                    path_graph.add_edge(node1, node2, weight=path.total_length, path=path)
+                if path is None:
+                    continue
+                # Add edge with path length as weight
+                path_graph.add_edge(node1, node2, weight=path.total_length, path=path)
 
         # Check if graph is connected
         if not nx.is_connected(path_graph):
@@ -301,13 +305,12 @@ class RoadNetwork:
         # Create road segments from MST edges
         for edge in mst.edges(data=True):
             node1, node2, data = edge
-            path = data["path"]
+            edge_path = cast(Path, data["path"])  # always set; None paths skipped above
 
             # Classify road type based on proximity to entrance
             road_type = self._classify_road_type(node1, node2, asset_node_ids)
 
-            # Create segment
-            self._create_segment_from_path(path, road_type)
+            self._create_segment_from_path(edge_path, road_type)
 
         return True
 
@@ -529,7 +532,7 @@ class RoadNetwork:
         Returns:
             Dictionary with network statistics
         """
-        segments_by_type = {
+        segments_by_type: Dict[RoadType, list] = {
             RoadType.PRIMARY: [],
             RoadType.SECONDARY: [],
             RoadType.ACCESS: [],

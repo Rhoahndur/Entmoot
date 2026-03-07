@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString, Point as ShapelyPoint
+from shapely.geometry import LineString
+from shapely.geometry import Point as ShapelyPoint
 
 try:
     import networkx as nx
@@ -42,7 +43,7 @@ class GraphNode:
     slope_pct: float = 0.0
     is_asset: bool = False
     is_entrance: bool = False
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Initialize metadata if None."""
@@ -311,7 +312,7 @@ class NavigationGraph:
         if not self.graph.has_edge(node1_id, node2_id):
             raise ValueError(f"No edge between {node1_id} and {node2_id}")
 
-        return self.graph[node1_id][node2_id]["weight"]
+        return float(self.graph[node1_id][node2_id]["weight"])
 
     def _sample_elevation(self, position: Tuple[float, float]) -> float:
         """
@@ -407,7 +408,7 @@ class NavigationGraph:
         cut_fill_cost = cut_fill_volume * 0.01  # Scale factor
 
         # Combine costs with weights
-        total_cost = (
+        total_cost: float = (
             self.length_weight * length_cost
             + self.slope_weight * slope_cost
             + self.cut_fill_weight * cut_fill_cost

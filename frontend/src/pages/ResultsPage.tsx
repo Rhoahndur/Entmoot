@@ -177,9 +177,14 @@ export const ResultsPage: React.FC = () => {
   // Debounced violation check ref
   const violationCheckTimeoutRef = useRef<number | null>(null);
 
-  // Initialize violations on first load or alternative switch
+  // Initialize violations on first load or alternative switch.
+  // Use backend-computed violations when available; fall back to local check.
   useEffect(() => {
-    recalculateViolations();
+    if (currentAlternative?.violations !== undefined) {
+      setLocalViolations(currentAlternative.violations);
+    } else {
+      recalculateViolations();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAlternativeId]); // Only when alternative ID changes
 
@@ -222,8 +227,12 @@ export const ResultsPage: React.FC = () => {
     // Update assets with new position AND recalculate polygon
     const updatedAssets = currentAlternative.assets.map((asset) => {
       if (asset.id === assetId) {
-        const updatedAsset = { ...asset, position: newPosition };
-        // Recalculate polygon based on new position
+        // Clear backend polygon so recalculateAssetPolygon uses local math
+        const updatedAsset = {
+          ...asset,
+          position: newPosition,
+          polygon: [] as Coordinate[],
+        };
         updatedAsset.polygon = recalculateAssetPolygon(updatedAsset);
         return updatedAsset;
       }
@@ -307,7 +316,21 @@ export const ResultsPage: React.FC = () => {
         clearTimeout(violationCheckTimeoutRef.current);
       }
 
-      // Immediately recalculate violations
+      // Invalidate backend violations so the useEffect falls back to local check
+      if (results && currentAlternative && selectedAlternativeId) {
+        const updatedAlternative = {
+          ...currentAlternative,
+          violations: undefined as unknown as ConstraintViolation[],
+        };
+        setResults({
+          ...results,
+          alternatives: results.alternatives.map((alt) =>
+            alt.id === selectedAlternativeId ? updatedAlternative : alt,
+          ),
+        });
+      }
+
+      // Immediately recalculate violations with local checker
       recalculateViolations();
 
       // Reset unsaved changes flag after successful save
