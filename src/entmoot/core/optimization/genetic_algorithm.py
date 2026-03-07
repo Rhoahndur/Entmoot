@@ -539,9 +539,11 @@ class GeneticOptimizer:
         return mutated
 
     def _mutate_move(self, solution: PlacementSolution) -> PlacementSolution:
-        """Mutate by moving a random asset (with overlap avoidance)."""
+        """Mutate by moving a random asset (with overlap and boundary avoidance)."""
         if not solution.assets:
             return solution
+
+        buildable = self.constraints.get_buildable_area()
 
         # Select random asset to move
         asset_idx = random.randint(0, len(solution.assets) - 1)  # nosec B311
@@ -562,11 +564,13 @@ class GeneticOptimizer:
             new_x, new_y = x + dx, y + dy
             asset.set_position(new_x, new_y)
 
-            # Check if new position causes overlaps
+            # Check if new position is within buildable area
             asset_geom = asset.get_geometry()
-            has_overlap = False
+            if not buildable.contains(asset_geom):
+                continue
 
             # Check against all other assets
+            has_overlap = False
             for i, other_asset in enumerate(solution.assets):
                 if i == asset_idx:
                     continue
@@ -585,9 +589,11 @@ class GeneticOptimizer:
         return solution
 
     def _mutate_rotate(self, solution: PlacementSolution) -> PlacementSolution:
-        """Mutate by rotating a random asset (with overlap avoidance)."""
+        """Mutate by rotating a random asset (with overlap and boundary avoidance)."""
         if not solution.assets:
             return solution
+
+        buildable = self.constraints.get_buildable_area()
 
         # Select random asset to rotate
         asset_idx = random.randint(0, len(solution.assets) - 1)  # nosec B311
@@ -606,11 +612,13 @@ class GeneticOptimizer:
 
             asset.set_rotation(new_rotation)
 
-            # Check if new rotation causes overlaps
+            # Check if new rotation stays within buildable area
             asset_geom = asset.get_geometry()
-            has_overlap = False
+            if not buildable.contains(asset_geom):
+                continue
 
             # Check against all other assets
+            has_overlap = False
             for i, other_asset in enumerate(solution.assets):
                 if i == asset_idx:
                     continue

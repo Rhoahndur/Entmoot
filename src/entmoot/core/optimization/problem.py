@@ -108,6 +108,8 @@ class OptimizationConstraints:
     require_road_access: bool = True
     max_total_road_length_m: float = 1000.0
 
+    _cached_buildable_area: Optional[ShapelyPolygon] = field(default=None, init=False, repr=False)
+
     def __post_init__(self) -> None:
         """Validate constraints."""
         if not self.site_boundary.is_valid:
@@ -123,9 +125,15 @@ class OptimizationConstraints:
         """
         Get the effective buildable area after applying constraints.
 
+        Result is cached so repeated calls (e.g. from the fitness evaluator)
+        are essentially free.
+
         Returns:
             Shapely Polygon of buildable area
         """
+        if self._cached_buildable_area is not None:
+            return self._cached_buildable_area
+
         # Start with site boundary
         buildable = self.site_boundary
 
@@ -133,7 +141,8 @@ class OptimizationConstraints:
         if self.min_setback_m > 0:
             buildable = buildable.buffer(-self.min_setback_m)
             if buildable.is_empty:
-                return ShapelyPolygon()
+                self._cached_buildable_area = ShapelyPolygon()
+                return self._cached_buildable_area
 
         # Intersect with buildable zones if specified
         if self.buildable_zones:
@@ -150,7 +159,9 @@ class OptimizationConstraints:
             constraint_geom = constraint.get_geometry()
             buildable = buildable.difference(constraint_geom)
 
-        return buildable if isinstance(buildable, ShapelyPolygon) else ShapelyPolygon()
+        result = buildable if isinstance(buildable, ShapelyPolygon) else ShapelyPolygon()
+        self._cached_buildable_area = result
+        return result
 
     @staticmethod
     def _geom_area(geom) -> float:  # type: ignore[no-untyped-def]
@@ -498,13 +509,14 @@ class OptimizationObjective:
     def _count_constraint_violations(self, solution: PlacementSolution) -> int:
         """Count constraint violations in a solution."""
         violations = 0
+        buildable = self.constraints.get_buildable_area()
 
         # Check asset overlaps
         for i, asset1 in enumerate(solution.assets):
             geom1 = asset1.get_geometry()
 
-            # Check if asset is within site boundary
-            if not self.constraints.site_boundary.contains(geom1):
+            # Check if asset footprint is within buildable area (setback-inset boundary)
+            if not buildable.contains(geom1):
                 violations += 1
 
             # Check against other assets
