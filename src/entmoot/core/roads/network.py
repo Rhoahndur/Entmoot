@@ -7,7 +7,7 @@ including road topology, geometry, intersections, and cut/fill calculations.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -289,9 +289,10 @@ class RoadNetwork:
         for i, node1 in enumerate(all_nodes):
             for node2 in all_nodes[i + 1 :]:
                 path = self.pathfinder.find_path(node1, node2)
-                if path:
-                    # Add edge with path length as weight
-                    path_graph.add_edge(node1, node2, weight=path.total_length, path=path)
+                if path is None:
+                    continue
+                # Add edge with path length as weight
+                path_graph.add_edge(node1, node2, weight=path.total_length, path=path)
 
         # Check if graph is connected
         if not nx.is_connected(path_graph):
@@ -303,16 +304,12 @@ class RoadNetwork:
         # Create road segments from MST edges
         for edge in mst.edges(data=True):
             node1, node2, data = edge
-            path = data["path"]
+            edge_path = cast(Path, data["path"])  # always set; None paths skipped above
 
             # Classify road type based on proximity to entrance
             road_type = self._classify_road_type(node1, node2, asset_node_ids)
 
-            # Fail the whole network if any path is missing
-            if path is None:
-                return False
-
-            self._create_segment_from_path(path, road_type)
+            self._create_segment_from_path(edge_path, road_type)
 
         return True
 

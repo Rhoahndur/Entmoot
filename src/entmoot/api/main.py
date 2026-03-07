@@ -127,9 +127,9 @@ async def health_check() -> dict[str, Any]:
         try:
             store.client.ping()
             storage_info["redis_ping"] = "ok"
-            storage_info["project_count"] = len(store.get_all_projects())
-        except Exception as e:
-            storage_info["redis_ping"] = f"failed: {e}"
+            storage_info["project_count"] = store.get_project_count()
+        except Exception:
+            storage_info["redis_ping"] = "failed"
     elif store.use_fallback:
         storage_info["project_count"] = store.get_project_count()
 

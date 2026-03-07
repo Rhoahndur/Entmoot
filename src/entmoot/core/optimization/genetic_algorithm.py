@@ -284,6 +284,12 @@ class GeneticOptimizer:
                         f"The {setback_ft:.0f}ft setback consumes the entire "
                         f"{site_sqft:.0f} sq ft site. Try reducing the setback distance."
                     )
+                elif stage_name == "buildable_zones" and is_empty:
+                    hints.append(
+                        f"{param} buildable zone(s) do not intersect the site after "
+                        f"setback. Check that the designated buildable zones overlap "
+                        f"the property boundary."
+                    )
                 elif stage_name == "exclusion_zones" and is_empty:
                     hints.append(
                         f"{param} exclusion zone(s) (existing buildings, roads, "
@@ -296,6 +302,11 @@ class GeneticOptimizer:
                         f"Exclusion zones reduced buildable area to only "
                         f"{remaining_sqft:.0f} sq ft ({remaining_sqft / site_sqft * 100:.0f}% "
                         f"of site). Consider a larger or less developed site."
+                    )
+                elif stage_name == "regulatory" and is_empty:
+                    hints.append(
+                        f"{param} regulatory constraint(s) consume the remaining "
+                        f"buildable area. Review zoning or regulatory overlays."
                     )
             if not hints:
                 hints.append(

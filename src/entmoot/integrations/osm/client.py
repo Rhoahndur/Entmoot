@@ -115,8 +115,8 @@ class OSMClient:
         try:
             data = await self._make_request(query)
             result = self._parser.parse_response(data, bbox=bbox)
-        except Exception as e:
-            logger.warning(f"OSM query/parse failed, returning empty data: {e}")
+        except Exception:
+            logger.exception("OSM query/parse failed, returning empty data")
             return ExistingConditionsData(bbox=bbox)
 
         self._cache.put(cache_key, result)

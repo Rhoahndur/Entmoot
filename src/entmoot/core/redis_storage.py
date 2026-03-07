@@ -146,8 +146,17 @@ class RedisStorage:
             return []
 
     def get_project_count(self) -> int:
-        """Return the number of stored projects."""
-        return len(self.get_all_projects())
+        """Return the number of stored projects using SCAN (no deserialization)."""
+        if self.use_fallback or self.client is None:
+            return len(self._fallback_projects)
+        try:
+            count = 0
+            for _ in self.client.scan_iter("project:*"):
+                count += 1
+            return count
+        except Exception as e:
+            logger.error(f"Error counting projects: {e}")
+            return len(self._fallback_projects)
 
     def project_exists(self, project_id: str) -> bool:
         """

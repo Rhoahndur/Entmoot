@@ -164,6 +164,8 @@ class OptimizationConstraints:
 
         if self.min_setback_m > 0:
             buildable = buildable.buffer(-self.min_setback_m)
+            if not isinstance(buildable, ShapelyPolygon):
+                buildable = ShapelyPolygon()
             stages.append(("setback", self.min_setback_m, buildable.area, buildable.is_empty))
             if buildable.is_empty:
                 return {
@@ -175,6 +177,8 @@ class OptimizationConstraints:
         if self.buildable_zones:
             buildable_union = unary_union(self.buildable_zones)
             buildable = buildable.intersection(buildable_union)
+            if not isinstance(buildable, ShapelyPolygon):
+                buildable = ShapelyPolygon()
             stages.append(
                 ("buildable_zones", len(self.buildable_zones), buildable.area, buildable.is_empty)
             )
@@ -182,6 +186,8 @@ class OptimizationConstraints:
         if self.exclusion_zones:
             exclusion_union = unary_union(self.exclusion_zones)
             buildable = buildable.difference(exclusion_union)
+            if not isinstance(buildable, ShapelyPolygon):
+                buildable = ShapelyPolygon()
             stages.append(
                 ("exclusion_zones", len(self.exclusion_zones), buildable.area, buildable.is_empty)
             )
@@ -191,6 +197,8 @@ class OptimizationConstraints:
             buildable = buildable.difference(constraint_geom)
 
         if self.regulatory_constraints:
+            if not isinstance(buildable, ShapelyPolygon):
+                buildable = ShapelyPolygon()
             stages.append(
                 ("regulatory", len(self.regulatory_constraints), buildable.area, buildable.is_empty)
             )

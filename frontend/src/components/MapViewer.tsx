@@ -991,9 +991,10 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       document.removeEventListener("keydown", onGlobalKeyDown);
       document.removeEventListener("keyup", onGlobalKeyUp);
 
-      // Clean up all popups when unmounting or dependencies change
+      // Clean up all markers and popups when unmounting or dependencies change
       currentMarkers.forEach((markerData) => {
         markerData.popup.remove();
+        markerData.marker.remove();
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

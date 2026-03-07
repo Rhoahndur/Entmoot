@@ -2,7 +2,7 @@
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>Rural Demo Site</name>
-    <description>Rural parcel near Limon, CO — open rangeland with no structures</description>
+    <description>Rural parcel — open rangeland in Lincoln County, CO, no structures for miles</description>
     <Placemark>
       <name>Property Boundary</name>
       <description>~40 acre rural parcel</description>
@@ -10,11 +10,11 @@
         <outerBoundaryIs>
           <LinearRing>
             <coordinates>
-              -103.6920,39.2640,0
-              -103.6870,39.2640,0
-              -103.6870,39.2680,0
-              -103.6920,39.2680,0
-              -103.6920,39.2640,0
+              -103.4020,39.3500,0
+              -103.3970,39.3500,0
+              -103.3970,39.3540,0
+              -103.4020,39.3540,0
+              -103.4020,39.3500,0
             </coordinates>
           </LinearRing>
         </outerBoundaryIs>

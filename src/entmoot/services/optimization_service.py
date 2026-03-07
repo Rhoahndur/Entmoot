@@ -510,11 +510,14 @@ def run_optimization_sync(  # noqa: C901
     # ------------------------------------------------------------------
     logger.info("Setting up optimization objectives")
 
-    resolved_entrance = (
-        road_entry_override
-        if road_entry_override is not None
-        else (site_boundary.centroid.x, site_boundary.centroid.y)
-    )
+    if road_entry_override is not None:
+        resolved_entrance = road_entry_override
+    else:
+        # Use the nearest point on the boundary to the centroid (an entrance
+        # should be on the perimeter, not the interior centroid).
+        centroid = site_boundary.centroid
+        boundary_pt = site_boundary.exterior.interpolate(site_boundary.exterior.project(centroid))
+        resolved_entrance = (boundary_pt.x, boundary_pt.y)
 
     objective_weights = ObjectiveWeights(
         cut_fill_weight=config.optimization_weights.cost / 100.0,
@@ -670,7 +673,10 @@ def run_optimization_sync(  # noqa: C901
         )
         logger.info(f"Intelligent road network generated: {len(road_segments)} segments")
     except Exception as e:
-        logger.warning(f"Intelligent road network failed, falling back to straight lines: {e}")
+        logger.warning(
+            "Intelligent road network failed, falling back to straight lines",
+            exc_info=True,
+        )
         road_segments = _generate_straight_line_roads(
             entrance_pos=resolved_entrance,
             assets=result.best_solution.assets,
@@ -875,13 +881,6 @@ def _generate_road_network(
     from entmoot.core.roads import NavigationGraph, PathfinderConfig
     from entmoot.core.roads import RoadNetwork as CoreRoadNetwork
 
-    # Road width mapping: core RoadType → feet
-    ROAD_WIDTH_FT = {
-        "primary": 24.0,
-        "secondary": 18.0,
-        "access": 12.0,
-    }
-
     bounds = site_boundary.bounds  # (min_x, min_y, max_x, max_y)
     grid_spacing = 25.0  # metres
 
@@ -981,7 +980,7 @@ def _generate_road_network(
             points.append(Coordinate(latitude=lat, longitude=lon))
 
         # Convert metres → feet
-        width_ft = ROAD_WIDTH_FT.get(core_seg.road_type.value, config.road_design.min_width)
+        width_ft = core_seg.width_m * 3.28084
         length_ft = core_seg.length_m * 3.28084
 
         segment = RoadSegment(
