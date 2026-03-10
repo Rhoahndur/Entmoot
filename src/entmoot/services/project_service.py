@@ -313,8 +313,10 @@ class ProjectService:
             boundary_poly = ShapelyPolygon(
                 [(p["longitude"], p["latitude"]) for p in property_boundary_coords]
             )
-            # Approximate setback in degrees
-            setback_deg = setback_ft * LNG_PER_FOOT
+            # Approximate setback in degrees with latitude correction
+            center_lat = boundary_poly.centroid.y
+            cos_lat = math.cos(math.radians(center_lat))
+            setback_deg = setback_ft * LAT_PER_FOOT / (cos_lat or 1)
             setback_zone = boundary_poly.difference(boundary_poly.buffer(-setback_deg))
             if setback_zone.is_empty:
                 return []
@@ -352,7 +354,9 @@ class ProjectService:
             boundary_poly = ShapelyPolygon(
                 [(p["longitude"], p["latitude"]) for p in property_boundary_coords]
             )
-            setback_deg = setback_ft * LNG_PER_FOOT
+            center_lat = boundary_poly.centroid.y
+            cos_lat = math.cos(math.radians(center_lat))
+            setback_deg = setback_ft * LAT_PER_FOOT / (cos_lat or 1)
             buildable = boundary_poly.buffer(-setback_deg)
             if buildable.is_empty:
                 return []
@@ -377,8 +381,19 @@ class ProjectService:
 
     @staticmethod
     def _asset_polygon(asset: Any) -> ShapelyPolygon:
-        """Build a Shapely polygon for an asset's rotated footprint."""
-        half_width = (asset.width / 2) * LNG_PER_FOOT
+        """Build a Shapely polygon for an asset's footprint.
+
+        Uses backend-computed polygon (accurate UTM→WGS84) when available;
+        falls back to local approximation with cos(lat) correction.
+        """
+        # Prefer backend-computed polygon
+        if hasattr(asset, "polygon") and asset.polygon and len(asset.polygon) >= 3:
+            return ShapelyPolygon([(c.longitude, c.latitude) for c in asset.polygon])
+
+        # Fallback: local approximation with latitude correction
+        cos_lat = math.cos(math.radians(asset.position.latitude))
+        lng_per_foot = LAT_PER_FOOT / (cos_lat or 1)
+        half_width = (asset.width / 2) * lng_per_foot
         half_length = (asset.length / 2) * LAT_PER_FOOT
 
         rot_rad = math.radians(asset.rotation)
