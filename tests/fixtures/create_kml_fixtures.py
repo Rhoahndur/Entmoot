@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 def main():
+    """Create KML and KMZ fixture files for testing."""
     fixtures_dir = Path(__file__).parent
 
     # Read the simple.kml content to embed in the KMZ

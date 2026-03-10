@@ -18,19 +18,19 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.figure import Figure
-from matplotlib.axes import Axes
-from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
 from shapely.geometry import (
-    Point,
-    LineString,
-    Polygon,
-    MultiPolygon,
-    MultiLineString,
     GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Point,
+    Polygon,
 )
 from shapely.geometry.base import BaseGeometry
 
@@ -698,6 +698,8 @@ class Map2DRenderer:
             output_path = output_path.with_suffix(f".{format.value}")
 
         # Export
+        if self._figure is None:
+            raise RuntimeError("render() must be called before export")
         self._figure.savefig(
             output_path,
             format=format.value,
@@ -722,6 +724,8 @@ class Map2DRenderer:
         if self._figure is None:
             self.render()
 
+        if self._figure is None:
+            raise RuntimeError("render() must be called before export")
         buffer = io.BytesIO()
         self._figure.savefig(
             buffer,

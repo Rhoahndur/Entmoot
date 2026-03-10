@@ -19,6 +19,7 @@ import {
   checkProjectStatus,
   reoptimizeLayout,
   saveLayout,
+  validatePlacement,
 } from "../api/client";
 import type {
   OptimizationResults,
@@ -250,12 +251,31 @@ export const ResultsPage: React.FC = () => {
       timestamp: Date.now(),
     });
 
-    // Debounce violation check - wait 300ms after last change
+    // Debounce server-side validation - wait 300ms after last change
     if (violationCheckTimeoutRef.current) {
       clearTimeout(violationCheckTimeoutRef.current);
     }
-    violationCheckTimeoutRef.current = setTimeout(() => {
-      recalculateViolations();
+    violationCheckTimeoutRef.current = setTimeout(async () => {
+      if (!projectId) {
+        recalculateViolations();
+        return;
+      }
+      try {
+        const result = await validatePlacement(projectId, {
+          asset_id: assetId,
+          position: {
+            lat: newPosition.latitude,
+            lng: newPosition.longitude,
+          },
+          rotation: asset.rotation,
+          width: asset.width,
+          length: asset.length,
+        });
+        setLocalViolations(result.violations);
+      } catch {
+        // Fallback to local constraint checker on error
+        recalculateViolations();
+      }
     }, 300);
   };
 

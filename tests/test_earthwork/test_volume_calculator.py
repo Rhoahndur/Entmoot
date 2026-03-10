@@ -4,19 +4,16 @@ Tests for volume calculator.
 Tests cut/fill calculations, cost estimation, and accuracy validation.
 """
 
-import pytest
-import numpy as np
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
-from entmoot.core.earthwork.volume_calculator import VolumeCalculator, PIL_AVAILABLE
-from entmoot.models.terrain import DEMMetadata, ElevationUnit
-from entmoot.models.earthwork import (
-    SoilProperties,
-    SoilType,
-    CostDatabase,
-)
+import numpy as np
+import pytest
 from pyproj import CRS
+
+from entmoot.core.earthwork.volume_calculator import PIL_AVAILABLE, VolumeCalculator
+from entmoot.models.earthwork import CostDatabase, SoilProperties, SoilType
+from entmoot.models.terrain import DEMMetadata, ElevationUnit
 
 
 @pytest.fixture

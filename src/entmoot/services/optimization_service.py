@@ -301,7 +301,10 @@ def run_optimization_sync(  # noqa: C901
     # Step 2c: Load DEM if provided
     # ------------------------------------------------------------------
     terrain_data = None
-    target_crs_epsg = None
+    # Capture UTM EPSG from the CRS transformation (if it happened)
+    target_crs_epsg: Optional[int] = None
+    if "target_crs" in dir() and hasattr(target_crs, "epsg"):
+        target_crs_epsg = target_crs.epsg
 
     if hasattr(config, "dem_upload_id") and config.dem_upload_id:
         try:
@@ -457,12 +460,38 @@ def run_optimization_sync(  # noqa: C901
     _update_progress(project_id, 20)
 
     # ------------------------------------------------------------------
+    # Step 3b: Buildability analysis (slope-aware buildable zones)
+    # ------------------------------------------------------------------
+    buildable_zone_geoms: list = []
+    if terrain_data is not None:
+        try:
+            from entmoot.core.terrain.buildability import analyze_buildability
+
+            buildability_result = analyze_buildability(
+                slope_percent=terrain_data.slope_percent,
+                elevation=terrain_data.elevation,
+                cell_size=terrain_data.cell_size,
+                transform=terrain_data.transform,
+            )
+            buildable_zone_geoms = [
+                z.geometry
+                for z in buildability_result.zones
+                if z.geometry is not None and not z.geometry.is_empty
+            ]
+            logger.info(
+                f"Buildability analysis: {len(buildable_zone_geoms)} buildable zones, "
+                f"{buildability_result.buildable_percentage:.1f}% buildable"
+            )
+        except Exception as e:
+            logger.warning(f"Buildability analysis failed, continuing without: {e}")
+
+    # ------------------------------------------------------------------
     # Step 4: Set up constraints
     # ------------------------------------------------------------------
     logger.info("Setting up optimization constraints")
     constraints = OptimizationConstraints(
         site_boundary=site_boundary,
-        buildable_zones=[],
+        buildable_zones=buildable_zone_geoms,
         exclusion_zones=list(existing_conditions_zones),
         regulatory_constraints=[],
         min_setback_m=config.constraints.setback_distance * 0.3048,
@@ -745,6 +774,25 @@ def run_optimization_sync(  # noqa: C901
         fitness_score=result.best_solution.fitness / 100.0,
         alternatives=[],
     )
+
+    # ------------------------------------------------------------------
+    # Step 13: Store UTM reference data for accurate violation detection
+    # ------------------------------------------------------------------
+    if target_crs_epsg is not None:
+        try:
+            utm_data = {
+                "crs_epsg": target_crs_epsg,
+                "site_boundary_wkt": site_boundary.wkt,
+                "buildable_area_wkt": constraints.get_buildable_area().wkt,
+                "exclusion_zones_wkt": [z.wkt for z in constraints.exclusion_zones],
+            }
+            project = storage.get_project(project_id)
+            if project:
+                project["utm_data"] = utm_data
+                storage.set_project(project_id, project)
+                logger.info(f"Stored UTM reference data (EPSG:{target_crs_epsg})")
+        except Exception as e:
+            logger.warning(f"Failed to store UTM data: {e}")
 
     logger.info(
         f"Optimization complete: {len(placed_assets)} assets placed, "

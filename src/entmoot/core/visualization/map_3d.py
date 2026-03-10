@@ -23,13 +23,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.interpolate import griddata
-from shapely.geometry import (
-    Point,
-    LineString,
-    Polygon,
-    MultiPolygon,
-    MultiLineString,
-)
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
 from shapely.geometry.base import BaseGeometry
 
 logger = logging.getLogger(__name__)
@@ -363,6 +357,8 @@ class Map3DRenderer:
 
         # Find nearest grid point
         try:
+            if self.terrain_x is None or self.terrain_y is None:
+                return 0.0
             x_idx = np.argmin(np.abs(self.terrain_x[0, :] - point.x))
             y_idx = np.argmin(np.abs(self.terrain_y[:, 0] - point.y))
             return float(self.terrain_data[y_idx, x_idx])
@@ -506,7 +502,9 @@ class Map3DRenderer:
         # Handle MultiLineString
         lines = [geometry] if isinstance(geometry, LineString) else geometry.geoms
 
-        all_x, all_y, all_z = [], [], []
+        all_x: list[float | None] = []
+        all_y: list[float | None] = []
+        all_z: list[float | None] = []
 
         for line in lines:
             coords = list(line.coords)
@@ -673,6 +671,8 @@ class Map3DRenderer:
             output_path = output_path.with_suffix(f".{format.value}")
 
         # Export
+        if self._figure is None:
+            raise RuntimeError("render() must be called before export")
         if format == OutputFormat3D.HTML:
             self._figure.write_html(
                 str(output_path),
@@ -704,9 +704,13 @@ class Map3DRenderer:
         if self._figure is None:
             self.render()
 
-        return self._figure.to_html(
-            include_plotlyjs="cdn",
-            full_html=True,
+        if self._figure is None:
+            raise RuntimeError("render() must be called before export")
+        return str(
+            self._figure.to_html(
+                include_plotlyjs="cdn",
+                full_html=True,
+            )
         )
 
     def show(self) -> None:
@@ -714,4 +718,6 @@ class Map3DRenderer:
         if self._figure is None:
             self.render()
 
+        if self._figure is None:
+            raise RuntimeError("render() must be called before show")
         self._figure.show()

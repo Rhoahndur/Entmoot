@@ -1,6 +1,4 @@
-"""
-Tests for logging utilities and configuration.
-"""
+"""Tests for logging utilities and configuration."""
 
 import asyncio
 import json

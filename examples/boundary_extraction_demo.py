@@ -16,7 +16,7 @@ from entmoot.core.parsers.kml_parser import parse_kml_file
 from entmoot.models.boundary import BoundarySource
 
 
-def main():
+def main() -> None:
     """Run boundary extraction demo."""
     print("=" * 70)
     print("Property Boundary Extraction Demo")

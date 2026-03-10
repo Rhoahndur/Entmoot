@@ -137,7 +137,7 @@ class RedisCache(CacheBackend):
         self._misses = 0
 
         try:
-            import redis
+            import redis  # type: ignore[import-untyped]
 
             self.redis = redis.from_url(redis_url, decode_responses=False)
             # Test connection

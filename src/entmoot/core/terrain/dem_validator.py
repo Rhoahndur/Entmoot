@@ -6,14 +6,11 @@ resolution consistency, bounds validation, and CRS checks.
 """
 
 import logging
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
 import numpy as np
 
-from entmoot.models.terrain import (
-    DEMData,
-    DEMMetadata,
-    DEMValidationResult,
-)
+from entmoot.models.terrain import DEMData, DEMMetadata, DEMValidationResult
 
 logger = logging.getLogger(__name__)
 

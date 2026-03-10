@@ -2,7 +2,7 @@
  * TypeScript types for results and layout data
  */
 
-import { AssetType } from './config';
+import { AssetType } from "./config";
 
 // Coordinate types
 export interface Coordinate {
@@ -41,7 +41,7 @@ export interface RoadSegment {
   points: Coordinate[];
   width: number;
   grade: number; // percentage
-  surface_type: 'paved' | 'gravel' | 'dirt';
+  surface_type: "paved" | "gravel" | "dirt";
   length: number; // feet
 }
 
@@ -53,25 +53,26 @@ export interface RoadNetwork {
 
 // Constraint types
 export const ConstraintType = {
-  SETBACK: 'setback',
-  WETLAND: 'wetland',
-  SLOPE: 'slope',
-  EASEMENT: 'easement',
-  EXCLUSION: 'exclusion',
-  PROPERTY_LINE: 'property_line',
-  EXISTING_BUILDING: 'existing_building',
-  EXISTING_ROAD: 'existing_road',
-  EXISTING_UTILITY: 'existing_utility',
-  EXISTING_WATER: 'existing_water',
+  SETBACK: "setback",
+  WETLAND: "wetland",
+  SLOPE: "slope",
+  EASEMENT: "easement",
+  EXCLUSION: "exclusion",
+  PROPERTY_LINE: "property_line",
+  EXISTING_BUILDING: "existing_building",
+  EXISTING_ROAD: "existing_road",
+  EXISTING_UTILITY: "existing_utility",
+  EXISTING_WATER: "existing_water",
 } as const;
 
-export type ConstraintType = typeof ConstraintType[keyof typeof ConstraintType];
+export type ConstraintType =
+  (typeof ConstraintType)[keyof typeof ConstraintType];
 
 export interface ConstraintZone {
   id: string;
   type: ConstraintType;
   polygon: Coordinate[];
-  severity: 'low' | 'medium' | 'high'; // for visualization
+  severity: "low" | "medium" | "high"; // for visualization
   description?: string;
 }
 
@@ -125,7 +126,7 @@ export interface LayoutMetrics {
 export interface ConstraintViolation {
   asset_id: string;
   constraint_type: ConstraintType;
-  severity: 'warning' | 'error';
+  severity: "warning" | "error";
   message: string;
   location?: Coordinate;
 }
@@ -147,18 +148,18 @@ export interface LayoutAlternative {
 
 // Map layer types
 export const LayerType = {
-  BASE_MAP: 'base_map',
-  TERRAIN: 'terrain',
-  PROPERTY_BOUNDARY: 'property_boundary',
-  ASSETS: 'assets',
-  ROADS: 'roads',
-  CONSTRAINTS: 'constraints',
-  BUILDABLE_AREAS: 'buildable_areas',
-  EARTHWORK: 'earthwork',
-  EXISTING_CONDITIONS: 'existing_conditions',
+  BASE_MAP: "base_map",
+  TERRAIN: "terrain",
+  PROPERTY_BOUNDARY: "property_boundary",
+  ASSETS: "assets",
+  ROADS: "roads",
+  CONSTRAINTS: "constraints",
+  BUILDABLE_AREAS: "buildable_areas",
+  EARTHWORK: "earthwork",
+  EXISTING_CONDITIONS: "existing_conditions",
 } as const;
 
-export type LayerType = typeof LayerType[keyof typeof LayerType];
+export type LayerType = (typeof LayerType)[keyof typeof LayerType];
 
 export interface LayerVisibility {
   [LayerType.BASE_MAP]: boolean;
@@ -186,13 +187,14 @@ export interface OptimizationResults {
 
 // Edit operation types for undo/redo
 export const EditOperationType = {
-  MOVE_ASSET: 'move_asset',
-  ROTATE_ASSET: 'rotate_asset',
-  DELETE_ASSET: 'delete_asset',
-  ADD_ASSET: 'add_asset',
+  MOVE_ASSET: "move_asset",
+  ROTATE_ASSET: "rotate_asset",
+  DELETE_ASSET: "delete_asset",
+  ADD_ASSET: "add_asset",
 } as const;
 
-export type EditOperationType = typeof EditOperationType[keyof typeof EditOperationType];
+export type EditOperationType =
+  (typeof EditOperationType)[keyof typeof EditOperationType];
 
 export interface EditOperation {
   type: EditOperationType;
@@ -204,20 +206,20 @@ export interface EditOperation {
 
 // Export format types
 export const ExportFormat = {
-  PDF: 'pdf',
-  KMZ: 'kmz',
-  GEOJSON: 'geojson',
-  DXF: 'dxf',
-  PNG: 'png',
+  PDF: "pdf",
+  KMZ: "kmz",
+  GEOJSON: "geojson",
+  DXF: "dxf",
+  PNG: "png",
 } as const;
 
-export type ExportFormat = typeof ExportFormat[keyof typeof ExportFormat];
+export type ExportFormat = (typeof ExportFormat)[keyof typeof ExportFormat];
 
 export interface ExportOptions {
   format: ExportFormat;
   includeMetrics?: boolean;
   includeConstraints?: boolean;
   includeEarthwork?: boolean;
-  pageSize?: 'letter' | 'legal' | 'tabloid' | 'a4' | 'a3';
-  orientation?: 'portrait' | 'landscape';
+  pageSize?: "letter" | "legal" | "tabloid" | "a4" | "a3";
+  orientation?: "portrait" | "landscape";
 }

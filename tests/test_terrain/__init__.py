@@ -1,3 +1,1 @@
-"""
-Test suite for terrain analysis module.
-"""
+"""Test suite for terrain analysis module."""

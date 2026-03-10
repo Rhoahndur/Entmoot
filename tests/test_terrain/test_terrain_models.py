@@ -1,9 +1,7 @@
-"""
-Tests for terrain data models.
-"""
+"""Tests for terrain data models."""
 
-import pytest
 import numpy as np
+import pytest
 from pyproj import CRS
 
 from entmoot.models.terrain import (

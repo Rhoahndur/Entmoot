@@ -3,23 +3,23 @@
  */
 
 export const FileType = {
-  KMZ: 'kmz',
-  KML: 'kml',
-  GEOJSON: 'geojson',
-  GEOTIFF: 'tif',
-  TIFF: 'tiff',
+  KMZ: "kmz",
+  KML: "kml",
+  GEOJSON: "geojson",
+  GEOTIFF: "tif",
+  TIFF: "tiff",
 } as const;
 
-export type FileType = typeof FileType[keyof typeof FileType];
+export type FileType = (typeof FileType)[keyof typeof FileType];
 
 export const UploadStatus = {
-  PENDING: 'pending',
-  PROCESSING: 'processing',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
+  PENDING: "pending",
+  PROCESSING: "processing",
+  COMPLETED: "completed",
+  FAILED: "failed",
 } as const;
 
-export type UploadStatus = typeof UploadStatus[keyof typeof UploadStatus];
+export type UploadStatus = (typeof UploadStatus)[keyof typeof UploadStatus];
 
 export interface UploadResponse {
   upload_id: string;
@@ -46,7 +46,7 @@ export interface UploadMetadata {
 }
 
 export interface HealthResponse {
-  status: 'healthy' | 'unhealthy';
+  status: "healthy" | "unhealthy";
   service?: string;
   max_upload_size_mb?: number;
   allowed_extensions?: string[];

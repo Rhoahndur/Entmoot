@@ -2,10 +2,10 @@
  * Custom hook for file upload functionality
  */
 
-import { useState, useCallback } from 'react';
-import { uploadFileWithProgress, ApiError } from '../api/client';
-import type { UploadResponse } from '../types/api';
-import { validateFile } from '../utils/validators';
+import { useState, useCallback } from "react";
+import { uploadFileWithProgress, ApiError } from "../api/client";
+import type { UploadResponse } from "../types/api";
+import { validateFile } from "../utils/validators";
 
 export interface UploadState {
   uploading: boolean;
@@ -76,7 +76,7 @@ export const useFileUpload = () => {
 
       return response;
     } catch (error) {
-      let errorMessage = 'Failed to upload file';
+      let errorMessage = "Failed to upload file";
 
       if (error instanceof ApiError) {
         errorMessage = error.message;

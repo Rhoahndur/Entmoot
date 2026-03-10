@@ -1,3 +1,1 @@
-"""
-API module for FastAPI endpoints.
-"""
+"""API module for FastAPI endpoints."""

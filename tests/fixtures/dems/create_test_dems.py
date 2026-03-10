@@ -4,13 +4,14 @@ Utility script to create test DEM fixtures.
 This script creates synthetic DEMs for testing purposes.
 """
 
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 try:
     import rasterio
-    from rasterio.transform import from_bounds
     from rasterio.crs import CRS
+    from rasterio.transform import from_bounds
 
     RASTERIO_AVAILABLE = True
 except ImportError:

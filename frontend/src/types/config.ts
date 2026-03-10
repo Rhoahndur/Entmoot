@@ -3,14 +3,14 @@
  */
 
 export const AssetType = {
-  BUILDINGS: 'buildings',
-  YARDS: 'yards',
-  PARKING: 'parking',
-  GREEN_SPACE: 'green_space',
-  INFRASTRUCTURE: 'infrastructure',
+  BUILDINGS: "buildings",
+  YARDS: "yards",
+  PARKING: "parking",
+  GREEN_SPACE: "green_space",
+  INFRASTRUCTURE: "infrastructure",
 } as const;
 
-export type AssetType = typeof AssetType[keyof typeof AssetType];
+export type AssetType = (typeof AssetType)[keyof typeof AssetType];
 
 export interface AssetConfig {
   type: AssetType;
@@ -35,7 +35,7 @@ export interface RoadConfig {
   min_width: number;
   max_grade: number;
   turning_radius: number;
-  surface_type: 'paved' | 'gravel' | 'dirt';
+  surface_type: "paved" | "gravel" | "dirt";
   include_sidewalks: boolean;
 }
 
@@ -63,5 +63,5 @@ export interface ConfigPreset {
   id: string;
   name: string;
   description: string;
-  config: Omit<ProjectConfig, 'project_name' | 'upload_id'>;
+  config: Omit<ProjectConfig, "project_name" | "upload_id">;
 }

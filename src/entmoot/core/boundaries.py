@@ -564,7 +564,7 @@ class BoundaryExtractionService:
         meters_per_deg = (meters_per_deg_lon + meters_per_deg_lat) / 2
         area_sqm = area_deg2 * (meters_per_deg**2)
 
-        return area_sqm
+        return float(area_sqm)
 
     def _calculate_perimeter_m(self, geometry: Polygon) -> float:
         """
@@ -689,7 +689,7 @@ def extract_boundaries_from_kml(
     min_area_sqm: float = 1.0,
 ) -> BoundaryExtractionResult:
     """
-    Convenience function to extract boundaries from parsed KML.
+    Extract boundaries from parsed KML.
 
     Args:
         parsed_kml: Parsed KML data

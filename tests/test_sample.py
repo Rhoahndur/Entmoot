@@ -1,6 +1,4 @@
-"""
-Sample tests to verify the test framework is working correctly.
-"""
+"""Sample tests to verify the test framework is working correctly."""
 
 import pytest
 

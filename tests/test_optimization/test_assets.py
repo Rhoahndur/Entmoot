@@ -1,6 +1,4 @@
-"""
-Tests for asset models.
-"""
+"""Tests for asset models."""
 
 import pytest
 from shapely.geometry import Point as ShapelyPoint
@@ -11,8 +9,8 @@ from entmoot.models.assets import (
     BuildingAsset,
     EquipmentYardAsset,
     ParkingLotAsset,
-    StorageTankAsset,
     RotationAngle,
+    StorageTankAsset,
     create_asset_from_dict,
 )
 

@@ -63,7 +63,7 @@ class EntmootException(Exception):
         }
 
     def __str__(self) -> str:
-        """String representation of the exception."""
+        """Return string representation of the exception."""
         return f"{self.error_code}: {self.message}"
 
     def __repr__(self) -> str:

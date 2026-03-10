@@ -2,8 +2,8 @@
  * File Dropzone component with drag-and-drop support
  */
 
-import React, { useCallback, useState } from 'react';
-import { formatFileSize, getFileIcon, validateFile } from '../utils/validators';
+import React, { useCallback, useState } from "react";
+import { formatFileSize, getFileIcon, validateFile } from "../utils/validators";
 
 interface FileDropzoneProps {
   onFileSelect: (file: File) => void;
@@ -16,9 +16,9 @@ interface FileDropzoneProps {
 export const FileDropzone: React.FC<FileDropzoneProps> = ({
   onFileSelect,
   disabled = false,
-  accept = '.kmz,.kml,.geojson,.tif,.tiff',
-  label = 'Supported formats: KMZ, KML, GeoJSON, GeoTIFF (max 50MB)',
-  inputId = 'file-input',
+  accept = ".kmz,.kml,.geojson,.tif,.tiff",
+  label = "Supported formats: KMZ, KML, GeoJSON, GeoTIFF (max 50MB)",
+  inputId = "file-input",
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
         setIsDragging(true);
       }
     },
-    [disabled]
+    [disabled],
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -47,23 +47,23 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
   const checkAcceptedExtension = useCallback(
     (file: File): string | null => {
-      const tokens = accept.split(',').map((t) => t.trim().toLowerCase());
+      const tokens = accept.split(",").map((t) => t.trim().toLowerCase());
       const fileName = file.name.toLowerCase();
-      const fileType = file.type?.toLowerCase() || '';
+      const fileType = file.type?.toLowerCase() || "";
 
       const matches = tokens.some((token) => {
-        if (token.startsWith('.')) {
+        if (token.startsWith(".")) {
           // Extension token: ".tif", ".kmz", etc.
           return fileName.endsWith(token);
         }
-        if (token.includes('/')) {
+        if (token.includes("/")) {
           if (!fileType) {
             // Browser couldn't determine MIME — fall back to extension-based tokens only
             return false;
           }
-          if (token.endsWith('/*')) {
+          if (token.endsWith("/*")) {
             // Wildcard MIME: "image/*" matches "image/tiff", "image/png", etc.
-            return fileType.split('/')[0] === token.split('/')[0];
+            return fileType.split("/")[0] === token.split("/")[0];
           }
           // Exact MIME: "image/tiff" === "image/tiff"
           return fileType === token;
@@ -72,11 +72,11 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       });
 
       if (!matches) {
-        return `File type not accepted. Allowed: ${tokens.join(', ')}`;
+        return `File type not accepted. Allowed: ${tokens.join(", ")}`;
       }
       return null;
     },
-    [accept]
+    [accept],
   );
 
   const handleDrop = useCallback(
@@ -107,7 +107,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       setValidationError(null);
       onFileSelect(file);
     },
-    [disabled, onFileSelect, checkAcceptedExtension]
+    [disabled, onFileSelect, checkAcceptedExtension],
   );
 
   const handleFileInput = useCallback(
@@ -119,23 +119,23 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
       const acceptError = checkAcceptedExtension(file);
       if (acceptError) {
-        e.target.value = '';
+        e.target.value = "";
         setValidationError(acceptError);
         return;
       }
 
       const error = validateFile(file);
       if (error) {
-        e.target.value = '';
+        e.target.value = "";
         setValidationError(error);
         return;
       }
 
       setValidationError(null);
       onFileSelect(file);
-      e.target.value = '';
+      e.target.value = "";
     },
-    [onFileSelect, checkAcceptedExtension]
+    [onFileSelect, checkAcceptedExtension],
   );
 
   return (
@@ -143,8 +143,8 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       <div
         className={`
           relative border-2 border-dashed rounded-lg p-12 text-center transition-colors
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:bg-blue-50'}
+          ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"}
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-blue-400 hover:bg-blue-50"}
         `}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -177,7 +177,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
           </svg>
 
           <p className="text-lg font-medium text-gray-700 mb-2">
-            {isDragging ? 'Drop file here' : 'Drag and drop file here'}
+            {isDragging ? "Drop file here" : "Drag and drop file here"}
           </p>
 
           <p className="text-sm text-gray-500 mb-4">or</p>
@@ -194,9 +194,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
             Browse Files
           </button>
 
-          <p className="text-xs text-gray-400 mt-4">
-            {label}
-          </p>
+          <p className="text-xs text-gray-400 mt-4">{label}</p>
         </div>
       </div>
 
@@ -250,7 +248,10 @@ interface UploadProgressProps {
   filename: string;
 }
 
-export const UploadProgress: React.FC<UploadProgressProps> = ({ progress, filename }) => {
+export const UploadProgress: React.FC<UploadProgressProps> = ({
+  progress,
+  filename,
+}) => {
   return (
     <div className="mt-4 p-6 bg-blue-50 border-2 border-blue-400 rounded-lg shadow-lg">
       <div className="flex items-start space-x-4">
@@ -275,7 +276,9 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({ progress, filena
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-blue-800">{progress}%</span>
+            <span className="text-sm font-medium text-blue-800">
+              {progress}%
+            </span>
             <span className="text-xs text-blue-600">Please wait...</span>
           </div>
         </div>

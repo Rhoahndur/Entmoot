@@ -72,7 +72,7 @@ def retry(
     on_retry: Optional[Callable[[Exception, int], None]] = None,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
-    Decorator for retrying synchronous functions with exponential backoff.
+    Retry synchronous functions with exponential backoff.
 
     Args:
         max_attempts: Maximum number of attempts (including initial)
@@ -163,7 +163,7 @@ def async_retry(
     on_retry: Optional[Callable[[Exception, int], None]] = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
-    Decorator for retrying async functions with exponential backoff.
+    Retry async functions with exponential backoff.
 
     Args:
         max_attempts: Maximum number of attempts (including initial)

@@ -7,21 +7,22 @@ for comparison with post-grading design.
 
 import logging
 from pathlib import Path
-from typing import Optional, Tuple, Union, Any
+from typing import Any, Optional, Tuple, Union
+
 import numpy as np
 from numpy.typing import NDArray
 
 try:
     import rasterio
-    from rasterio.transform import Affine
     from rasterio.features import rasterize
+    from rasterio.transform import Affine
 
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
 
-from entmoot.models.terrain import DEMData, DEMMetadata
 from entmoot.core.errors import ValidationError
+from entmoot.models.terrain import DEMData, DEMMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +107,7 @@ class PreGradingModel:
 
         except Exception as e:
             logger.warning(f"Failed to calculate 3D surface area: {e}. Using planar area.")
-            return planar_area
+            return float(planar_area)
 
     def get_elevation_at_point(self, x: float, y: float) -> Optional[float]:
         """

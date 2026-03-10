@@ -10,6 +10,7 @@ This module provides comprehensive CRS handling including:
 
 from entmoot.core.crs.detector import (
     CRSDetectionError,
+    crs_to_info,
     detect_crs_from_file,
     detect_crs_from_geojson,
     detect_crs_from_geotiff,
@@ -17,12 +18,11 @@ from entmoot.core.crs.detector import (
     detect_crs_from_ogr,
     detect_crs_from_prj,
     parse_crs_string,
-    crs_to_info,
 )
 from entmoot.core.crs.normalizer import (
     CRSNormalizer,
-    NormalizedData,
     NormalizationError,
+    NormalizedData,
     normalize_to_utm,
     normalize_to_wgs84,
 )

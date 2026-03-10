@@ -9,13 +9,13 @@ import numpy as np
 from rasterio.transform import from_bounds
 
 from entmoot.core.terrain.buildability import (
-    analyze_buildability,
-    BuildabilityThresholds,
     BuildabilityClass,
+    BuildabilityThresholds,
+    analyze_buildability,
 )
 
 
-def demo_basic_buildability():
+def demo_basic_buildability() -> None:
     """Demonstrate basic buildability analysis."""
     print("=" * 70)
     print("DEMO 1: Basic Buildability Analysis")
@@ -30,22 +30,26 @@ def demo_basic_buildability():
     result = analyze_buildability(slope, elevation, cell_size=1.0)
 
     print(f"\nTotal area: {size * size} sq m")
-    print(f"Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
-          f"({result.total_buildable_area_acres:.2f} acres)")
+    print(
+        f"Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
+        f"({result.total_buildable_area_acres:.2f} acres)"
+    )
     print(f"Buildable percentage: {result.buildable_percentage:.1f}%")
     print(f"Number of buildable zones: {result.num_zones}")
     print(f"Overall quality score: {result.overall_quality_score:.1f}/100")
 
     if result.largest_zone:
         print(f"\nLargest zone:")
-        print(f"  - Area: {result.largest_zone.area_sqm:.1f} sq m "
-              f"({result.largest_zone.area_acres:.2f} acres)")
+        print(
+            f"  - Area: {result.largest_zone.area_sqm:.1f} sq m "
+            f"({result.largest_zone.area_acres:.2f} acres)"
+        )
         print(f"  - Mean slope: {result.largest_zone.mean_slope:.1f}%")
         print(f"  - Buildability: {result.largest_zone.buildability_class.value}")
         print(f"  - Quality score: {result.largest_zone.quality_score:.1f}/100")
 
 
-def demo_custom_thresholds():
+def demo_custom_thresholds() -> None:
     """Demonstrate analysis with custom buildability thresholds."""
     print("\n" + "=" * 70)
     print("DEMO 2: Custom Thresholds")
@@ -67,9 +71,7 @@ def demo_custom_thresholds():
         min_zone_area_sqm=500.0,
     )
 
-    result = analyze_buildability(
-        slope, elevation, cell_size=1.0, thresholds=strict_thresholds
-    )
+    result = analyze_buildability(slope, elevation, cell_size=1.0, thresholds=strict_thresholds)
 
     print(f"\nWith strict thresholds:")
     print(f"  excellent_slope_max: {strict_thresholds.excellent_slope_max}%")
@@ -77,8 +79,10 @@ def demo_custom_thresholds():
     print(f"  difficult_slope_max: {strict_thresholds.difficult_slope_max}%")
 
     print(f"\nResults:")
-    print(f"  Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
-          f"({result.buildable_percentage:.1f}%)")
+    print(
+        f"  Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
+        f"({result.buildable_percentage:.1f}%)"
+    )
     print(f"  Number of zones: {result.num_zones}")
 
     # Count zones by class
@@ -89,7 +93,7 @@ def demo_custom_thresholds():
             print(f"    - {cls}: {count} zone(s)")
 
 
-def demo_elevation_constraints():
+def demo_elevation_constraints() -> None:
     """Demonstrate analysis with elevation constraints (flood avoidance)."""
     print("\n" + "=" * 70)
     print("DEMO 3: Elevation Constraints (Flood Zone Avoidance)")
@@ -111,25 +115,27 @@ def demo_elevation_constraints():
         min_zone_area_sqm=1000.0,
     )
 
-    result = analyze_buildability(
-        slope, elevation, cell_size=1.0, thresholds=flood_thresholds
-    )
+    result = analyze_buildability(slope, elevation, cell_size=1.0, thresholds=flood_thresholds)
 
     print(f"\nElevation constraint: min_elevation = 100m")
     print(f"\nResults:")
-    print(f"  Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
-          f"({result.buildable_percentage:.1f}%)")
+    print(
+        f"  Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
+        f"({result.buildable_percentage:.1f}%)"
+    )
     print(f"  Number of zones: {result.num_zones}")
 
     if result.largest_zone:
         print(f"\nLargest buildable zone:")
         print(f"  - Area: {result.largest_zone.area_sqm:.1f} sq m")
-        print(f"  - Elevation range: {result.largest_zone.min_elevation:.1f}m - "
-              f"{result.largest_zone.max_elevation:.1f}m")
+        print(
+            f"  - Elevation range: {result.largest_zone.min_elevation:.1f}m - "
+            f"{result.largest_zone.max_elevation:.1f}m"
+        )
         print(f"  - Mean elevation: {result.largest_zone.mean_elevation:.1f}m")
 
 
-def demo_with_transform():
+def demo_with_transform() -> None:
     """Demonstrate analysis with georeferenced coordinates."""
     print("\n" + "=" * 70)
     print("DEMO 4: Georeferenced Analysis")
@@ -149,8 +155,10 @@ def demo_with_transform():
     print(f"\nProperty bounds: 0-500m x 0-500m")
     print(f"Resolution: 10m")
     print(f"\nResults:")
-    print(f"  Total buildable: {result.total_buildable_area_sqm:.1f} sq m "
-          f"({result.total_buildable_area_acres:.2f} acres)")
+    print(
+        f"  Total buildable: {result.total_buildable_area_sqm:.1f} sq m "
+        f"({result.total_buildable_area_acres:.2f} acres)"
+    )
     print(f"  Number of zones: {result.num_zones}")
 
     if result.largest_zone:
@@ -161,7 +169,7 @@ def demo_with_transform():
         print(f"  - Geometry type: {result.largest_zone.geometry.geom_type}")
 
 
-def demo_quality_scoring():
+def demo_quality_scoring() -> None:
     """Demonstrate quality scoring for different site conditions."""
     print("\n" + "=" * 70)
     print("DEMO 5: Quality Scoring Comparison")

@@ -1,9 +1,8 @@
-"""
-Tests for configuration module.
-"""
+"""Tests for configuration module."""
+
+from pathlib import Path
 
 import pytest
-from pathlib import Path
 
 from entmoot.core.config import Settings
 

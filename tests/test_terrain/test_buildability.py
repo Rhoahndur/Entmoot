@@ -5,17 +5,17 @@ This module tests the identification of buildable areas based on terrain analysi
 including zone detection, polygonization, and quality scoring.
 """
 
-import pytest
 import numpy as np
+import pytest
 from rasterio.transform import from_bounds
 from shapely.geometry import Polygon
 
 from entmoot.core.terrain.buildability import (
     BuildabilityAnalyzer,
-    BuildabilityThresholds,
     BuildabilityClass,
-    BuildableZone,
     BuildabilityResult,
+    BuildabilityThresholds,
+    BuildableZone,
     analyze_buildability,
 )
 

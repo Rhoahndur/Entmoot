@@ -1,6 +1,4 @@
-"""
-Tests for upload models.
-"""
+"""Tests for upload models."""
 
 from datetime import datetime
 from uuid import UUID, uuid4

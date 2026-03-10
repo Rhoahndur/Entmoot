@@ -2,17 +2,28 @@
  * Upload Page - File upload wizard with optional DEM upload
  */
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Header } from '../components/Header';
-import { FileDropzone, FilePreview, UploadProgress } from '../components/FileDropzone';
-import { useFileUpload } from '../hooks/useFileUpload';
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Header } from "../components/Header";
+import {
+  FileDropzone,
+  FilePreview,
+  UploadProgress,
+} from "../components/FileDropzone";
+import { useFileUpload } from "../hooks/useFileUpload";
 
 export const UploadPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { uploading, progress, error, success, uploadResponse, uploadFile, resetState } =
-    useFileUpload();
+  const {
+    uploading,
+    progress,
+    error,
+    success,
+    uploadResponse,
+    uploadFile,
+    resetState,
+  } = useFileUpload();
 
   // DEM upload state
   const [showDemUpload, setShowDemUpload] = useState(false);
@@ -68,7 +79,7 @@ export const UploadPage: React.FC = () => {
   const handleSkipDem = () => {
     if (uploadResponse) {
       const params = new URLSearchParams();
-      params.set('upload_id', uploadResponse.upload_id);
+      params.set("upload_id", uploadResponse.upload_id);
       navigate(`/config?${params.toString()}`);
     }
   };
@@ -83,8 +94,8 @@ export const UploadPage: React.FC = () => {
         redirectTimerRef.current = setTimeout(() => {
           redirectTimerRef.current = null;
           const params = new URLSearchParams();
-          params.set('upload_id', uploadResponse.upload_id);
-          params.set('dem_upload_id', demResponse.upload_id);
+          params.set("upload_id", uploadResponse.upload_id);
+          params.set("dem_upload_id", demResponse.upload_id);
           navigate(`/config?${params.toString()}`);
         }, 1000);
       }
@@ -106,7 +117,9 @@ export const UploadPage: React.FC = () => {
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-semibold">
                 1
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-900">Upload File</span>
+              <span className="ml-2 text-sm font-medium text-gray-900">
+                Upload File
+              </span>
             </div>
 
             <div className="w-16 h-1 bg-gray-300"></div>
@@ -115,7 +128,9 @@ export const UploadPage: React.FC = () => {
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-600 font-semibold">
                 2
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-500">Configure</span>
+              <span className="ml-2 text-sm font-medium text-gray-500">
+                Configure
+              </span>
             </div>
 
             <div className="w-16 h-1 bg-gray-300"></div>
@@ -124,16 +139,21 @@ export const UploadPage: React.FC = () => {
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-600 font-semibold">
                 3
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-500">Generate</span>
+              <span className="ml-2 text-sm font-medium text-gray-500">
+                Generate
+              </span>
             </div>
           </div>
         </div>
 
         {/* Boundary Upload Section */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Upload Site Boundary</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            Upload Site Boundary
+          </h2>
           <p className="text-gray-600 mb-6">
-            Upload a geospatial file (KMZ, KML, or GeoJSON) containing your property boundary.
+            Upload a geospatial file (KMZ, KML, or GeoJSON) containing your
+            property boundary.
           </p>
 
           {/* Dropzone */}
@@ -173,8 +193,12 @@ export const UploadPage: React.FC = () => {
                   />
                 </svg>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-green-800 mb-1">Upload Successful!</h3>
-                  <p className="text-sm text-green-700 mb-2">{uploadResponse.message}</p>
+                  <h3 className="text-lg font-semibold text-green-800 mb-1">
+                    Upload Successful!
+                  </h3>
+                  <p className="text-sm text-green-700 mb-2">
+                    {uploadResponse.message}
+                  </p>
                 </div>
               </div>
             </div>
@@ -196,7 +220,9 @@ export const UploadPage: React.FC = () => {
                   />
                 </svg>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Upload Failed</h3>
+                  <h3 className="text-sm font-medium text-red-800">
+                    Upload Failed
+                  </h3>
                   <p className="mt-1 text-sm text-red-700">{error}</p>
                 </div>
               </div>
@@ -231,8 +257,9 @@ export const UploadPage: React.FC = () => {
               Upload Elevation Data (Optional)
             </h2>
             <p className="text-gray-600 mb-6">
-              Upload a GeoTIFF DEM file for terrain-aware optimization. This enables real slope
-              analysis, cut/fill calculations, and road grade estimation.
+              Upload a GeoTIFF DEM file for terrain-aware optimization. This
+              enables real slope analysis, cut/fill calculations, and road grade
+              estimation.
             </p>
 
             {/* DEM Dropzone */}
@@ -248,12 +275,18 @@ export const UploadPage: React.FC = () => {
 
             {/* DEM File Preview */}
             {selectedDemFile && !demUpload.uploading && !demUpload.success && (
-              <FilePreview file={selectedDemFile} onRemove={handleRemoveDemFile} />
+              <FilePreview
+                file={selectedDemFile}
+                onRemove={handleRemoveDemFile}
+              />
             )}
 
             {/* DEM Upload Progress */}
             {demUpload.uploading && selectedDemFile && (
-              <UploadProgress progress={demUpload.progress} filename={selectedDemFile.name} />
+              <UploadProgress
+                progress={demUpload.progress}
+                filename={selectedDemFile.name}
+              />
             )}
 
             {/* DEM Success */}
@@ -324,7 +357,9 @@ export const UploadPage: React.FC = () => {
           <ul className="text-sm text-blue-800 space-y-1">
             <li>- KMZ/KML files are commonly exported from Google Earth</li>
             <li>- GeoJSON files can be created from most GIS software</li>
-            <li>- GeoTIFF DEM files provide elevation data for terrain analysis</li>
+            <li>
+              - GeoTIFF DEM files provide elevation data for terrain analysis
+            </li>
             <li>- Maximum file size is 50MB</li>
           </ul>
         </div>

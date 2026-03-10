@@ -5,17 +5,17 @@ This module provides genetic algorithm-based optimization for placing
 assets on a property while respecting constraints and optimizing objectives.
 """
 
-from entmoot.core.optimization.problem import (
-    OptimizationObjective,
-    ObjectiveWeights,
-    OptimizationConstraints,
-    PlacementSolution,
-)
 from entmoot.core.optimization.collision import (
     CollisionDetector,
     ValidationResult,
     Violation,
     ViolationType,
+)
+from entmoot.core.optimization.problem import (
+    ObjectiveWeights,
+    OptimizationConstraints,
+    OptimizationObjective,
+    PlacementSolution,
 )
 
 __all__ = [

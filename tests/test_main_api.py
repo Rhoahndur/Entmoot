@@ -1,6 +1,4 @@
-"""
-Tests for main API endpoints and application lifecycle.
-"""
+"""Tests for main API endpoints and application lifecycle."""
 
 from fastapi.testclient import TestClient
 

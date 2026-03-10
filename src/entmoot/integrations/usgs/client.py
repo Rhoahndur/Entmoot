@@ -194,7 +194,7 @@ class USGSClient:
             response = await self.client.get(url, params=params)
             response.raise_for_status()
 
-            data = response.json()
+            data: dict[str, Any] = response.json()
             return data
 
         except (httpx.HTTPError, httpx.TimeoutException) as e:
@@ -342,7 +342,7 @@ class USGSClient:
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for result in batch_results:
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     failed_count += 1
                     logger.error(f"Batch query failed for point: {result}")
                 elif result.elevation is not None:

@@ -1,6 +1,4 @@
-"""
-File validation utilities for upload operations.
-"""
+"""File validation utilities for upload operations."""
 
 import logging
 from pathlib import Path
@@ -154,7 +152,7 @@ def validate_file_size(file_size: int, max_size_bytes: int) -> None:
 
 async def scan_for_viruses(file_path: Path) -> Optional[str]:
     """
-    Placeholder for virus scanning functionality.
+    Scan a file for viruses.
 
     This function is a placeholder for integration with antivirus software
     like ClamAV. When implemented, it should scan the file and return

@@ -6,20 +6,21 @@ functionality in Entmoot for terrain analysis.
 """
 
 import numpy as np
+
+from entmoot.core.terrain.aspect import (
+    AspectCalculator,
+    aspect_to_cardinal,
+    calculate_aspect,
+    calculate_aspect_distribution,
+    calculate_solar_exposure,
+    calculate_wind_exposure,
+)
 from entmoot.core.terrain.slope import (
     SlopeCalculator,
     SlopeMethod,
     calculate_slope,
-    classify_slope,
     calculate_slope_statistics,
-)
-from entmoot.core.terrain.aspect import (
-    AspectCalculator,
-    calculate_aspect,
-    aspect_to_cardinal,
-    calculate_aspect_distribution,
-    calculate_solar_exposure,
-    calculate_wind_exposure,
+    classify_slope,
 )
 
 
@@ -36,7 +37,7 @@ def create_synthetic_dem(size: int = 100) -> np.ndarray:
     distance = np.sqrt((xx - center_x) ** 2 + (yy - center_y) ** 2)
 
     # Create hill (Gaussian-like shape)
-    elevation = 1000 + 50 * np.exp(-distance**2 / (2 * (size / 4) ** 2))
+    elevation = 1000 + 50 * np.exp(-(distance**2) / (2 * (size / 4) ** 2))
 
     # Add some random noise for realism
     elevation += np.random.normal(0, 0.5, elevation.shape)
@@ -44,7 +45,7 @@ def create_synthetic_dem(size: int = 100) -> np.ndarray:
     return elevation
 
 
-def demo_basic_slope_calculation():
+def demo_basic_slope_calculation() -> None:
     """Demonstrate basic slope calculation."""
     print("=" * 60)
     print("DEMO 1: Basic Slope Calculation")
@@ -74,7 +75,7 @@ def demo_basic_slope_calculation():
     print(f"  Mean: {slope_percent.mean():.2f}%")
 
 
-def demo_slope_classification():
+def demo_slope_classification() -> None:
     """Demonstrate slope classification for buildability."""
     print("\n" + "=" * 60)
     print("DEMO 2: Slope Classification")
@@ -97,13 +98,11 @@ def demo_slope_classification():
     print(f"  Steep (15-25%): {stats['class_percentages']['steep']:.1f}% of area")
     print(f"  Very Steep (25%+): {stats['class_percentages']['very_steep']:.1f}% of area")
 
-    buildable_percent = (
-        stats["class_percentages"]["flat"] + stats["class_percentages"]["moderate"]
-    )
+    buildable_percent = stats["class_percentages"]["flat"] + stats["class_percentages"]["moderate"]
     print(f"\nTotal easily buildable area: {buildable_percent:.1f}%")
 
 
-def demo_aspect_calculation():
+def demo_aspect_calculation() -> None:
     """Demonstrate aspect calculation."""
     print("\n" + "=" * 60)
     print("DEMO 3: Aspect Calculation")
@@ -125,7 +124,7 @@ def demo_aspect_calculation():
         print(f"  {direction:4s}: {percent:5.1f}% ({count:4d} pixels)")
 
 
-def demo_multiple_methods():
+def demo_multiple_methods() -> None:
     """Demonstrate different slope calculation methods."""
     print("\n" + "=" * 60)
     print("DEMO 4: Comparison of Slope Methods")
@@ -146,7 +145,7 @@ def demo_multiple_methods():
         print(f"  {method.value:20s}: mean={slope.mean():.2f}°, max={slope.max():.2f}°")
 
 
-def demo_solar_exposure():
+def demo_solar_exposure() -> None:
     """Demonstrate solar exposure analysis."""
     print("\n" + "=" * 60)
     print("DEMO 5: Solar Exposure Analysis")
@@ -173,7 +172,7 @@ def demo_solar_exposure():
     print(f"  ({(high_solar.sum() / solar.size) * 100:.1f}% of total area)")
 
 
-def demo_wind_exposure():
+def demo_wind_exposure() -> None:
     """Demonstrate wind exposure analysis."""
     print("\n" + "=" * 60)
     print("DEMO 6: Wind Exposure Analysis")
@@ -200,7 +199,7 @@ def demo_wind_exposure():
     print(f"  ({(high_wind.sum() / wind.size) * 100:.1f}% of total area)")
 
 
-def demo_complete_analysis():
+def demo_complete_analysis() -> None:
     """Demonstrate complete terrain analysis workflow."""
     print("\n" + "=" * 60)
     print("DEMO 7: Complete Terrain Analysis")
@@ -242,7 +241,7 @@ def demo_complete_analysis():
     print(f"  Not recommended: {stats['class_percentages']['very_steep']:.1f}%")
 
 
-def main():
+def main() -> None:
     """Run all demonstrations."""
     print("\n" + "=" * 60)
     print("ENTMOOT TERRAIN ANALYSIS DEMONSTRATION")

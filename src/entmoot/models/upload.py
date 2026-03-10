@@ -1,6 +1,4 @@
-"""
-Pydantic models for file upload operations.
-"""
+"""Pydantic models for file upload operations."""
 
 from datetime import datetime
 from enum import Enum

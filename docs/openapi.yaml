@@ -315,6 +315,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/projects/{project_id}/validate-placement:
+    post:
+      tags:
+      - projects
+      summary: Validate single asset placement
+      description: Check a single asset position against constraints (for drag-and-drop)
+      operationId: validate_placement_api_v1_projects__project_id__validate_placement_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidatePlacementRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidatePlacementResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/projects/{project_id}/alternatives/{alternative_id}/export/{export_format}:
     get:
       tags:
@@ -1376,6 +1417,53 @@ components:
         filename: property_boundary.kmz
         message: File uploaded successfully
         upload_id: 550e8400-e29b-41d4-a716-446655440000
+    ValidatePlacementRequest:
+      properties:
+        asset_id:
+          type: string
+          title: Asset Id
+        position:
+          additionalProperties:
+            type: number
+          type: object
+          title: Position
+          description: '{''lat'': ..., ''lng'': ...}'
+        rotation:
+          type: number
+          title: Rotation
+          default: 0.0
+        width:
+          type: number
+          title: Width
+          description: Width in feet
+        length:
+          type: number
+          title: Length
+          description: Length in feet
+      type: object
+      required:
+      - asset_id
+      - position
+      - width
+      - length
+      title: ValidatePlacementRequest
+      description: Request body for single-asset placement validation.
+    ValidatePlacementResponse:
+      properties:
+        violations:
+          items:
+            $ref: '#/components/schemas/ConstraintViolation'
+          type: array
+          title: Violations
+        is_valid:
+          type: boolean
+          title: Is Valid
+      type: object
+      required:
+      - violations
+      - is_valid
+      title: ValidatePlacementResponse
+      description: Response for placement validation.
     ValidationError:
       properties:
         loc:

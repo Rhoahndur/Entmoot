@@ -6,31 +6,24 @@ for large files.
 """
 
 import logging
+import warnings
 from pathlib import Path
 from typing import Optional, Tuple, Union
-import warnings
 
 import numpy as np
 from pyproj import CRS
 
 try:
     import rasterio
-    from rasterio.windows import Window
     from rasterio.enums import Resampling
+    from rasterio.windows import Window
 
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
 
-from entmoot.models.terrain import (
-    DEMData,
-    DEMMetadata,
-    ElevationUnit,
-)
-from entmoot.core.errors import (
-    ValidationError,
-    ParseError,
-)
+from entmoot.core.errors import ParseError, ValidationError
+from entmoot.models.terrain import DEMData, DEMMetadata, ElevationUnit
 
 logger = logging.getLogger(__name__)
 

@@ -1,22 +1,20 @@
-"""
-Constraint management core functionality.
-"""
+"""Constraint management core functionality."""
 
-from .collection import ConstraintCollection, ConstraintStatistics
-from .validator import ConstraintValidator
 from .aggregator import ConstraintAggregator
 from .buffers import (
-    BufferGenerator,
+    PROPERTY_LINE_SETBACK,
+    ROAD_SETBACK,
+    UTILITY_SETBACK,
+    WATER_FEATURE_SETBACK,
     BufferConfig,
+    BufferGenerator,
     BufferStyle,
     RoadType,
     WaterFeatureType,
-    PROPERTY_LINE_SETBACK,
-    ROAD_SETBACK,
-    WATER_FEATURE_SETBACK,
-    UTILITY_SETBACK,
     create_buffer_from_config,
 )
+from .collection import ConstraintCollection, ConstraintStatistics
+from .validator import ConstraintValidator
 
 __all__ = [
     "ConstraintCollection",

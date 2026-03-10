@@ -1,3 +1,1 @@
-"""
-Core business logic for site layout automation.
-"""
+"""Core business logic for site layout automation."""

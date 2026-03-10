@@ -1,22 +1,20 @@
-"""
-Tests for 2D map rendering.
-"""
+"""Tests for 2D map rendering."""
 
 import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
-from shapely.geometry import Point, LineString, Polygon, MultiPolygon
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
 
 from entmoot.core.visualization.map_2d import (
-    Map2DRenderer,
-    MapConfig,
-    StyleConfig,
+    DEFAULT_STYLES,
     LayerConfig,
     LayerType,
+    Map2DRenderer,
+    MapConfig,
     OutputFormat,
-    DEFAULT_STYLES,
+    StyleConfig,
 )
 
 

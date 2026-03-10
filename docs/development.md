@@ -861,7 +861,7 @@ def operation_with_callback():
    ```python
    # Good
    raise ValidationError("Invalid email format", field="email")
-   
+
    # Avoid
    raise Exception("Invalid email")
    ```
@@ -981,7 +981,7 @@ To add a new custom exception:
    ```python
    class MyNewError(EntmootException):
        """Description of when this error occurs."""
-       
+
        def __init__(
            self,
            message: str,
@@ -992,7 +992,7 @@ To add a new custom exception:
            error_details = details or {}
            if custom_field:
                error_details["custom_field"] = custom_field
-           
+
            super().__init__(
                message=message,
                error_code="MY_NEW_ERROR",
@@ -1014,4 +1014,3 @@ To add a new custom exception:
    ```
 
 4. **Update documentation**: Add the new error type to this guide.
-

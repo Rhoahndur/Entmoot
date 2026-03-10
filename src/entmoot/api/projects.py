@@ -12,12 +12,15 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from entmoot.core.redis_storage import get_storage
 from entmoot.models.errors import ErrorResponse
 from entmoot.models.project import (
+    ConstraintViolation,
     LayoutResults,
     OptimizationResults,
+    PlacedAsset,
     ProjectConfig,
     ProjectResponse,
     ProjectStatus,
@@ -25,6 +28,24 @@ from entmoot.models.project import (
 )
 from entmoot.services.optimization_service import generate_layout_async
 from entmoot.services.project_service import ProjectService
+
+
+class ValidatePlacementRequest(BaseModel):
+    """Request body for single-asset placement validation."""
+
+    asset_id: str
+    position: Dict[str, float] = Field(..., description="{'lat': ..., 'lng': ...}")
+    rotation: float = 0.0
+    width: float = Field(..., description="Width in feet")
+    length: float = Field(..., description="Length in feet")
+
+
+class ValidatePlacementResponse(BaseModel):
+    """Response for placement validation."""
+
+    violations: list[ConstraintViolation]
+    is_valid: bool
+
 
 logger = logging.getLogger(__name__)
 
@@ -441,6 +462,52 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
     layout_results = LayoutResults(**results_data)
 
     return ProjectService.build_optimization_results(project, layout_results, project_id)
+
+
+@router.post(
+    "/{project_id}/validate-placement",
+    response_model=ValidatePlacementResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Project not found"},
+    },
+    summary="Validate single asset placement",
+    description="Check a single asset position against constraints (for drag-and-drop)",
+)
+async def validate_placement(
+    project_id: str,
+    req: ValidatePlacementRequest,
+) -> ValidatePlacementResponse:
+    """Validate a single asset placement against project constraints."""
+    project = storage.get_project(project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorResponse(
+                error_code="PROJECT_NOT_FOUND",
+                message=f"Project {project_id} not found",
+            ).model_dump(mode="json"),
+        )
+
+    results_data = storage.get_results(project_id)
+    other_assets = []
+    if results_data and results_data.get("placed_assets"):
+        other_assets = [PlacedAsset(**a) for a in results_data["placed_assets"]]
+
+    violations = ProjectService.validate_single_asset_placement(
+        asset_id=req.asset_id,
+        lat=req.position["lat"],
+        lng=req.position["lng"],
+        rotation=req.rotation,
+        width_ft=req.width,
+        length_ft=req.length,
+        other_assets=other_assets,
+        utm_data=project.get("utm_data"),
+    )
+
+    return ValidatePlacementResponse(
+        violations=violations,
+        is_valid=len(violations) == 0,
+    )
 
 
 @router.get(

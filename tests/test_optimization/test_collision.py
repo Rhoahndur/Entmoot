@@ -9,17 +9,18 @@ Tests cover:
 - Spatial indexing performance
 """
 
-import pytest
 from datetime import datetime
-from shapely.geometry import Polygon, Point, box
 
-from entmoot.models.asset import AssetType, PlacedAsset, get_required_spacing
+import pytest
+from shapely.geometry import Point, Polygon, box
+
 from entmoot.core.optimization.collision import (
     CollisionDetector,
+    ValidationResult,
     Violation,
     ViolationType,
-    ValidationResult,
 )
+from entmoot.models.asset import AssetType, PlacedAsset, get_required_spacing
 
 # Fixtures
 

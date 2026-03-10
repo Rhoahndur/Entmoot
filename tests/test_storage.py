@@ -1,6 +1,4 @@
-"""
-Unit tests for file storage service.
-"""
+"""Unit tests for file storage service."""
 
 import json
 from pathlib import Path

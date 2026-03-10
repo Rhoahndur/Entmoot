@@ -8,15 +8,11 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from shapely.geometry import Polygon as ShapelyPolygon, shape
+from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import shape
 from shapely.ops import unary_union
 
-from entmoot.models.regulatory import (
-    FloodplainData,
-    FloodZone,
-    FloodZoneType,
-    RegulatoryDataSource,
-)
+from entmoot.models.regulatory import FloodplainData, FloodZone, FloodZoneType, RegulatoryDataSource
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +106,7 @@ class FEMAResponseParser:
                     logger.warning("Invalid geometry detected, attempting to fix")
                     geom = geom.buffer(0)
 
-                return geom.wkt
+                return str(geom.wkt)
 
             # Try GeoJSON format as fallback
             geom = shape(geometry_dict)
@@ -120,7 +116,7 @@ class FEMAResponseParser:
                 logger.warning("Invalid geometry detected, attempting to fix")
                 geom = geom.buffer(0)
 
-            return geom.wkt
+            return str(geom.wkt)
 
         except Exception as e:
             logger.error(f"Failed to parse geometry: {e}")

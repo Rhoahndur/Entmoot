@@ -6,29 +6,27 @@ to create professional visualizations of site data.
 """
 
 import numpy as np
-from shapely.geometry import Polygon, LineString, Point
+from shapely.geometry import LineString, Point, Polygon
 
 from entmoot.core.visualization import (
-    Map2DRenderer,
-    MapConfig,
-    StyleConfig,
-    LayerType,
-    OutputFormat,
-    Map3DRenderer,
-    Map3DConfig,
     CameraPreset,
+    LayerType,
+    Map2DRenderer,
+    Map3DConfig,
+    Map3DRenderer,
+    MapConfig,
+    OutputFormat,
     OutputFormat3D,
+    StyleConfig,
 )
 
 
-def example_2d_map():
+def example_2d_map() -> None:
     """Create a simple 2D map with multiple layers."""
     print("Creating 2D map...")
 
     # Create sample geometries
-    boundary = Polygon([
-        (0, 0), (100, 0), (100, 100), (0, 100), (0, 0)
-    ])
+    boundary = Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)])
 
     buildings = [
         Polygon([(10, 10), (30, 10), (30, 30), (10, 30), (10, 10)]),
@@ -40,9 +38,7 @@ def example_2d_map():
         LineString([(50, 50), (100, 50)]),
     ]
 
-    constraint = Polygon([
-        (20, 60), (40, 60), (40, 80), (20, 80), (20, 60)
-    ])
+    constraint = Polygon([(20, 60), (40, 60), (40, 80), (20, 80), (20, 60)])
 
     # Configure map
     config = MapConfig(
@@ -109,7 +105,7 @@ def example_2d_map():
     renderer.close()
 
 
-def example_3d_map():
+def example_3d_map() -> None:
     """Create a 3D terrain visualization."""
     print("Creating 3D map...")
 
@@ -176,7 +172,7 @@ def example_3d_map():
     print(f"3D map HTML length: {len(html_string)} characters")
 
 
-def main():
+def main() -> None:
     """Run all examples."""
     print("=" * 60)
     print("Entmoot Visualization Examples")

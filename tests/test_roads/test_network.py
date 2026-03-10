@@ -9,12 +9,7 @@ import pytest
 from rasterio.transform import from_bounds
 
 from entmoot.core.roads.graph import NavigationGraph
-from entmoot.core.roads.network import (
-    RoadIntersection,
-    RoadNetwork,
-    RoadSegment,
-    RoadType,
-)
+from entmoot.core.roads.network import RoadIntersection, RoadNetwork, RoadSegment, RoadType
 from entmoot.core.roads.pathfinding import PathfinderConfig
 
 

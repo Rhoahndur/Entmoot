@@ -5,24 +5,23 @@ Tests ConstraintCollection, ConstraintValidator, and ConstraintAggregator.
 """
 
 import pytest
-from shapely.geometry import Polygon, Point, box
+from shapely.geometry import Point, Polygon, box
 
-from entmoot.models.constraints import (
-    ConstraintType,
-    ConstraintSeverity,
-    ConstraintPriority,
-    SetbackConstraint,
-    ExclusionZoneConstraint,
-    RegulatoryConstraint as RegulatoryConstraintV2,
-    UserDefinedConstraint,
-)
 from entmoot.core.constraints import (
+    ConstraintAggregator,
     ConstraintCollection,
     ConstraintStatistics,
     ConstraintValidator,
-    ConstraintAggregator,
 )
 from entmoot.core.constraints.aggregator import AggregationMode
+from entmoot.models.constraints import (
+    ConstraintPriority,
+    ConstraintSeverity,
+    ConstraintType,
+    ExclusionZoneConstraint,
+)
+from entmoot.models.constraints import RegulatoryConstraint as RegulatoryConstraintV2
+from entmoot.models.constraints import SetbackConstraint, UserDefinedConstraint
 
 
 class TestConstraintCollection:

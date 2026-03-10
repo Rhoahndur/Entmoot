@@ -1,24 +1,22 @@
-"""
-Tests for 3D map rendering.
-"""
+"""Tests for 3D map rendering."""
 
 import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
-from shapely.geometry import Point, LineString, Polygon, MultiPolygon, MultiLineString
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
 
 from entmoot.core.visualization.map_3d import (
-    Map3DRenderer,
-    Map3DConfig,
-    TerrainStyle3D,
     AssetStyle3D,
     CameraConfig,
-    LightingConfig,
     CameraPreset,
-    RenderMode,
+    LightingConfig,
+    Map3DConfig,
+    Map3DRenderer,
     OutputFormat3D,
+    RenderMode,
+    TerrainStyle3D,
 )
 
 

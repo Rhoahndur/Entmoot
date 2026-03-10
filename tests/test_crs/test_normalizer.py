@@ -1,6 +1,4 @@
-"""
-Tests for CRS normalization service.
-"""
+"""Tests for CRS normalization service."""
 
 import pytest
 
