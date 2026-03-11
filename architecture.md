@@ -64,6 +64,7 @@ projects.py  create_project()
        ├─ Parse file (KML / KMZ / GeoJSON)
        ├─ Detect CRS → transform to UTM
        ├─ Load DEM → compute slope grid → slope exclusion zones (optional)
+       ├─ Buildability analysis → slope-aware buildable zone polygons (optional)
        ├─ Query OpenStreetMap → classify features → typed buffers → exclusion zones (optional)
        ├─ Build Asset instances from config
        ├─ Set up constraints + objectives
@@ -71,6 +72,7 @@ projects.py  create_project()
        ├─ Inverse-transform results → WGS84, compute asset footprint polygons
        ├─ Generate road network (MST-optimized A* pathfinding, fallback: straight lines)
        ├─ Calculate earthwork (cut/fill)
+       ├─ Store UTM geometry data (CRS, buildable area WKT, exclusion zones) for validation
        └─ Store LayoutResults in Redis
 
 Client GET /api/v1/projects/{id}/results
@@ -79,11 +81,24 @@ Client GET /api/v1/projects/{id}/results
 projects.py  get_layout_results()
   └─ ProjectService.build_optimization_results()
        ├─ Assemble road network + intersections
-       ├─ Detect constraint violations
+       ├─ Detect constraint violations (UTM-accurate when utm_data available, WGS84 fallback)
        ├─ Compute constraint zones (setback buffer)
        ├─ Compute buildable areas (boundary minus setback)
        ├─ Calculate cost breakdown + metrics
        └─ Return OptimizationResults
+
+Client POST /api/v1/projects/{id}/validate-placement
+  │
+  ▼
+projects.py  validate_placement()
+  └─ ProjectService.validate_single_asset_placement()
+       ├─ Load stored utm_data from project
+       ├─ Transform WGS84 position → UTM
+       ├─ Build asset footprint polygon (feet → meters)
+       ├─ Check containment in buildable area
+       ├─ Check intersection with exclusion zones
+       ├─ Check overlap with other placed assets
+       └─ Return violations list + is_valid
 ```
 
 ---
@@ -97,7 +112,7 @@ Thin HTTP handlers. No business logic — delegates to services.
 | File | Responsibility |
 |---|---|
 | `main.py` | App factory, CORS, lifespan (startup/shutdown), middleware registration, health check |
-| `projects.py` | Project CRUD, status polling, results retrieval, re-optimization, export, delete |
+| `projects.py` | Project CRUD, status polling, results retrieval, re-optimization, single-asset placement validation (drag-and-drop), export, delete |
 | `upload.py` | Multipart file upload with validation (extension, MIME, magic bytes, size) |
 | `auth.py` | `verify_api_key` — FastAPI `Security` dependency using `APIKeyHeader("X-API-Key")` |
 | `middleware.py` | `RequestCorrelationMiddleware` (X-Request-ID), `LoggingContextMiddleware` (context injection) |
@@ -109,7 +124,7 @@ Business logic extracted from routes — testable without HTTP.
 
 | File | Responsibility |
 |---|---|
-| `project_service.py` | Weight validation, result assembly, constraint violation detection, road intersection computation, setback zone / buildable area geometry |
+| `project_service.py` | Weight validation, result assembly, constraint violation detection (UTM-accurate with WGS84 fallback), single-asset placement validation, road intersection computation, setback zone / buildable area geometry |
 | `optimization_service.py` | `generate_layout_async` (background task), `run_optimization_sync` (file parsing → CRS → DEM → OSM → GA → road gen → earthwork → results) |
 | `terrain_service.py` | `prepare_terrain_data()` — DEM loading, validation, reprojection to UTM, cropping, slope computation; `TerrainData` container with elevation/slope sampling methods |
 | `existing_conditions_service.py` | `fetch_and_process()` — OSM Overpass query, feature classification, typed buffer generation (buildings, roads, utilities, water), road entry point identification |
@@ -122,9 +137,9 @@ Domain-specific processing engines.
 |---|---|
 | `parsers/` | KML/KMZ parsing and validation; coordinate/geometry extraction |
 | `crs/` | CRS detection from file content, UTM zone selection, coordinate transformation (PyProj) |
-| `terrain/` | DEM loading/validation, slope calculation, aspect analysis, buildability scoring |
+| `terrain/` | DEM loading/validation, slope calculation, aspect analysis, buildability scoring (slope-aware buildable zone polygons with EXCELLENT/GOOD/DIFFICULT/UNSUITABLE classification) |
 | `constraints/` | Setback buffers, exclusion zones, regulatory constraints; typed buffer generation (property lines 25ft, roads 25–100ft, water 100–150ft, utilities 30–100ft) |
-| `optimization/` | `GeneticOptimizer` — population-based multi-objective optimization with collision detection, tournament selection, elitism, convergence detection; `get_buildable_area_diagnostic()` for actionable error messages |
+| `optimization/` | `GeneticOptimizer` — population-based multi-objective optimization with collision detection, tournament selection, elitism, convergence detection; buildable area validation in crossover and mutation operators; `get_buildable_area_diagnostic()` for actionable error messages |
 | `roads/` | `NavigationGraph` (grid-based), `AStarPathfinder` (grade-aware), `RoadNetwork` (MST-optimized topology with road classification PRIMARY/SECONDARY/ACCESS, intersection generation, exclusion zone avoidance) |
 | `earthwork/` | Pre/post-grading models, cut/fill volume calculation, cost estimation |
 | `export/` | `KMZExporter`, `GeoJSONExporter`, `DXFExporter` — georeferenced output for Google Earth, QGIS, AutoCAD |
@@ -134,6 +149,9 @@ Domain-specific processing engines.
 | `redis_storage.py` | `RedisStorage` singleton — project/result persistence with in-memory fallback when Redis is unavailable |
 | `storage.py` | `FileStorageService` — atomic file writes, metadata sidecar JSON, directory-per-upload |
 | `cleanup.py` | Background async loop that deletes expired uploads (skips in-progress files) |
+| `boundaries.py` | Property boundary extraction and validation; `BoundaryExtractionService` with multiple identification strategies |
+| `validation.py` | Schema validation and input sanitization utilities |
+| `errors.py` | Custom exception hierarchy (`EntmootException`, `ValidationError`, `GeometryError`, `CRSError`, etc.) |
 | `logging_config.py` | `JSONFormatter` (production), `ColoredFormatter` (dev), rotating file handler |
 
 ### Integrations (`src/entmoot/integrations/`)
@@ -161,6 +179,9 @@ Pydantic v2 data models — serialization boundary between layers.
 | `elevation.py` | `ElevationPoint`, `ElevationQuery`, `DEMTileMetadata` |
 | `regulatory.py` | `FloodplainData`, `FloodZone` |
 | `upload.py` | `UploadMetadata`, `UploadResponse`, `FileType` |
+| `crs.py` | `BoundingBox`, `CoordinateOrder`, CRS metadata types |
+| `earthwork.py` | Pre/post-grading models, volume and cost calculation types |
+| `existing_conditions.py` | OSM feature types, existing conditions data containers |
 | `errors.py` | `ErrorResponse`, custom exception hierarchy |
 
 ---
@@ -283,6 +304,7 @@ Pydantic v2 data models — serialization boundary between layers.
 │  → progress  │     │                                    │
 │  → boundary  │     │  Atomic writes (temp → rename)    │
 │  → bounds    │     │  Auto-cleanup of expired uploads   │
+│  → utm_data  │     │                                    │
 │              │     │                                    │
 │  results:*   │     └──────────────────────────────────┘
 │  → assets    │
@@ -342,8 +364,7 @@ Multi-stage builds:
 | **security** | Bandit (SAST) + Safety (dependency audit) |
 | **build** | Docker image builds for backend + frontend |
 | **frontend-lint** | ESLint + production build |
-| **openapi-check** | Regenerates `docs/openapi.yaml` and `git diff --exit-code` |
-| **deploy** | Staging (develop branch), production (release tags), auto-rollback |
+| **openapi-check** | Pre-commit hook verifies `docs/openapi.yaml` is current |
 
 ### Observability
 
@@ -377,7 +398,7 @@ graph TB
     end
 
     subgraph "Service Layer"
-        ProjSvc[ProjectService<br/>validation · results · violations]
+        ProjSvc[ProjectService<br/>validation · results · violations · placement validation]
         OptSvc[OptimizationService<br/>layout generation]
         TerrSvc[TerrainService<br/>DEM · slope]
         ExCondSvc[ExistingConditionsService<br/>OSM · buffers]
@@ -386,7 +407,7 @@ graph TB
     subgraph "Core Modules"
         Parsers[Parsers<br/>KML · KMZ · GeoJSON]
         CRS[CRS<br/>detection · UTM transform]
-        Terrain[Terrain<br/>DEM · slope · aspect]
+        Terrain[Terrain<br/>DEM · slope · aspect · buildability]
         Constraints[Constraints<br/>setbacks · buffers · zones]
         GA[GeneticOptimizer<br/>multi-objective GA]
         Roads[Roads<br/>MST · A* pathfinding]
@@ -473,4 +494,6 @@ graph TB
 | **Server-side asset polygons** | UTM footprint corners are inverse-transformed to WGS84 server-side; frontend uses these directly instead of approximating with equatorial constants |
 | **Graceful degradation** | DEM, OSM, FEMA, and USGS integrations are all optional — failures return empty data, never block optimization |
 | **Optional API key auth** | Disabled by default in development; enabled in production via env vars |
+| **UTM-based validation pipeline** | After optimization, project stores `utm_data` (CRS, buildable area WKT, exclusion zones WKT) for accurate metre-space violation detection during result assembly and drag-and-drop; falls back to WGS84-degree approximations when UTM data unavailable |
+| **Slope-aware buildable zones** | Terrain `buildability.py` classifies slope into buildable zones; these constrain the GA's placement area via `OptimizationConstraints.buildable_zones` intersection |
 | **Atomic file writes** | Upload files written to temp path then renamed — prevents partial files on crash |
