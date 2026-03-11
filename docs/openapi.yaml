@@ -389,7 +389,9 @@ paths:
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Export Layout Api V1 Projects  Project Id  Alternatives  Alternative
+                  Id  Export  Export Format  Get
         '404':
           description: Project not found
           content:
@@ -912,6 +914,20 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    LatLng:
+      properties:
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+      type: object
+      required:
+      - lat
+      - lng
+      title: LatLng
+      description: Geographic coordinate pair.
     LayoutAlternative:
       properties:
         id:
@@ -1423,11 +1439,7 @@ components:
           type: string
           title: Asset Id
         position:
-          additionalProperties:
-            type: number
-          type: object
-          title: Position
-          description: '{''lat'': ..., ''lng'': ...}'
+          $ref: '#/components/schemas/LatLng'
         rotation:
           type: number
           title: Rotation

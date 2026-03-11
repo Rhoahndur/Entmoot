@@ -10,6 +10,7 @@ import json
 import logging
 import math
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -199,9 +200,33 @@ def run_optimization_sync(  # noqa: C901
             logger.info("Using KMLParser for KML file")
             kml_parser = KMLParser(validate=False)
             parsed_kml = kml_parser.parse(kml_file_path)
-        property_boundaries = parsed_kml.get_property_boundaries()
-        if property_boundaries and property_boundaries[0].geometry:
-            raw_boundary = property_boundaries[0].geometry
+        # Use BoundaryExtractionService for robust boundary identification
+        try:
+            from shapely import wkt
+
+            from entmoot.core.boundaries import BoundaryExtractionService
+
+            boundary_service = BoundaryExtractionService(auto_repair=True)
+            extraction_result = boundary_service.extract_boundaries(parsed_kml)
+
+            if extraction_result.success and extraction_result.boundaries:
+                raw_boundary = wkt.loads(extraction_result.boundaries[0].geometry_wkt)
+                logger.info(
+                    f"Boundary extracted via {extraction_result.extraction_strategy}, "
+                    f"valid={extraction_result.boundaries[0].is_valid}, "
+                    f"repaired={extraction_result.boundaries[0].repaired}"
+                )
+            else:
+                # Fallback to direct parser output
+                property_boundaries = parsed_kml.get_property_boundaries()
+                if property_boundaries and property_boundaries[0].geometry:
+                    raw_boundary = property_boundaries[0].geometry
+                    logger.warning("BoundaryExtractionService failed, using raw parser output")
+        except Exception as e:
+            logger.warning(f"BoundaryExtractionService error, falling back to raw parser: {e}")
+            property_boundaries = parsed_kml.get_property_boundaries()
+            if property_boundaries and property_boundaries[0].geometry:
+                raw_boundary = property_boundaries[0].geometry
 
     # ------------------------------------------------------------------
     # Step 2b: CRS transformation
@@ -351,6 +376,52 @@ def run_optimization_sync(  # noqa: C901
             logger.warning(f"Failed to load DEM, continuing without terrain data: {e}")
             terrain_data = None
 
+    elif raw_boundary is not None and target_crs_epsg is not None:
+        # Step 2c-alt: Auto-download DEM from USGS 3DEP
+        try:
+            from entmoot.integrations.usgs import USGSClient
+            from entmoot.models.elevation import DEMTileRequest
+            from entmoot.services.terrain_service import prepare_terrain_data
+
+            logger.info("No DEM uploaded — attempting USGS 3DEP auto-download")
+            min_lon, min_lat, max_lon, max_lat = raw_boundary.bounds
+
+            usgs_client = USGSClient()
+            usgs_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(usgs_loop)
+            try:
+                tile_metadata = usgs_loop.run_until_complete(
+                    usgs_client.download_dem_for_bbox(
+                        DEMTileRequest(
+                            min_lon=min_lon,
+                            min_lat=min_lat,
+                            max_lon=max_lon,
+                            max_lat=max_lat,
+                        )
+                    )
+                )
+            finally:
+                usgs_loop.close()
+
+            if tile_metadata:
+                import tempfile
+
+                with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp:
+                    mosaic_path = Path(tmp.name)
+
+                result_path = usgs_client.mosaic_dem_tiles(tile_metadata, mosaic_path)
+                if result_path and result_path.exists():
+                    terrain_data = prepare_terrain_data(result_path, site_boundary, target_crs_epsg)
+                    logger.info("USGS auto-DEM loaded successfully")
+                else:
+                    logger.warning("USGS DEM mosaic failed")
+            else:
+                logger.info("No USGS DEM tiles available for this location")
+
+        except Exception as e:
+            logger.warning(f"USGS auto-DEM failed: {e}")
+            terrain_data = None
+
     # ------------------------------------------------------------------
     # Step 2d: Fetch existing conditions from OpenStreetMap
     # ------------------------------------------------------------------
@@ -411,6 +482,52 @@ def run_optimization_sync(  # noqa: C901
         except Exception as e:
             logger.warning(f"Failed to fetch existing conditions, continuing without: {e}")
 
+    # ------------------------------------------------------------------
+    # Step 2e: Fetch FEMA flood zone data
+    # ------------------------------------------------------------------
+    if (
+        config.constraints.use_existing_conditions
+        and raw_boundary is not None
+        and transformer is not None
+    ):
+        try:
+            from shapely import wkt as shapely_wkt
+            from shapely.ops import transform as shapely_transform_fn
+
+            from entmoot.integrations.fema import FEMAClient
+
+            min_lon, min_lat, max_lon, max_lat = raw_boundary.bounds
+            fema_client = FEMAClient()
+
+            fema_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(fema_loop)
+            try:
+                floodplain_data = fema_loop.run_until_complete(
+                    fema_client.query_by_bbox(min_lon, min_lat, max_lon, max_lat)
+                )
+            finally:
+                fema_loop.close()
+
+            def fema_transform_coords(x: Any, y: Any, z: Any = None) -> tuple:
+                tx, ty = transformer.transform(x, y)
+                return tx, ty
+
+            fema_zone_count = 0
+            for zone in floodplain_data.zones:
+                if zone.is_high_risk() and zone.geometry_wkt:
+                    flood_geom = shapely_wkt.loads(zone.geometry_wkt)
+                    flood_geom_utm = shapely_transform_fn(fema_transform_coords, flood_geom)
+                    clipped = flood_geom_utm.intersection(site_boundary)
+                    if not clipped.is_empty and clipped.area > 1.0:
+                        existing_conditions_zones.append(clipped)
+                        fema_zone_count += 1
+
+            if fema_zone_count:
+                logger.info(f"FEMA: added {fema_zone_count} high-risk flood zones as exclusions")
+
+        except Exception as e:
+            logger.warning(f"FEMA flood zone fetch failed, continuing without: {e}")
+
     # Update progress
     _update_progress(project_id, 10)
 
@@ -462,16 +579,23 @@ def run_optimization_sync(  # noqa: C901
     # ------------------------------------------------------------------
     # Step 3b: Buildability analysis (slope-aware buildable zones)
     # ------------------------------------------------------------------
-    buildable_zone_geoms: list = []
+    # None = analysis not run; [] = analysis ran but found no zones
+    buildable_zone_geoms: Optional[list] = None
     if terrain_data is not None:
         try:
+            from entmoot.core.terrain.aspect import AspectCalculator
             from entmoot.core.terrain.buildability import analyze_buildability
+
+            aspect_calculator = AspectCalculator(cell_size=terrain_data.cell_size)
+            aspect_array = aspect_calculator.calculate(terrain_data.elevation)
+            logger.info("Computed terrain aspect data")
 
             buildability_result = analyze_buildability(
                 slope_percent=terrain_data.slope_percent,
                 elevation=terrain_data.elevation,
                 cell_size=terrain_data.cell_size,
                 transform=terrain_data.transform,
+                aspect=aspect_array,
             )
             buildable_zone_geoms = [
                 z.geometry
@@ -482,6 +606,11 @@ def run_optimization_sync(  # noqa: C901
                 f"Buildability analysis: {len(buildable_zone_geoms)} buildable zones, "
                 f"{buildability_result.buildable_percentage:.1f}% buildable"
             )
+            if not buildable_zone_geoms:
+                logger.warning(
+                    "Buildability analysis found no suitable zones; "
+                    "entire site will be treated as buildable"
+                )
         except Exception as e:
             logger.warning(f"Buildability analysis failed, continuing without: {e}")
 
@@ -491,7 +620,7 @@ def run_optimization_sync(  # noqa: C901
     logger.info("Setting up optimization constraints")
     constraints = OptimizationConstraints(
         site_boundary=site_boundary,
-        buildable_zones=buildable_zone_geoms,
+        buildable_zones=buildable_zone_geoms if buildable_zone_geoms is not None else [],
         exclusion_zones=list(existing_conditions_zones),
         regulatory_constraints=[],
         min_setback_m=config.constraints.setback_distance * 0.3048,
@@ -597,7 +726,7 @@ def run_optimization_sync(  # noqa: C901
     seed_solution = None
     if current_assets:
         try:
-            from entmoot.core.optimization.solution import PlacementSolution
+            from entmoot.core.optimization.problem import PlacementSolution
 
             seed_assets = []
             for asset_data_item, asset in zip(current_assets, assets):

@@ -482,13 +482,75 @@ class USGSClient:
 
             return metadata
 
-        # In a real implementation, download from USGS here
-        logger.warning(
-            f"DEM tile download not implemented for ({lon}, {lat}). "
-            "Would download from USGS 3DEP TNM API."
-        )
+        # Query TNM API for available DEM tiles
+        while not self.rate_limiter.acquire():
+            wait_time = self.rate_limiter.wait_time()
+            await asyncio.sleep(wait_time)
 
-        return None
+        tnm_url = "https://tnmaccess.nationalmap.gov/api/v1/products"
+        params = {
+            "datasets": "National Elevation Dataset (NED) 1/3 arc-second",
+            "bbox": f"{lon},{lat},{lon + 1},{lat + 1}",
+            "outputFormat": "JSON",
+            "max": 5,
+        }
+
+        try:
+            response = await self.client.get(tnm_url, params=params, timeout=30.0)
+            response.raise_for_status()
+            data = response.json()
+        except (httpx.HTTPError, ValueError) as e:
+            logger.warning(f"TNM API query failed for tile ({lon}, {lat}): {e}")
+            return None
+
+        items = data.get("items", [])
+        if not items:
+            logger.info(f"No DEM tiles available for ({lon}, {lat})")
+            return None
+
+        # Find download URL (prefer GeoTIFF)
+        download_url = None
+        for item in items:
+            urls = item.get("urls", {})
+            candidate = urls.get("downloadURL") or urls.get("url")
+            if candidate and candidate.endswith((".tif", ".img", ".zip")):
+                download_url = candidate
+                break
+            if candidate:
+                download_url = candidate
+
+        if not download_url:
+            logger.warning(f"No download URL for tile ({lon}, {lat})")
+            return None
+
+        # Download the tile file
+        while not self.rate_limiter.acquire():
+            wait_time = self.rate_limiter.wait_time()
+            await asyncio.sleep(wait_time)
+
+        try:
+            dl_response = await self.client.get(download_url, timeout=120.0)
+            dl_response.raise_for_status()
+            tile_path.parent.mkdir(parents=True, exist_ok=True)
+            tile_path.write_bytes(dl_response.content)
+        except httpx.HTTPError as e:
+            logger.warning(f"DEM tile download failed for ({lon}, {lat}): {e}")
+            return None
+
+        logger.info(f"Downloaded DEM tile to {tile_path} ({tile_path.stat().st_size} bytes)")
+        return DEMTileMetadata(
+            tile_id=f"{lat}_{lon}_{resolution}",
+            min_lon=float(lon),
+            min_lat=float(lat),
+            max_lon=float(lon + 1),
+            max_lat=float(lat + 1),
+            resolution=resolution,
+            unit=ElevationUnit.METERS,
+            datum=ElevationDatum.NAVD88,
+            data_source=ElevationDataSource.USGS_3DEP_1ARC,
+            file_path=str(tile_path),
+            file_size_bytes=tile_path.stat().st_size,
+        )
 
     async def download_dem_for_bbox(
         self,

@@ -19,7 +19,7 @@ from entmoot.api.main import app
 
 
 def main() -> None:
-    """Generate the OpenAPI schema JSON file."""
+    """Generate the OpenAPI schema YAML file."""
     parser = argparse.ArgumentParser(description="Generate OpenAPI schema")
     parser.add_argument(
         "--check",

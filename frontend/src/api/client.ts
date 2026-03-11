@@ -295,16 +295,4 @@ export const validatePlacement = async (
   return response.data;
 };
 
-/**
- * Delete a project
- */
-export const deleteProject = async (
-  projectId: string,
-): Promise<{ success: boolean }> => {
-  const response = await apiClient.delete<{ success: boolean }>(
-    `${API_V1_PREFIX}/projects/${projectId}`,
-  );
-  return response.data;
-};
-
 export default apiClient;

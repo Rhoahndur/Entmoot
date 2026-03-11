@@ -16,12 +16,14 @@ React frontend application for Entmoot - AI-driven site layout automation.
 
 ## Tech Stack
 
-- React 18
-- TypeScript
-- Vite (build tool)
-- Tailwind CSS
-- React Router v6
+- React 19
+- TypeScript 5
+- Vite 7
+- Tailwind CSS 4
+- MapLibre GL 5
+- React Router v7
 - Axios
+- Recharts
 
 ## Project Structure
 
@@ -91,14 +93,20 @@ npm run preview
 - `/` - Redirects to upload page
 - `/upload` - File upload wizard
 - `/config` - Configuration panel (requires `upload_id` query parameter)
+- `/results/:projectId` - Optimization results with map viewer, layout editor, and dashboard
+- `/projects` - Projects list page
 
 ## API Integration
 
 The frontend integrates with the Entmoot backend API:
 
 - `POST /api/v1/upload` - Upload geospatial files
-- `GET /api/v1/upload/health` - Check upload service health
-- `GET /health` - Check API health
+- `POST /api/v1/projects` - Create project and start optimization
+- `GET /api/v1/projects/{id}/status` - Poll optimization progress
+- `GET /api/v1/projects/{id}/results` - Retrieve optimization results
+- `POST /api/v1/projects/{id}/validate-placement` - Validate asset placement (drag-and-drop)
+- `POST /api/v1/projects/{id}/reoptimize` - Re-run optimization with updated config
+- `PUT /api/v1/projects/{id}/alternatives/{alt}/` - Save edited layout
 
 ## Features in Detail
 
@@ -144,7 +152,5 @@ The frontend integrates with the Entmoot backend API:
 ## Next Steps
 
 - Implement configuration preset save/load functionality
-- Add results/visualization page
+- Wire in export endpoint (backend classes exist, API returns 501)
 - Implement WebSocket connection for real-time processing updates
-- Add authentication and user management
-- Implement project history and management

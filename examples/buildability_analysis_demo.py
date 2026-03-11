@@ -39,7 +39,7 @@ def demo_basic_buildability() -> None:
     print(f"Overall quality score: {result.overall_quality_score:.1f}/100")
 
     if result.largest_zone:
-        print(f"\nLargest zone:")
+        print("\nLargest zone:")
         print(
             f"  - Area: {result.largest_zone.area_sqm:.1f} sq m "
             f"({result.largest_zone.area_acres:.2f} acres)"
@@ -78,7 +78,7 @@ def demo_custom_thresholds() -> None:
     print(f"  good_slope_max: {strict_thresholds.good_slope_max}%")
     print(f"  difficult_slope_max: {strict_thresholds.difficult_slope_max}%")
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(
         f"  Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
         f"({result.buildable_percentage:.1f}%)"
@@ -117,8 +117,8 @@ def demo_elevation_constraints() -> None:
 
     result = analyze_buildability(slope, elevation, cell_size=1.0, thresholds=flood_thresholds)
 
-    print(f"\nElevation constraint: min_elevation = 100m")
-    print(f"\nResults:")
+    print("\nElevation constraint: min_elevation = 100m")
+    print("\nResults:")
     print(
         f"  Buildable area: {result.total_buildable_area_sqm:.1f} sq m "
         f"({result.buildable_percentage:.1f}%)"
@@ -126,7 +126,7 @@ def demo_elevation_constraints() -> None:
     print(f"  Number of zones: {result.num_zones}")
 
     if result.largest_zone:
-        print(f"\nLargest buildable zone:")
+        print("\nLargest buildable zone:")
         print(f"  - Area: {result.largest_zone.area_sqm:.1f} sq m")
         print(
             f"  - Elevation range: {result.largest_zone.min_elevation:.1f}m - "
@@ -152,9 +152,9 @@ def demo_with_transform() -> None:
 
     result = analyze_buildability(slope, elevation, cell_size=10.0, transform=transform)
 
-    print(f"\nProperty bounds: 0-500m x 0-500m")
-    print(f"Resolution: 10m")
-    print(f"\nResults:")
+    print("\nProperty bounds: 0-500m x 0-500m")
+    print("Resolution: 10m")
+    print("\nResults:")
     print(
         f"  Total buildable: {result.total_buildable_area_sqm:.1f} sq m "
         f"({result.total_buildable_area_acres:.2f} acres)"
@@ -163,7 +163,7 @@ def demo_with_transform() -> None:
 
     if result.largest_zone:
         cx, cy = result.largest_zone.centroid
-        print(f"\nLargest zone centroid (georeferenced):")
+        print("\nLargest zone centroid (georeferenced):")
         print(f"  - Easting: {cx:.1f}m")
         print(f"  - Northing: {cy:.1f}m")
         print(f"  - Geometry type: {result.largest_zone.geometry.geom_type}")

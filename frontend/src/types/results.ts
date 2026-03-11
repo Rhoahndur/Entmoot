@@ -210,7 +210,6 @@ export const ExportFormat = {
   KMZ: "kmz",
   GEOJSON: "geojson",
   DXF: "dxf",
-  PNG: "png",
 } as const;
 
 export type ExportFormat = (typeof ExportFormat)[keyof typeof ExportFormat];
