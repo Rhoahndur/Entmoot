@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
@@ -520,7 +520,25 @@ async def validate_placement(
 
 @router.get(
     "/{project_id}/alternatives/{alternative_id}/export/{export_format}",
+    response_class=Response,
     responses={
+        200: {
+            "description": "Exported file",
+            "content": {
+                "application/vnd.google-earth.kmz": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+                "application/geo+json": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+                "application/dxf": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+                "application/pdf": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+            },
+        },
         404: {"model": ErrorResponse, "description": "Project not found"},
         400: {"model": ErrorResponse, "description": "Invalid format"},
     },
@@ -531,7 +549,7 @@ async def export_layout(
     project_id: str,
     alternative_id: str,
     export_format: str,
-) -> Any:
+) -> Response:
     """
     Export layout in specified format.
 
@@ -579,7 +597,7 @@ async def export_layout(
             ).model_dump(mode="json"),
         )
 
-    project_name = project.get("name", "Untitled")
+    project_name = project.get("project_name", "") or project.get("name", "Untitled")
     boundary_coords = project.get("property_boundary", [])
     site_boundary = None
     if boundary_coords:

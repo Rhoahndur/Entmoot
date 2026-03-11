@@ -401,6 +401,7 @@ def run_optimization_sync(  # noqa: C901
                     )
                 )
             finally:
+                usgs_loop.run_until_complete(usgs_client.close())
                 usgs_loop.close()
 
             if tile_metadata:
@@ -506,6 +507,7 @@ def run_optimization_sync(  # noqa: C901
                     fema_client.query_by_bbox(min_lon, min_lat, max_lon, max_lat)
                 )
             finally:
+                fema_loop.run_until_complete(fema_client.close())
                 fema_loop.close()
 
             def fema_transform_coords(x: Any, y: Any, z: Any = None) -> tuple:
@@ -731,10 +733,18 @@ def run_optimization_sync(  # noqa: C901
             seed_assets = []
             for asset_data_item, asset in zip(current_assets, assets):
                 asset_copy = asset.model_copy(deep=True)
-                asset_copy.set_position(
-                    asset_data_item.get("position", {}).get("longitude", asset.position[0]),
-                    asset_data_item.get("position", {}).get("latitude", asset.position[1]),
-                )
+                pos = asset_data_item.get("position", {})
+                lon = pos.get("longitude", asset.position[0])
+                lat = pos.get("latitude", asset.position[1])
+
+                # Project WGS84 lon/lat to the same projected CRS used
+                # for site_boundary and constraints
+                if transformer is not None:
+                    proj_x, proj_y = transformer.transform(lon, lat)
+                    asset_copy.set_position(proj_x, proj_y)
+                else:
+                    asset_copy.set_position(lon, lat)
+
                 asset_copy.set_rotation(asset_data_item.get("rotation", 0))
                 seed_assets.append(asset_copy)
 

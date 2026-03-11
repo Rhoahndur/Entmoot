@@ -508,15 +508,20 @@ class USGSClient:
             logger.info(f"No DEM tiles available for ({lon}, {lat})")
             return None
 
-        # Find download URL (prefer GeoTIFF)
+        # Find download URL (prefer GeoTIFF, skip zip archives)
         download_url = None
         for item in items:
             urls = item.get("urls", {})
             candidate = urls.get("downloadURL") or urls.get("url")
-            if candidate and candidate.endswith((".tif", ".img", ".zip")):
+            if not candidate:
+                continue
+            if candidate.endswith(".zip"):
+                logger.warning(f"Skipping zip archive for tile ({lon}, {lat}): {candidate}")
+                continue
+            if candidate.endswith((".tif", ".img")):
                 download_url = candidate
                 break
-            if candidate:
+            if download_url is None:
                 download_url = candidate
 
         if not download_url:

@@ -386,12 +386,24 @@ paths:
           title: Export Format
       responses:
         '200':
-          description: Successful Response
+          description: Exported file
           content:
-            application/json:
+            application/vnd.google-earth.kmz:
               schema:
-                title: Response Export Layout Api V1 Projects  Project Id  Alternatives  Alternative
-                  Id  Export  Export Format  Get
+                type: string
+                format: binary
+            application/geo+json:
+              schema:
+                type: string
+                format: binary
+            application/dxf:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
         '404':
           description: Project not found
           content:

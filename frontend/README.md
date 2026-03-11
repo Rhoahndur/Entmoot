@@ -46,7 +46,7 @@ frontend/
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20.19+ or 22.12+ and npm (required by Vite 7)
 - Backend API running on http://localhost:8000 (configurable)
 
 ### Installation
@@ -107,6 +107,7 @@ The frontend integrates with the Entmoot backend API:
 - `POST /api/v1/projects/{id}/validate-placement` - Validate asset placement (drag-and-drop)
 - `POST /api/v1/projects/{id}/reoptimize` - Re-run optimization with updated config
 - `PUT /api/v1/projects/{id}/alternatives/{alt}/` - Save edited layout
+- `GET /api/v1/projects/{id}/alternatives/{alt}/export/{format}` - Export layout (kmz, geojson, dxf, pdf)
 
 ## Features in Detail
 
@@ -152,5 +153,4 @@ The frontend integrates with the Entmoot backend API:
 ## Next Steps
 
 - Implement configuration preset save/load functionality
-- Wire in export endpoint (backend classes exist, API returns 501)
 - Implement WebSocket connection for real-time processing updates

@@ -708,10 +708,10 @@ class ProjectService:
             ConstraintViolation(
                 asset_id=asset_id,
                 constraint_type=ConstraintType.SETBACK,
-                severity="warning",
+                severity="error",
                 message=(
-                    "Boundary and buildable-area checks are unavailable; "
-                    "only overlap checks are performed"
+                    "UTM projection data unavailable — boundary and buildable-area "
+                    "checks could not run; placement cannot be validated"
                 ),
                 location=None,
             )

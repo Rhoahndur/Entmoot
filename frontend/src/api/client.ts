@@ -287,10 +287,12 @@ export const validatePlacement = async (
     width: number;
     length: number;
   },
+  signal?: AbortSignal,
 ): Promise<{ violations: ConstraintViolation[]; is_valid: boolean }> => {
   const response = await apiClient.post(
     `${API_V1_PREFIX}/projects/${projectId}/validate-placement`,
     params,
+    { signal },
   );
   return response.data;
 };
