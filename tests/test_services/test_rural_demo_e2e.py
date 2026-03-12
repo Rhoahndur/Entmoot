@@ -4,11 +4,11 @@ Runs the full optimization pipeline and verifies zero constraint violations
 are reported to the user.
 """
 
+import asyncio
 import uuid
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
 
 from entmoot.core.redis_storage import get_storage
 from entmoot.core.storage import storage_service
@@ -30,24 +30,17 @@ FIXTURE_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 @pytest.fixture()
 def upload_id():
     """Save rural_demo.kml into StorageService and return its upload_id."""
-    import asyncio
-
     kml_path = FIXTURE_DIR / "rural_demo.kml"
     content = kml_path.read_bytes()
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        metadata = loop.run_until_complete(
-            storage_service.save_file(
-                file_content=content,
-                filename="rural_demo.kml",
-                content_type="application/vnd.google-earth.kml+xml",
-                file_type="kml",
-            )
+    metadata = asyncio.run(
+        storage_service.save_file(
+            file_content=content,
+            filename="rural_demo.kml",
+            content_type="application/vnd.google-earth.kml+xml",
+            file_type="kml",
         )
-    finally:
-        loop.close()
+    )
 
     return str(metadata.upload_id)
 
@@ -101,19 +94,27 @@ def rural_demo_project(upload_id):
 def test_rural_demo_zero_violations(rural_demo_project):
     """Full pipeline: parse, optimize, build results, assert zero violations.
 
-    Catches the double-counting bug where _check_constraint_zones ran
-    on top of UTM-based checks, producing phantom setback violations.
+    Runs the GA once and checks both raw GA validity and the results
+    endpoint's violation report.  Catches the double-counting bug where
+    _check_constraint_zones ran on top of UTM-based checks, producing
+    phantom setback violations.
     """
     storage, project_id, config = rural_demo_project
 
-    # Run the optimizer synchronously
+    # Run the optimizer synchronously (single invocation for all assertions)
     layout_results: LayoutResults = run_optimization_sync(project_id, config)
 
-    # GA itself should report a valid solution
+    # --- GA-level checks ---
     assert layout_results.constraints_satisfied, (
-        f"GA produced an invalid solution " f"(fitness_score={layout_results.fitness_score:.2f})"
+        "GA should produce a valid solution for a 40-acre rural parcel "
+        f"with only 3 buildings (fitness_score={layout_results.fitness_score:.2f})"
     )
+    assert layout_results.fitness_score > 0, (
+        f"Fitness should be positive for valid solution, " f"got {layout_results.fitness_score}"
+    )
+    assert len(layout_results.placed_assets) == 3
 
+    # --- Results-endpoint checks ---
     # Persist results (as the async wrapper does)
     storage.set_results(project_id, layout_results.model_dump())
 
@@ -134,18 +135,3 @@ def test_rural_demo_zero_violations(rural_demo_project):
         pytest.fail(f"Expected 0 violations but got {len(alt.violations)}:\n{detail}")
 
     assert alt.metrics.constraint_violations == 0
-
-
-def test_rural_demo_ga_solution_is_valid(rural_demo_project):
-    """Verify the GA converges to a violation-free solution for rural_demo."""
-    _storage, project_id, config = rural_demo_project
-
-    layout_results = run_optimization_sync(project_id, config)
-
-    assert layout_results.constraints_satisfied, (
-        "GA should produce a valid solution for a 40-acre rural parcel " "with only 3 buildings"
-    )
-    assert layout_results.fitness_score > 0, (
-        f"Fitness should be positive for valid solution, " f"got {layout_results.fitness_score}"
-    )
-    assert len(layout_results.placed_assets) == 3
