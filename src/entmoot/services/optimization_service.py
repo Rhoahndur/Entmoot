@@ -762,7 +762,9 @@ def run_optimization_sync(  # noqa: C901
 
     logger.info(
         f"Optimization completed: {result.generations_run} generations, "
-        f"best fitness: {result.best_solution.fitness:.2f}"
+        f"best fitness: {result.best_solution.fitness:.2f}, "
+        f"violations: {result.best_solution.constraint_violations}, "
+        f"is_valid: {result.best_solution.is_valid}"
     )
 
     _update_progress(project_id, 80)

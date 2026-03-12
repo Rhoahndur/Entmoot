@@ -215,8 +215,11 @@ class ProjectService:
                 asset_polys, property_boundary_coords, violations
             )
 
-        # ----- Zone checks always run (even after UTM) -----
-        if constraint_zones:
+        # ----- Zone checks only when UTM was unavailable -----
+        # UTM-based checks already cover buildable area (setback) and exclusion
+        # zones with metre-accuracy, so running WGS84 zone checks on top would
+        # double-count the same violations.
+        if not utm_succeeded and constraint_zones:
             ProjectService._check_constraint_zones(asset_polys, constraint_zones, violations)
 
         logger.info(f"Detected {len(violations)} constraint violations")
