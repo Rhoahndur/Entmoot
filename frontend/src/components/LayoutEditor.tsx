@@ -3,12 +3,12 @@
  * Supports drag-and-drop, rotation, deletion, and undo/redo
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import type {
   PlacedAsset,
   ConstraintViolation,
   EditOperation,
-} from '../types/results';
+} from "../types/results";
 
 interface LayoutEditorProps {
   assets: PlacedAsset[];
@@ -88,7 +88,7 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
     const updatedAssets = assets.map((asset) =>
       asset.id === selectedAssetId
         ? { ...asset, rotation: targetRotation }
-        : asset
+        : asset,
     );
 
     onAssetsChange(updatedAssets);
@@ -110,13 +110,15 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
 
     const operation = editHistory[historyIndex];
     const updatedAssets = [...assets];
-    const assetIndex = updatedAssets.findIndex((a) => a.id === operation.assetId);
+    const assetIndex = updatedAssets.findIndex(
+      (a) => a.id === operation.assetId,
+    );
 
     if (assetIndex === -1) return;
 
     switch (operation.type) {
-      case 'move_asset':
-      case 'rotate_asset':
+      case "move_asset":
+      case "rotate_asset":
         if (operation.before) {
           updatedAssets[assetIndex] = {
             ...updatedAssets[assetIndex],
@@ -124,13 +126,13 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
           };
         }
         break;
-      case 'delete_asset':
+      case "delete_asset":
         // Re-add the deleted asset
         if (operation.before) {
           updatedAssets.push(operation.before as PlacedAsset);
         }
         break;
-      case 'add_asset':
+      case "add_asset":
         // Remove the added asset
         updatedAssets.splice(assetIndex, 1);
         break;
@@ -146,11 +148,13 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
 
     const operation = editHistory[historyIndex + 1];
     const updatedAssets = [...assets];
-    const assetIndex = updatedAssets.findIndex((a) => a.id === operation.assetId);
+    const assetIndex = updatedAssets.findIndex(
+      (a) => a.id === operation.assetId,
+    );
 
     switch (operation.type) {
-      case 'move_asset':
-      case 'rotate_asset':
+      case "move_asset":
+      case "rotate_asset":
         if (assetIndex !== -1 && operation.after) {
           updatedAssets[assetIndex] = {
             ...updatedAssets[assetIndex],
@@ -158,12 +162,12 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
           };
         }
         break;
-      case 'delete_asset':
+      case "delete_asset":
         if (assetIndex !== -1) {
           updatedAssets.splice(assetIndex, 1);
         }
         break;
-      case 'add_asset':
+      case "add_asset":
         if (operation.after) {
           updatedAssets.push(operation.after as PlacedAsset);
         }
@@ -179,16 +183,17 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
     if (!selectedAsset) return;
 
     const newRotation = (selectedAsset.rotation + degrees) % 360;
-    const normalizedRotation = newRotation < 0 ? newRotation + 360 : newRotation;
+    const normalizedRotation =
+      newRotation < 0 ? newRotation + 360 : newRotation;
 
     const updatedAssets = assets.map((asset) =>
       asset.id === selectedAssetId
         ? { ...asset, rotation: normalizedRotation }
-        : asset
+        : asset,
     );
 
     addToHistory({
-      type: 'rotate_asset',
+      type: "rotate_asset",
       assetId: selectedAssetId!,
       before: { rotation: selectedAsset.rotation },
       after: { rotation: normalizedRotation },
@@ -205,7 +210,7 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
     const updatedAssets = assets.filter((a) => a.id !== selectedAssetId);
 
     addToHistory({
-      type: 'delete_asset',
+      type: "delete_asset",
       assetId: selectedAssetId!,
       before: { ...selectedAsset },
       timestamp: Date.now(),
@@ -311,7 +316,8 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
             <span>Redo</span>
           </button>
           <span className="text-xs text-gray-500 ml-2">
-            {editHistory.length > 0 && `${historyIndex + 1}/${editHistory.length} operations`}
+            {editHistory.length > 0 &&
+              `${historyIndex + 1}/${editHistory.length} operations`}
           </span>
         </div>
 
@@ -332,16 +338,21 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
               {/* Asset Info */}
               <div className="text-sm space-y-1">
                 <p className="text-gray-700">
-                  <span className="font-medium">Type:</span>{' '}
-                  <span className="capitalize">{selectedAsset.type.replace('_', ' ')}</span>
+                  <span className="font-medium">Type:</span>{" "}
+                  <span className="capitalize">
+                    {selectedAsset.type.replace("_", " ")}
+                  </span>
                 </p>
                 <p className="text-gray-700">
-                  <span className="font-medium">Size:</span> {selectedAsset.width.toFixed(1)}' ×{' '}
+                  <span className="font-medium">Size:</span>{" "}
+                  {selectedAsset.width.toFixed(1)}' ×{" "}
                   {selectedAsset.length.toFixed(1)}'
-                  {selectedAsset.height && ` × ${selectedAsset.height.toFixed(1)}'`}
+                  {selectedAsset.height &&
+                    ` × ${selectedAsset.height.toFixed(1)}'`}
                 </p>
                 <p className="text-gray-700">
-                  <span className="font-medium">Rotation:</span> {selectedAsset.rotation.toFixed(1)}°
+                  <span className="font-medium">Rotation:</span>{" "}
+                  {selectedAsset.rotation.toFixed(1)}°
                 </p>
               </div>
 
@@ -375,11 +386,14 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
                     }}
                     onInput={(e) => {
                       // Update ref and schedule RAF update (throttled to 60fps)
-                      const newRotation = parseFloat((e.target as HTMLInputElement).value);
+                      const newRotation = parseFloat(
+                        (e.target as HTMLInputElement).value,
+                      );
                       sliderRotationRef.current = newRotation;
 
                       if (rotationFrameRef.current === null) {
-                        rotationFrameRef.current = requestAnimationFrame(applySliderRotation);
+                        rotationFrameRef.current =
+                          requestAnimationFrame(applySliderRotation);
                       }
                     }}
                     onMouseUp={() => {
@@ -388,7 +402,7 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
                         const finalRotation = selectedAsset.rotation;
                         if (startRotationRef.current !== finalRotation) {
                           addToHistory({
-                            type: 'rotate_asset',
+                            type: "rotate_asset",
                             assetId: selectedAssetId!,
                             before: { rotation: startRotationRef.current },
                             after: { rotation: finalRotation },
@@ -432,10 +446,15 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
                   </h5>
                   <ul className="space-y-1">
                     {assetViolations.map((violation, index) => (
-                      <li key={index} className="text-xs text-red-700 flex items-start">
+                      <li
+                        key={index}
+                        className="text-xs text-red-700 flex items-start"
+                      >
                         <span
                           className={`inline-block w-1.5 h-1.5 rounded-full mt-1 mr-2 ${
-                            violation.severity === 'error' ? 'bg-red-600' : 'bg-yellow-600'
+                            violation.severity === "error"
+                              ? "bg-red-600"
+                              : "bg-yellow-600"
                           }`}
                         />
                         <span>{violation.message}</span>
@@ -463,7 +482,9 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {violations.map((violation, index) => (
                 <div key={index} className="text-xs text-orange-700">
-                  <span className="font-medium">Asset {violation.asset_id.substring(0, 8)}:</span>{' '}
+                  <span className="font-medium">
+                    Asset {violation.asset_id.substring(0, 8)}:
+                  </span>{" "}
                   {violation.message}
                 </div>
               ))}
@@ -505,13 +526,15 @@ export const LayoutEditor: React.FC<LayoutEditorProps> = ({
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-gray-50 rounded p-2">
             <p className="text-gray-600">Total Assets</p>
-            <p className="text-lg font-semibold text-gray-900">{assets.length}</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {assets.length}
+            </p>
           </div>
           <div className="bg-gray-50 rounded p-2">
             <p className="text-gray-600">Violations</p>
             <p
               className={`text-lg font-semibold ${
-                violations.length === 0 ? 'text-green-600' : 'text-red-600'
+                violations.length === 0 ? "text-green-600" : "text-red-600"
               }`}
             >
               {violations.length}

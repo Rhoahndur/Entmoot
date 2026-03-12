@@ -10,27 +10,24 @@ Provides functionality for:
 
 import logging
 from typing import Optional, Tuple, Union
+
 import numpy as np
-from scipy import ndimage, interpolate
-from shapely.geometry import Polygon, box
 from pyproj import CRS, Transformer
+from scipy import interpolate, ndimage
+from shapely.geometry import Polygon, box
 
 try:
     import rasterio
     from rasterio.transform import from_bounds
-    from rasterio.warp import reproject, Resampling as RioResampling
+    from rasterio.warp import Resampling as RioResampling
+    from rasterio.warp import reproject
 
     RASTERIO_AVAILABLE = True
 except ImportError:
     RASTERIO_AVAILABLE = False
 
-from entmoot.models.terrain import (
-    DEMData,
-    DEMMetadata,
-    ResamplingMethod,
-    InterpolationMethod,
-)
 from entmoot.core.errors import ParseError, ValidationError
+from entmoot.models.terrain import DEMData, DEMMetadata, InterpolationMethod, ResamplingMethod
 
 logger = logging.getLogger(__name__)
 

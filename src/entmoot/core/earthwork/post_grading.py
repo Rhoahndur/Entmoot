@@ -9,24 +9,25 @@ Generates target elevations for asset footprints including:
 """
 
 import logging
-from typing import List, Optional, Tuple, Any
+from typing import Any, List, Optional, Tuple
+
 import numpy as np
 from numpy.typing import NDArray
 
 try:
     import rasterio
-    from rasterio.transform import Affine
     from rasterio.features import rasterize
-    from shapely.geometry import Point, LineString, Polygon
+    from rasterio.transform import Affine
+    from shapely.geometry import LineString, Point, Polygon
     from shapely.ops import nearest_points
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError:
     DEPENDENCIES_AVAILABLE = False
 
+from entmoot.core.errors import ValidationError
 from entmoot.models.earthwork import GradingZone, GradingZoneType
 from entmoot.models.terrain import DEMMetadata
-from entmoot.core.errors import ValidationError
 
 logger = logging.getLogger(__name__)
 

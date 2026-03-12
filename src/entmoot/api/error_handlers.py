@@ -17,8 +17,8 @@ from pydantic import ValidationError as PydanticValidationError
 from entmoot.core.config import settings
 from entmoot.core.errors import (
     APIError,
-    CRSError,
     ConfigurationError,
+    CRSError,
     EntmootException,
     GeometryError,
     ParseError,

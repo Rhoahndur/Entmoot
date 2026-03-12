@@ -6,16 +6,10 @@ assets on a property while respecting constraints and optimizing objectives.
 """
 
 from entmoot.core.optimization.problem import (
-    OptimizationObjective,
     ObjectiveWeights,
     OptimizationConstraints,
+    OptimizationObjective,
     PlacementSolution,
-)
-from entmoot.core.optimization.collision import (
-    CollisionDetector,
-    ValidationResult,
-    Violation,
-    ViolationType,
 )
 
 __all__ = [
@@ -23,8 +17,4 @@ __all__ = [
     "ObjectiveWeights",
     "OptimizationConstraints",
     "PlacementSolution",
-    "CollisionDetector",
-    "ValidationResult",
-    "Violation",
-    "ViolationType",
 ]

@@ -13,12 +13,13 @@ from pathlib import Path
 # Ensure src/ is importable when running the script directly
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from entmoot.api.main import app
 
 
 def main() -> None:
+    """Generate the OpenAPI schema YAML file."""
     parser = argparse.ArgumentParser(description="Generate OpenAPI schema")
     parser.add_argument(
         "--check",

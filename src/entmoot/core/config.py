@@ -1,6 +1,4 @@
-"""
-Configuration settings for the Entmoot application.
-"""
+"""Configuration settings for the Entmoot application."""
 
 from pathlib import Path
 from typing import Literal

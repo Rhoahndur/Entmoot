@@ -2,15 +2,25 @@
  * API client using Axios
  */
 
-import axios, { AxiosError, type AxiosInstance } from 'axios';
-import type { ErrorResponse, HealthResponse, UploadResponse } from '../types/api';
-import type { OptimizationResults, PlacedAsset, ExportFormat } from '../types/results';
-import type { ProjectConfig } from '../types/config';
+import axios, { AxiosError, type AxiosInstance } from "axios";
+import type {
+  ErrorResponse,
+  HealthResponse,
+  UploadResponse,
+} from "../types/api";
+import type {
+  OptimizationResults,
+  PlacedAsset,
+  ExportFormat,
+  ConstraintViolation,
+} from "../types/results";
+import type { ProjectConfig } from "../types/config";
 
 // API base URL - can be configured via environment variable
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const API_V1_PREFIX = '/api/v1';
-const API_KEY = import.meta.env.VITE_API_KEY || '';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_V1_PREFIX = "/api/v1";
+const API_KEY = import.meta.env.VITE_API_KEY || "";
 
 /**
  * Create configured Axios instance
@@ -20,7 +30,7 @@ const createApiClient = (): AxiosInstance => {
     baseURL: API_BASE_URL,
     timeout: 30000, // 30 seconds
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
@@ -28,13 +38,13 @@ const createApiClient = (): AxiosInstance => {
   client.interceptors.request.use(
     (config) => {
       if (API_KEY) {
-        config.headers['X-API-Key'] = API_KEY;
+        config.headers["X-API-Key"] = API_KEY;
       }
       return config;
     },
     (error) => {
       return Promise.reject(error);
-    }
+    },
   );
 
   // Response interceptor for error handling
@@ -43,22 +53,21 @@ const createApiClient = (): AxiosInstance => {
       return response;
     },
     (error: AxiosError<ErrorResponse>) => {
-
       // Transform error to consistent format
       if (error.response?.data) {
         throw new ApiError(
-          error.response.data.message || 'An error occurred',
+          error.response.data.message || "An error occurred",
           error.response.status,
           error.response.data.error_code,
-          error.response.data.details
+          error.response.data.details,
         );
       }
 
       throw new ApiError(
-        error.message || 'Network error occurred',
-        error.response?.status || 0
+        error.message || "Network error occurred",
+        error.response?.status || 0,
       );
-    }
+    },
   );
 
   return client;
@@ -76,10 +85,10 @@ export class ApiError extends Error {
     message: string,
     status: number,
     code?: string,
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.details = details;
@@ -94,16 +103,16 @@ const apiClient = createApiClient();
  */
 export const uploadFile = async (file: File): Promise<UploadResponse> => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   const response = await apiClient.post<UploadResponse>(
     `${API_V1_PREFIX}/upload`,
     formData,
     {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
-    }
+    },
   );
 
   return response.data;
@@ -114,25 +123,27 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
  */
 export const uploadFileWithProgress = async (
   file: File,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<UploadResponse> => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   const response = await apiClient.post<UploadResponse>(
     `${API_V1_PREFIX}/upload`,
     formData,
     {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total && onProgress) {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
           onProgress(progress);
         }
       },
-    }
+    },
   );
 
   return response.data;
@@ -142,7 +153,7 @@ export const uploadFileWithProgress = async (
  * Check API health
  */
 export const checkHealth = async (): Promise<HealthResponse> => {
-  const response = await apiClient.get<HealthResponse>('/health');
+  const response = await apiClient.get<HealthResponse>("/health");
   return response.data;
 };
 
@@ -150,31 +161,34 @@ export const checkHealth = async (): Promise<HealthResponse> => {
  * Check upload service health
  */
 export const checkUploadHealth = async (): Promise<HealthResponse> => {
-  const response = await apiClient.get<HealthResponse>(`${API_V1_PREFIX}/upload/health`);
+  const response = await apiClient.get<HealthResponse>(
+    `${API_V1_PREFIX}/upload/health`,
+  );
   return response.data;
 };
 
 /**
  * Submit project configuration and start optimization
  */
-export const submitProjectConfig = async (config: ProjectConfig): Promise<{
+export const submitProjectConfig = async (
+  config: ProjectConfig,
+): Promise<{
   project_id: string;
   project_name: string;
   status: string;
   created_at: string;
   message: string;
 }> => {
-  const response = await apiClient.post(
-    `${API_V1_PREFIX}/projects`,
-    config
-  );
+  const response = await apiClient.post(`${API_V1_PREFIX}/projects`, config);
   return response.data;
 };
 
 /**
  * Check project status
  */
-export const checkProjectStatus = async (projectId: string): Promise<{
+export const checkProjectStatus = async (
+  projectId: string,
+): Promise<{
   project_id: string;
   status: string;
   progress: number;
@@ -182,7 +196,7 @@ export const checkProjectStatus = async (projectId: string): Promise<{
   error?: string;
 }> => {
   const response = await apiClient.get(
-    `${API_V1_PREFIX}/projects/${projectId}/status`
+    `${API_V1_PREFIX}/projects/${projectId}/status`,
   );
   return response.data;
 };
@@ -190,9 +204,11 @@ export const checkProjectStatus = async (projectId: string): Promise<{
 /**
  * Get optimization results for a project
  */
-export const getOptimizationResults = async (projectId: string): Promise<OptimizationResults> => {
+export const getOptimizationResults = async (
+  projectId: string,
+): Promise<OptimizationResults> => {
   const response = await apiClient.get<OptimizationResults>(
-    `${API_V1_PREFIX}/projects/${projectId}/results`
+    `${API_V1_PREFIX}/projects/${projectId}/results`,
   );
   return response.data;
 };
@@ -203,11 +219,11 @@ export const getOptimizationResults = async (projectId: string): Promise<Optimiz
 export const saveLayout = async (
   projectId: string,
   alternativeId: string,
-  assets: PlacedAsset[]
+  assets: PlacedAsset[],
 ): Promise<{ success: boolean }> => {
   const response = await apiClient.put<{ success: boolean }>(
     `${API_V1_PREFIX}/projects/${projectId}/alternatives/${alternativeId}`,
-    { assets }
+    { assets },
   );
   return response.data;
 };
@@ -217,7 +233,7 @@ export const saveLayout = async (
  */
 export const reoptimizeLayout = async (
   projectId: string,
-  config?: Partial<ProjectConfig>
+  config?: Partial<ProjectConfig>,
 ): Promise<{
   project_id: string;
   project_name: string;
@@ -227,7 +243,7 @@ export const reoptimizeLayout = async (
 }> => {
   const response = await apiClient.post(
     `${API_V1_PREFIX}/projects/${projectId}/reoptimize`,
-    config || {}
+    config || {},
   );
   return response.data;
 };
@@ -238,13 +254,13 @@ export const reoptimizeLayout = async (
 export const exportLayout = async (
   projectId: string,
   alternativeId: string,
-  format: ExportFormat
+  format: ExportFormat,
 ): Promise<Blob> => {
   const response = await apiClient.get(
     `${API_V1_PREFIX}/projects/${projectId}/alternatives/${alternativeId}/export/${format}`,
     {
-      responseType: 'blob',
-    }
+      responseType: "blob",
+    },
   );
   return response.data;
 };
@@ -252,17 +268,31 @@ export const exportLayout = async (
 /**
  * Get list of all projects
  */
-export const getProjects = async (): Promise<Array<{ id: string; name: string; created_at: string }>> => {
+export const getProjects = async (): Promise<
+  Array<{ id: string; name: string; created_at: string }>
+> => {
   const response = await apiClient.get(`${API_V1_PREFIX}/projects`);
   return response.data;
 };
 
 /**
- * Delete a project
+ * Validate a single asset placement against project constraints
  */
-export const deleteProject = async (projectId: string): Promise<{ success: boolean }> => {
-  const response = await apiClient.delete<{ success: boolean }>(
-    `${API_V1_PREFIX}/projects/${projectId}`
+export const validatePlacement = async (
+  projectId: string,
+  params: {
+    asset_id: string;
+    position: { lat: number; lng: number };
+    rotation: number;
+    width: number;
+    length: number;
+  },
+  signal?: AbortSignal,
+): Promise<{ violations: ConstraintViolation[]; is_valid: boolean }> => {
+  const response = await apiClient.post(
+    `${API_V1_PREFIX}/projects/${projectId}/validate-placement`,
+    params,
+    { signal },
   );
   return response.data;
 };

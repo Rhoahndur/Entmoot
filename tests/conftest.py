@@ -1,6 +1,4 @@
-"""
-Shared test fixtures and configuration.
-"""
+"""Shared test fixtures and configuration."""
 
 import zipfile
 from pathlib import Path

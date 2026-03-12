@@ -1,5 +1,5 @@
 """
-Earthwork Volume Calculation Demo
+Earthwork Volume Calculation Demo.
 
 Demonstrates the complete earthwork analysis workflow:
 1. Load existing terrain (pre-grading)
@@ -9,23 +9,32 @@ Demonstrates the complete earthwork analysis workflow:
 5. Generate visualizations
 """
 
-import numpy as np
 from pathlib import Path
 
-from entmoot.core.earthwork import PreGradingModel, PostGradingModel, VolumeCalculator
-from entmoot.models.terrain import DEMData, DEMMetadata, ElevationUnit
-from entmoot.models.earthwork import SoilType, SoilProperties, CostDatabase
+import numpy as np
 from pyproj import CRS
 
+from entmoot.core.earthwork import PostGradingModel, PreGradingModel, VolumeCalculator
+from entmoot.models.earthwork import (
+    BalancingResult,
+    CostDatabase,
+    EarthworkCost,
+    SoilProperties,
+    SoilType,
+    VolumeResult,
+)
+from entmoot.models.terrain import DEMData, DEMMetadata, ElevationUnit
+
 try:
-    from shapely.geometry import Polygon, LineString
+    from shapely.geometry import LineString, Polygon
+
     SHAPELY_AVAILABLE = True
 except ImportError:
     SHAPELY_AVAILABLE = False
     print("Warning: Shapely not available. Grading zone demo will be limited.")
 
 
-def create_sample_terrain():
+def create_sample_terrain() -> DEMData:
     """Create a sample sloped terrain for demonstration."""
     print("\n=== Creating Sample Terrain ===")
 
@@ -59,7 +68,7 @@ def create_sample_terrain():
     return dem_data
 
 
-def demonstrate_pre_grading(dem_data):
+def demonstrate_pre_grading(dem_data: DEMData) -> PreGradingModel:
     """Demonstrate pre-grading model."""
     print("\n=== Pre-Grading Analysis ===")
 
@@ -75,9 +84,7 @@ def demonstrate_pre_grading(dem_data):
 
     # Get elevation profile
     distance, elevation = pre_model.get_elevation_profile(
-        start=(10.0, 10.0),
-        end=(190.0, 190.0),
-        num_points=100
+        start=(10.0, 10.0), end=(190.0, 190.0), num_points=100
     )
     print(f"  Created elevation profile with {len(distance)} points")
     print(f"  Profile length: {distance[-1]:.1f} ft")
@@ -85,7 +92,7 @@ def demonstrate_pre_grading(dem_data):
     return pre_model
 
 
-def demonstrate_post_grading(dem_data):
+def demonstrate_post_grading(dem_data: DEMData) -> PostGradingModel:
     """Demonstrate post-grading model with zones."""
     print("\n=== Post-Grading Design ===")
 
@@ -102,27 +109,23 @@ def demonstrate_post_grading(dem_data):
     post_model = PostGradingModel(dem_data.metadata, base_elevation=dem_data.elevation)
 
     # Add building pad at elevation 105 ft
-    building_pad = Polygon([
-        (80, 80), (120, 80), (120, 120), (80, 120)
-    ])
+    building_pad = Polygon([(80, 80), (120, 80), (120, 120), (80, 120)])
     post_model.add_building_pad(
         geometry=building_pad,
         target_elevation=105.0,
         transition_slope=3.0,  # 3:1 slope
-        priority=10
+        priority=10,
     )
     print("  Added building pad: 40x40 meters at 105 ft")
 
     # Add road corridor
-    road_centerline = LineString([
-        (50, 100), (150, 100)
-    ])
+    road_centerline = LineString([(50, 100), (150, 100)])
     post_model.add_road_corridor(
         centerline=road_centerline,
         width=24.0,  # 24 ft wide
         crown_height=0.5,  # 0.5 ft crown
         cross_slope=2.0,  # 2% cross-slope
-        priority=8
+        priority=8,
     )
     print("  Added road corridor: 100 meters long, 24 ft wide")
 
@@ -136,7 +139,9 @@ def demonstrate_post_grading(dem_data):
     return post_model
 
 
-def calculate_volumes(pre_model, post_model):
+def calculate_volumes(
+    pre_model: PreGradingModel, post_model: PostGradingModel
+) -> tuple[VolumeCalculator, VolumeResult]:
     """Calculate earthwork volumes."""
     print("\n=== Volume Calculation ===")
 
@@ -171,7 +176,7 @@ def calculate_volumes(pre_model, post_model):
     return calculator, volume_result
 
 
-def estimate_costs(calculator, volume_result):
+def estimate_costs(calculator: VolumeCalculator, volume_result: VolumeResult) -> EarthworkCost:
     """Estimate earthwork costs."""
     print("\n=== Cost Estimation ===")
 
@@ -197,8 +202,7 @@ def estimate_costs(calculator, volume_result):
 
     # Calculate costs
     cost_result = calculator.calculate_costs(
-        volume_result,
-        average_haul_distance_miles=0.25  # 1/4 mile average haul
+        volume_result, average_haul_distance_miles=0.25  # 1/4 mile average haul
     )
 
     print("\n  Cost breakdown:")
@@ -213,7 +217,7 @@ def estimate_costs(calculator, volume_result):
     return cost_result
 
 
-def analyze_balancing(calculator):
+def analyze_balancing(calculator: VolumeCalculator) -> BalancingResult:
     """Analyze earthwork balancing."""
     print("\n=== Earthwork Balancing ===")
 
@@ -230,7 +234,7 @@ def analyze_balancing(calculator):
     return balancing
 
 
-def generate_visualizations(calculator):
+def generate_visualizations(calculator: VolumeCalculator) -> None:
     """Generate visualizations."""
     print("\n=== Generating Visualizations ===")
 
@@ -249,9 +253,7 @@ def generate_visualizations(calculator):
     try:
         png_path = output_dir / "cut_fill_heatmap.png"
         calculator.generate_heatmap(
-            str(png_path),
-            format="png",
-            color_range=(-5.0, 5.0)  # -5 to +5 feet
+            str(png_path), format="png", color_range=(-5.0, 5.0)  # -5 to +5 feet
         )
         print(f"  PNG heatmap: {png_path}")
     except ImportError as e:
@@ -259,9 +261,7 @@ def generate_visualizations(calculator):
 
     # Generate cross-section
     section = calculator.generate_cross_section(
-        start=(50.0, 50.0),
-        end=(150.0, 150.0),
-        num_points=100
+        start=(50.0, 50.0), end=(150.0, 150.0), num_points=100
     )
     print(f"\n  Cross-section generated:")
     print(f"    Length: {section.distance[-1]:.1f} ft")
@@ -270,7 +270,7 @@ def generate_visualizations(calculator):
     print(f"    Max fill: {np.nanmin(section.cut_fill):.2f} ft")
 
 
-def main():
+def main() -> None:
     """Run the earthwork demo."""
     print("=" * 70)
     print("EARTHWORK VOLUME CALCULATION DEMO")
@@ -303,7 +303,9 @@ def main():
 
     # Summary
     print("\nSUMMARY:")
-    print(f"  Total earthwork: {volume_result.cut_volume_cy + volume_result.fill_volume_cy:,.0f} CY")
+    print(
+        f"  Total earthwork: {volume_result.cut_volume_cy + volume_result.fill_volume_cy:,.0f} CY"
+    )
     print(f"  Estimated cost: ${cost_result.total_cost:,.2f}")
     print(f"  Balance status: {'BALANCED' if balancing.is_balanced else 'UNBALANCED'}")
 

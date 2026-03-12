@@ -9,21 +9,22 @@ Tests include:
 - Performance benchmarks
 """
 
-import pytest
-import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
 import time
+
+import numpy as np
+import pytest
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from entmoot.core.terrain.aspect import (
     AspectCalculator,
     CardinalDirection,
-    calculate_aspect,
     aspect_to_cardinal,
     aspect_to_cardinal_code,
-    cardinal_code_to_name,
+    calculate_aspect,
     calculate_aspect_distribution,
     calculate_solar_exposure,
     calculate_wind_exposure,
+    cardinal_code_to_name,
 )
 
 

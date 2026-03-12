@@ -45,7 +45,7 @@ class TestBoundaryIdentification:
         folder_path: list = None,
         properties: dict = None,
     ) -> Placemark:
-        """Helper to create a test polygon placemark."""
+        """Create a test polygon placemark."""
         if geometry is None:
             # Simple square polygon
             geometry = Polygon(
@@ -450,7 +450,7 @@ class TestFullExtraction:
     """Test full boundary extraction workflow."""
 
     def create_parsed_kml(self, placemarks: list) -> ParsedKML:
-        """Helper to create ParsedKML from placemark list."""
+        """Create ParsedKML from placemark list."""
         parsed = ParsedKML()
         parsed.placemarks = placemarks
         return parsed

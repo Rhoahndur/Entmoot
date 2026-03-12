@@ -10,7 +10,8 @@ Digital Elevation Models. Aspect is important for:
 """
 
 from enum import Enum
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -186,7 +187,7 @@ def calculate_aspect(
     dem: NDArray[np.floating[Any]], cell_size: float = 1.0, slope_threshold: float = 0.1
 ) -> NDArray[np.floating[Any]]:
     """
-    Convenience function to calculate aspect from a DEM.
+    Calculate aspect from a DEM.
 
     Args:
         dem: 2D numpy array representing the Digital Elevation Model

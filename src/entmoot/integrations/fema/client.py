@@ -198,7 +198,7 @@ class FEMAClient:
                     response=response,
                 )
 
-            return data
+            return dict(data)
 
         except (httpx.HTTPError, httpx.TimeoutException) as e:
             logger.warning(f"Request failed (attempt {retry_count + 1}): {e}")

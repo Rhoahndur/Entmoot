@@ -8,7 +8,7 @@ UTM (Universal Transverse Mercator) zone for given WGS84 coordinates.
 import math
 from typing import Tuple
 
-from entmoot.models.crs import CRSInfo, CoordinateOrder, DistanceUnit
+from entmoot.models.crs import CoordinateOrder, CRSInfo, DistanceUnit
 
 
 def detect_utm_zone(longitude: float, latitude: float) -> Tuple[int, bool]:

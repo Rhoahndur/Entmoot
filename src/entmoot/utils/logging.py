@@ -92,7 +92,7 @@ def log_function_call(
     redact: bool = True,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
-    Decorator to log function calls with arguments and results.
+    Log function calls with arguments and results.
 
     Args:
         log_args: Whether to log function arguments
@@ -154,7 +154,7 @@ def log_async_function_call(
     redact: bool = True,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
-    Decorator to log async function calls with arguments and results.
+    Log async function calls with arguments and results.
 
     Args:
         log_args: Whether to log function arguments
@@ -214,7 +214,7 @@ def log_performance(
     threshold_ms: Optional[float] = None,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
-    Decorator to log function execution time.
+    Log function execution time.
 
     Args:
         log_level: Logging level to use
@@ -260,7 +260,7 @@ def log_async_performance(
     threshold_ms: Optional[float] = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
-    Decorator to log async function execution time.
+    Log async function execution time.
 
     Args:
         log_level: Logging level to use

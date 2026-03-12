@@ -1,6 +1,4 @@
-"""
-File upload API endpoint.
-"""
+"""File upload API endpoint."""
 
 import logging
 from typing import Annotated

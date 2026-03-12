@@ -6,8 +6,8 @@ including metadata, elevation data, and terrain metrics.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 from pyproj import CRS

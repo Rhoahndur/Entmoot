@@ -15,7 +15,7 @@ from entmoot.core.roads.network import RoadNetwork
 from entmoot.core.roads.pathfinding import PathfinderConfig
 
 
-def main():
+def main() -> None:
     """Run road network generation demo."""
     print("=" * 60)
     print("Road Network Generation Demo")
@@ -120,12 +120,18 @@ def main():
     print(f"   Average Grade: {stats['avg_grade_pct']:.2f}%")
 
     print("\n   Road Classification:")
-    print(f"     - Primary Roads: {stats['primary_roads']['count']} "
-          f"({stats['primary_roads']['total_length_m']:.1f}m)")
-    print(f"     - Secondary Roads: {stats['secondary_roads']['count']} "
-          f"({stats['secondary_roads']['total_length_m']:.1f}m)")
-    print(f"     - Access Roads: {stats['access_roads']['count']} "
-          f"({stats['access_roads']['total_length_m']:.1f}m)")
+    print(
+        f"     - Primary Roads: {stats['primary_roads']['count']} "
+        f"({stats['primary_roads']['total_length_m']:.1f}m)"
+    )
+    print(
+        f"     - Secondary Roads: {stats['secondary_roads']['count']} "
+        f"({stats['secondary_roads']['total_length_m']:.1f}m)"
+    )
+    print(
+        f"     - Access Roads: {stats['access_roads']['count']} "
+        f"({stats['access_roads']['total_length_m']:.1f}m)"
+    )
 
     # 5. Show individual segments
     print("\n5. Road Segments:")
@@ -151,7 +157,7 @@ def main():
 
     checks = {
         "All assets accessible": len(network.segments) > 0,
-        "Grade constraints respected": stats['max_grade_pct'] <= config.max_grade_percent * 1.1,
+        "Grade constraints respected": stats["max_grade_pct"] <= config.max_grade_percent * 1.1,
         "Network optimized": success,
         "Smooth road geometry": all(
             len(s.centerline.coords) >= 2 for s in network.segments.values()

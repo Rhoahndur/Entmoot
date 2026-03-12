@@ -24,27 +24,29 @@ import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 import numpy as np
+from matplotlib.figure import Figure
 from numpy.typing import NDArray
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Image as RLImage
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    KeepTogether,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
-    Image as RLImage,
-    KeepTogether,
 )
 from reportlab.platypus.tableofcontents import TableOfContents
-from reportlab.pdfgen import canvas
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
-from shapely.geometry import Polygon as ShapelyPolygon, Point as ShapelyPoint, LineString
+from shapely.geometry import LineString
+from shapely.geometry import Point as ShapelyPoint
+from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry.base import BaseGeometry
 
 logger = logging.getLogger(__name__)
@@ -180,7 +182,7 @@ class PDFReportGenerator:
             self.styles.add(style)
 
     def _setup_custom_styles(self) -> None:
-        """Setup custom paragraph styles."""
+        """Set up custom paragraph styles."""
         # Title style
         self._add_or_update_style(
             ParagraphStyle(

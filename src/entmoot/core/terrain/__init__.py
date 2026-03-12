@@ -10,34 +10,35 @@ This module provides terrain analysis capabilities including:
 - Buildability analysis and zone identification
 """
 
-# Core slope and aspect calculation modules
-from entmoot.core.terrain.slope import (
-    SlopeCalculator,
-    SlopeMethod,
-    SlopeClassification,
-    calculate_slope,
-    classify_slope,
-)
 from entmoot.core.terrain.aspect import (
     AspectCalculator,
     CardinalDirection,
-    calculate_aspect,
     aspect_to_cardinal,
+    calculate_aspect,
 )
 from entmoot.core.terrain.buildability import (
     BuildabilityAnalyzer,
-    BuildabilityThresholds,
     BuildabilityClass,
-    BuildableZone,
     BuildabilityResult,
+    BuildabilityThresholds,
+    BuildableZone,
     analyze_buildability,
+)
+
+# Core slope and aspect calculation modules
+from entmoot.core.terrain.slope import (
+    SlopeCalculator,
+    SlopeClassification,
+    SlopeMethod,
+    calculate_slope,
+    classify_slope,
 )
 
 # Optional DEM modules (may have additional dependencies)
 try:
     from entmoot.core.terrain.dem_loader import DEMLoader
-    from entmoot.core.terrain.dem_validator import DEMValidator
     from entmoot.core.terrain.dem_processor import DEMProcessor
+    from entmoot.core.terrain.dem_validator import DEMValidator
 
     DEM_MODULES_AVAILABLE = True
 except ImportError:

@@ -2,10 +2,10 @@
  * ProjectsListPage - View and manage existing projects
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Header } from '../components/Header';
-import { getProjects } from '../api/client';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Header } from "../components/Header";
+import { getProjects } from "../api/client";
 
 interface Project {
   id: string;
@@ -31,14 +31,17 @@ export const ProjectsListPage: React.FC = () => {
         setProjects(data);
         setLoading(false);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load projects';
-        const isNetworkError = errorMessage.includes('Network') ||
-                              errorMessage.includes('timeout') ||
-                              errorMessage.includes('ECONNREFUSED');
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load projects";
+        const isNetworkError =
+          errorMessage.includes("Network") ||
+          errorMessage.includes("timeout") ||
+          errorMessage.includes("ECONNREFUSED");
 
-        setError(isNetworkError
-          ? 'Server connection lost. The server may be restarting.'
-          : errorMessage
+        setError(
+          isNetworkError
+            ? "Server connection lost. The server may be restarting."
+            : errorMessage,
         );
         setLoading(false);
       }
@@ -54,29 +57,29 @@ export const ProjectsListPage: React.FC = () => {
   };
 
   const getStatusColor = (status?: string) => {
-    if (!status) return 'bg-gray-100 text-gray-800';
+    if (!status) return "bg-gray-100 text-gray-800";
 
     switch (status.toLowerCase()) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
       return dateString;
@@ -84,9 +87,9 @@ export const ProjectsListPage: React.FC = () => {
   };
 
   const handleViewProject = (project: Project) => {
-    if (project.status === 'completed') {
+    if (project.status === "completed") {
       navigate(`/results?project_id=${project.id}`);
-    } else if (project.status === 'processing') {
+    } else if (project.status === "processing") {
       navigate(`/results?project_id=${project.id}`);
     } else {
       // For failed or other statuses, show info
@@ -110,7 +113,7 @@ export const ProjectsListPage: React.FC = () => {
                 </p>
               </div>
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
               >
                 New Project
@@ -130,7 +133,9 @@ export const ProjectsListPage: React.FC = () => {
             {error && (
               <div className="text-center py-12">
                 <div className="text-red-600 text-5xl mb-4">⚠️</div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Error Loading Projects</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  Error Loading Projects
+                </h3>
                 <p className="text-gray-600 mb-4">{error}</p>
                 <button
                   onClick={handleRetry}
@@ -144,12 +149,15 @@ export const ProjectsListPage: React.FC = () => {
             {!loading && !error && projects.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-5xl mb-4">📁</div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No Projects Yet</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  No Projects Yet
+                </h3>
                 <p className="text-gray-600 mb-6">
-                  Create your first site layout optimization project to get started.
+                  Create your first site layout optimization project to get
+                  started.
                 </p>
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate("/")}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
                 >
                   Create Project
@@ -183,16 +191,20 @@ export const ProjectsListPage: React.FC = () => {
                     {projects.map((project) => (
                       <tr key={project.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{project.name}</div>
-                          <div className="text-xs text-gray-500">{project.id}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {project.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {project.id}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                              project.status
+                              project.status,
                             )}`}
                           >
-                            {project.status || 'Pending'}
+                            {project.status || "Pending"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -203,7 +215,9 @@ export const ProjectsListPage: React.FC = () => {
                                 style={{ width: `${project.progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-sm text-gray-600">{project.progress}%</span>
+                            <span className="text-sm text-gray-600">
+                              {project.progress}%
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

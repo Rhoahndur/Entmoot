@@ -11,16 +11,17 @@ Tests cover:
 - Error handling
 """
 
-import pytest
 from pathlib import Path
-from shapely.geometry import Point, LineString, Polygon
+
+import pytest
+from shapely.geometry import LineString, Point, Polygon
 
 from entmoot.core.parsers import (
+    GeometryType,
     KMLParser,
     KMLValidator,
     ParsedKML,
     Placemark,
-    GeometryType,
     parse_kml_file,
     parse_kml_string,
     validate_kml_file,

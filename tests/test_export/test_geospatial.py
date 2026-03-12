@@ -12,18 +12,18 @@ Tests cover:
 
 import json
 import zipfile
-import pytest
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from shapely.geometry import Polygon, Point, LineString
+import pytest
+from shapely.geometry import LineString, Point, Polygon
 
 from entmoot.core.export.geospatial import (
+    DXFExporter,
     ExportData,
+    GeoJSONExporter,
     GeospatialExporter,
     KMZExporter,
-    GeoJSONExporter,
-    DXFExporter,
 )
 
 

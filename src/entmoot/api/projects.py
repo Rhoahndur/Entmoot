@@ -10,14 +10,17 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Response, status
+from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel, Field
 
 from entmoot.core.redis_storage import get_storage
 from entmoot.models.errors import ErrorResponse
 from entmoot.models.project import (
+    ConstraintViolation,
     LayoutResults,
     OptimizationResults,
+    PlacedAsset,
     ProjectConfig,
     ProjectResponse,
     ProjectStatus,
@@ -25,6 +28,31 @@ from entmoot.models.project import (
 )
 from entmoot.services.optimization_service import generate_layout_async
 from entmoot.services.project_service import ProjectService
+
+
+class LatLng(BaseModel):
+    """Geographic coordinate pair."""
+
+    lat: float
+    lng: float
+
+
+class ValidatePlacementRequest(BaseModel):
+    """Request body for single-asset placement validation."""
+
+    asset_id: str
+    position: LatLng
+    rotation: float = 0.0
+    width: float = Field(..., description="Width in feet")
+    length: float = Field(..., description="Length in feet")
+
+
+class ValidatePlacementResponse(BaseModel):
+    """Response for placement validation."""
+
+    violations: list[ConstraintViolation]
+    is_valid: bool
+
 
 logger = logging.getLogger(__name__)
 
@@ -443,31 +471,20 @@ async def get_layout_results(project_id: str) -> OptimizationResults:
     return ProjectService.build_optimization_results(project, layout_results, project_id)
 
 
-@router.get(
-    "/{project_id}/alternatives/{alternative_id}/export/{export_format}",
+@router.post(
+    "/{project_id}/validate-placement",
+    response_model=ValidatePlacementResponse,
     responses={
         404: {"model": ErrorResponse, "description": "Project not found"},
-        400: {"model": ErrorResponse, "description": "Invalid format"},
     },
-    summary="Export layout",
-    description="Export a layout alternative in the specified format",
+    summary="Validate single asset placement",
+    description="Check a single asset position against constraints (for drag-and-drop)",
 )
-async def export_layout(
+async def validate_placement(
     project_id: str,
-    alternative_id: str,
-    export_format: str,
-) -> JSONResponse:
-    """
-    Export layout in specified format.
-
-    Args:
-        project_id: Project identifier
-        alternative_id: Alternative identifier
-        export_format: Export format (pdf, dxf, kml, geojson)
-
-    Returns:
-        Export file as response
-    """
+    req: ValidatePlacementRequest,
+) -> ValidatePlacementResponse:
+    """Validate a single asset placement against project constraints."""
     project = storage.get_project(project_id)
     if not project:
         raise HTTPException(
@@ -478,11 +495,227 @@ async def export_layout(
             ).model_dump(mode="json"),
         )
 
-    # Placeholder: real implementation would delegate to export service
-    return JSONResponse(
-        content={"message": f"Export in {export_format} format is not yet implemented"},
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    results_data = storage.get_results(project_id)
+    other_assets = []
+    if results_data and results_data.get("placed_assets"):
+        other_assets = [PlacedAsset(**a) for a in results_data["placed_assets"]]
+
+    violations = ProjectService.validate_single_asset_placement(
+        asset_id=req.asset_id,
+        lat=req.position.lat,
+        lng=req.position.lng,
+        rotation=req.rotation,
+        width_ft=req.width,
+        length_ft=req.length,
+        other_assets=other_assets,
+        utm_data=project.get("utm_data"),
     )
+
+    has_errors = any(v.severity == "error" for v in violations)
+    return ValidatePlacementResponse(
+        violations=violations,
+        is_valid=not has_errors,
+    )
+
+
+@router.get(
+    "/{project_id}/alternatives/{alternative_id}/export/{export_format}",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "Exported file",
+            "content": {
+                "application/vnd.google-earth.kmz": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+                "application/geo+json": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+                "application/dxf": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+                "application/pdf": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+            },
+        },
+        404: {"model": ErrorResponse, "description": "Project not found"},
+        400: {"model": ErrorResponse, "description": "Invalid format"},
+    },
+    summary="Export layout",
+    description="Export a layout alternative in the specified format",
+)
+async def export_layout(
+    project_id: str,
+    alternative_id: str,
+    export_format: str,
+) -> Response:
+    """
+    Export layout in specified format.
+
+    Args:
+        project_id: Project identifier
+        alternative_id: Alternative identifier
+        export_format: Export format (pdf, dxf, kmz, geojson)
+
+    Returns:
+        Export file as response
+    """
+    import tempfile
+    from pathlib import Path
+
+    from shapely.geometry import LineString as ShapelyLineString
+    from shapely.geometry import Polygon as ShapelyPolygon
+
+    valid_formats = {"kmz", "geojson", "dxf", "pdf"}
+    if export_format.lower() not in valid_formats:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorResponse(
+                error_code="INVALID_FORMAT",
+                message=f"Invalid export format '{export_format}'. Must be one of: {', '.join(sorted(valid_formats))}",
+            ).model_dump(mode="json"),
+        )
+
+    project = storage.get_project(project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorResponse(
+                error_code="PROJECT_NOT_FOUND",
+                message=f"Project {project_id} not found",
+            ).model_dump(mode="json"),
+        )
+
+    results_data = storage.get_results(project_id)
+    if not results_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorResponse(
+                error_code="RESULTS_NOT_FOUND",
+                message=f"No results found for project {project_id}",
+            ).model_dump(mode="json"),
+        )
+
+    project_name = project.get("project_name", "") or project.get("name", "Untitled")
+    boundary_coords = project.get("property_boundary", [])
+    site_boundary = None
+    if boundary_coords:
+        site_boundary = ShapelyPolygon([(p["longitude"], p["latitude"]) for p in boundary_coords])
+
+    placed_assets = results_data.get("placed_assets", [])
+    road_network = results_data.get("road_network", [])
+    fmt = export_format.lower()
+
+    if fmt in ("kmz", "geojson", "dxf"):
+        from entmoot.core.export import DXFExporter, ExportData, GeoJSONExporter, KMZExporter
+
+        export_data = ExportData(
+            project_name=project_name,
+            crs_epsg=4326,
+            site_boundary=site_boundary,
+        )
+
+        for asset in placed_assets:
+            polygon_coords = asset.get("polygon", [])
+            if polygon_coords:
+                footprint = ShapelyPolygon(
+                    [(c["longitude"], c["latitude"]) for c in polygon_coords]
+                )
+                export_data.add_asset(
+                    geometry=footprint,
+                    name=asset.get("id", "asset"),
+                    asset_type=asset.get("type", "unknown"),
+                )
+
+        for seg in road_network:
+            points = seg.get("points", [])
+            if len(points) >= 2:
+                line = ShapelyLineString([(p["longitude"], p["latitude"]) for p in points])
+                export_data.add_road(
+                    geometry=line,
+                    name=seg.get("id", "road"),
+                )
+
+        suffix_map = {"kmz": ".kmz", "geojson": ".geojson", "dxf": ".dxf"}
+        media_map = {
+            "kmz": "application/vnd.google-earth.kmz",
+            "geojson": "application/geo+json",
+            "dxf": "application/dxf",
+        }
+        exporter_map = {
+            "kmz": KMZExporter(),
+            "geojson": GeoJSONExporter(),
+            "dxf": DXFExporter(),
+        }
+
+        with tempfile.NamedTemporaryFile(suffix=suffix_map[fmt], delete=False) as tmp:
+            output_path = Path(tmp.name)
+
+        exporter_map[fmt].export(export_data, output_path)
+
+        return FileResponse(
+            path=str(output_path),
+            media_type=media_map[fmt],
+            filename=f"{project_name}{suffix_map[fmt]}",
+        )
+
+    else:  # pdf
+        from entmoot.core.reports import PDFReportGenerator, ReportData
+
+        location = project.get("location", "Unknown")
+        if site_boundary is None:
+            site_boundary = ShapelyPolygon([(0, 0), (1, 0), (1, 1), (0, 1)])
+
+        report_data = ReportData(
+            project_name=project_name,
+            location=location,
+            site_boundary=site_boundary,
+        )
+
+        report_data.assets = [
+            {
+                "id": a.get("id", ""),
+                "type": a.get("type", ""),
+                "width": a.get("width", 0),
+                "length": a.get("length", 0),
+                "position": a.get("position", {}),
+            }
+            for a in placed_assets
+        ]
+
+        total_road_length = sum(s.get("length", 0) for s in road_network)
+        report_data.roads = {
+            "total_length_m": total_road_length * 0.3048,  # feet to meters
+            "segments": [
+                {
+                    "id": s.get("id", ""),
+                    "length": s.get("length", 0),
+                    "width": s.get("width", 0),
+                    "grade": s.get("grade", 0),
+                }
+                for s in road_network
+            ],
+        }
+
+        earthwork = results_data.get("earthwork", {})
+        report_data.earthwork = earthwork
+
+        report_data.costs = {
+            "total": results_data.get("total_cost", 0),
+            "earthwork": earthwork.get("estimated_cost", 0),
+        }
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            output_path = Path(tmp.name)
+
+        PDFReportGenerator().generate(report_data, output_path)
+
+        return FileResponse(
+            path=str(output_path),
+            media_type="application/pdf",
+            filename=f"{project_name}_report.pdf",
+        )
 
 
 @router.delete(

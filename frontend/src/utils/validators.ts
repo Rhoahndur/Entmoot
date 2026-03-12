@@ -2,29 +2,33 @@
  * Client-side validation utilities
  */
 
-import { FileType } from '../types/api';
+import { FileType } from "../types/api";
 
 const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
-const ALLOWED_EXTENSIONS = ['.kmz', '.kml', '.geojson', '.tif', '.tiff'];
+const ALLOWED_EXTENSIONS = [".kmz", ".kml", ".geojson", ".tif", ".tiff"];
 
 const MIME_TYPES: Record<string, string[]> = {
-  '.kmz': ['application/vnd.google-earth.kmz', 'application/zip'],
-  '.kml': ['application/vnd.google-earth.kml+xml', 'application/xml', 'text/xml'],
-  '.geojson': ['application/geo+json', 'application/json'],
-  '.tif': ['image/tiff'],
-  '.tiff': ['image/tiff'],
+  ".kmz": ["application/vnd.google-earth.kmz", "application/zip"],
+  ".kml": [
+    "application/vnd.google-earth.kml+xml",
+    "application/xml",
+    "text/xml",
+  ],
+  ".geojson": ["application/geo+json", "application/json"],
+  ".tif": ["image/tiff"],
+  ".tiff": ["image/tiff"],
 };
 
 /**
  * Validate file extension
  */
 export const validateFileExtension = (filename: string): string | null => {
-  const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+  const extension = filename.toLowerCase().substring(filename.lastIndexOf("."));
 
   if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    return `Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}`;
+    return `Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(", ")}`;
   }
 
   return null;
@@ -39,7 +43,7 @@ export const validateFileSize = (size: number): string | null => {
   }
 
   if (size === 0) {
-    return 'File is empty';
+    return "File is empty";
   }
 
   return null;
@@ -49,15 +53,17 @@ export const validateFileSize = (size: number): string | null => {
  * Validate file type matches expected MIME type
  */
 export const validateFileType = (file: File): string | null => {
-  const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+  const extension = file.name
+    .toLowerCase()
+    .substring(file.name.lastIndexOf("."));
   const expectedMimeTypes = MIME_TYPES[extension];
 
   if (!expectedMimeTypes) {
     return `Unknown file extension: ${extension}`;
   }
 
-  if (!expectedMimeTypes.includes(file.type) && file.type !== '') {
-    return `File type mismatch. Expected one of: ${expectedMimeTypes.join(', ')}, got: ${file.type}`;
+  if (!expectedMimeTypes.includes(file.type) && file.type !== "") {
+    return `File type mismatch. Expected one of: ${expectedMimeTypes.join(", ")}, got: ${file.type}`;
   }
 
   return null;
@@ -86,32 +92,32 @@ export const validateFile = (file: File): string | null => {
  * Format file size for display
  */
 export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 };
 
 /**
  * Get file icon based on extension
  */
 export const getFileIcon = (filename: string): string => {
-  const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+  const extension = filename.toLowerCase().substring(filename.lastIndexOf("."));
 
   switch (extension) {
-    case '.kmz':
-    case '.kml':
-      return '🗺️';
-    case '.geojson':
-      return '📍';
-    case '.tif':
-    case '.tiff':
-      return '🖼️';
+    case ".kmz":
+    case ".kml":
+      return "🗺️";
+    case ".geojson":
+      return "📍";
+    case ".tif":
+    case ".tiff":
+      return "🖼️";
     default:
-      return '📄';
+      return "📄";
   }
 };
 
@@ -119,7 +125,10 @@ export const getFileIcon = (filename: string): string => {
  * Extract file type from filename
  */
 export const getFileType = (filename: string): FileType | null => {
-  const extension = filename.toLowerCase().substring(filename.lastIndexOf('.')).replace('.', '');
+  const extension = filename
+    .toLowerCase()
+    .substring(filename.lastIndexOf("."))
+    .replace(".", "");
 
   if (Object.values(FileType).includes(extension as FileType)) {
     return extension as FileType;

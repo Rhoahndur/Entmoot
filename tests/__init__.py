@@ -1,3 +1,1 @@
-"""
-Test suite for Entmoot.
-"""
+"""Test suite for Entmoot."""

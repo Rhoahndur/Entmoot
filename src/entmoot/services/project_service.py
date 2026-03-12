@@ -95,7 +95,10 @@ class ProjectService:
 
         # Constraint violations (now checked against zones too)
         violations = ProjectService._detect_constraint_violations(
-            layout_results.placed_assets, property_boundary_coords, constraint_zones
+            layout_results.placed_assets,
+            property_boundary_coords,
+            constraint_zones,
+            utm_data=project.get("utm_data"),
         )
         buildable_areas = ProjectService._compute_buildable_areas(
             property_boundary_coords,
@@ -180,15 +183,52 @@ class ProjectService:
         placed_assets: list,
         property_boundary_coords: List[Dict[str, float]],
         constraint_zones: Optional[List[ConstraintZone]] = None,
+        utm_data: Optional[Dict[str, Any]] = None,
     ) -> List[ConstraintViolation]:
-        """Check every asset for overlaps, boundary breaches, and zone violations."""
+        """Check every asset for overlaps, boundary breaches, and zone violations.
+
+        When ``utm_data`` is available (stored after optimization) all geometry
+        checks are done in UTM metre-space for accuracy.  Falls back to the
+        original WGS84-degree approximation when UTM data is absent.
+        """
         violations: List[ConstraintViolation] = []
 
+        # ----- Try UTM-based checks first (accurate) -----
+        utm_succeeded = False
+        if utm_data is not None:
+            try:
+                utm_violations = ProjectService._detect_violations_utm(placed_assets, utm_data)
+                violations.extend(utm_violations)
+                utm_succeeded = True
+                logger.info(f"Detected {len(utm_violations)} constraint violations (UTM)")
+            except Exception as e:
+                logger.warning(f"UTM violation detection failed, falling back to WGS84: {e}")
+
+        # ----- Fallback: WGS84-degree overlap/boundary checks -----
         asset_polys = []
         for asset in placed_assets:
             poly = ProjectService._asset_polygon(asset)
             asset_polys.append((asset, poly))
 
+        if not utm_succeeded:
+            ProjectService._detect_violations_wgs84(
+                asset_polys, property_boundary_coords, violations
+            )
+
+        # ----- Zone checks always run (even after UTM) -----
+        if constraint_zones:
+            ProjectService._check_constraint_zones(asset_polys, constraint_zones, violations)
+
+        logger.info(f"Detected {len(violations)} constraint violations")
+        return violations
+
+    @staticmethod
+    def _detect_violations_wgs84(
+        asset_polys: list,
+        property_boundary_coords: List[Dict[str, float]],
+        violations: List[ConstraintViolation],
+    ) -> None:
+        """WGS84-degree overlap and boundary checks (fallback when UTM unavailable)."""
         for i, (asset, asset_poly) in enumerate(asset_polys):
             # Check overlaps with subsequent assets
             for j in range(i + 1, len(asset_polys)):
@@ -244,33 +284,141 @@ class ProjectService:
                 except Exception as e:
                     logger.warning(f"Could not check boundary violation: {e}")
 
-            # Check constraint zones (setback, exclusion, existing conditions)
-            if constraint_zones:
-                for zone in constraint_zones:
-                    try:
-                        zone_poly = ShapelyPolygon(
-                            [(c.longitude, c.latitude) for c in zone.polygon]
-                        )
-                        if asset_poly.intersects(zone_poly):
-                            intersection_area = asset_poly.intersection(zone_poly).area
-                            if intersection_area > 0:
-                                severity = "error" if zone.severity == "high" else "warning"
-                                violations.append(
-                                    ConstraintViolation(
-                                        asset_id=asset.id,
-                                        constraint_type=zone.type,
-                                        severity=severity,
-                                        message=(
-                                            f"Asset intersects {zone.type.value} zone"
-                                            f"{': ' + zone.description if zone.description else ''}"
-                                        ),
-                                        location=None,
-                                    )
+    @staticmethod
+    def _check_constraint_zones(
+        asset_polys: list,
+        constraint_zones: List[ConstraintZone],
+        violations: List[ConstraintViolation],
+    ) -> None:
+        """Check assets against constraint zones (setback, exclusion, existing conditions)."""
+        for asset, asset_poly in asset_polys:
+            for zone in constraint_zones:
+                try:
+                    zone_poly = ShapelyPolygon([(c.longitude, c.latitude) for c in zone.polygon])
+                    if asset_poly.intersects(zone_poly):
+                        intersection_area = asset_poly.intersection(zone_poly).area
+                        if intersection_area > 0:
+                            severity = "error" if zone.severity == "high" else "warning"
+                            violations.append(
+                                ConstraintViolation(
+                                    asset_id=asset.id,
+                                    constraint_type=zone.type,
+                                    severity=severity,
+                                    message=(
+                                        f"Asset intersects {zone.type.value} zone"
+                                        f"{': ' + zone.description if zone.description else ''}"
+                                    ),
+                                    location=None,
                                 )
-                    except Exception as e:
-                        logger.warning(f"Could not check zone {zone.id} violation: {e}")
+                            )
+                except Exception as e:
+                    logger.warning(f"Could not check zone {zone.id} violation: {e}")
 
-        logger.info(f"Detected {len(violations)} constraint violations")
+    # ------------------------------------------------------------------
+    # UTM-based violation detection (accurate metre-space geometry)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _detect_violations_utm(
+        placed_assets: list,
+        utm_data: Dict[str, Any],
+    ) -> List[ConstraintViolation]:
+        """Run violation checks in UTM metre-space using stored optimization geometry."""
+        from pyproj import Transformer
+        from shapely import wkt
+        from shapely.ops import transform as shapely_transform
+
+        violations: List[ConstraintViolation] = []
+
+        crs_epsg = utm_data["crs_epsg"]
+        site_boundary = wkt.loads(utm_data["site_boundary_wkt"])
+        buildable_area = wkt.loads(utm_data["buildable_area_wkt"])
+        exclusion_zones = [wkt.loads(w) for w in utm_data.get("exclusion_zones_wkt", [])]
+
+        # WGS84 → UTM transformer
+        proj_transformer = Transformer.from_crs("EPSG:4326", f"EPSG:{crs_epsg}", always_xy=True)
+
+        def to_utm(x: float, y: float) -> tuple:
+            return proj_transformer.transform(x, y)  # type: ignore[no-any-return]
+
+        # Build UTM polygons for each asset
+        asset_utm_polys = []
+        for asset in placed_assets:
+            wgs_poly = ProjectService._asset_polygon(asset)
+            utm_poly = shapely_transform(to_utm, wgs_poly)
+            asset_utm_polys.append((asset, utm_poly))
+
+        for i, (asset, asset_utm) in enumerate(asset_utm_polys):
+            # Check overlaps with subsequent assets
+            for j in range(i + 1, len(asset_utm_polys)):
+                other_asset, other_utm = asset_utm_polys[j]
+                if asset_utm.intersects(other_utm):
+                    overlap_area_sqm = asset_utm.intersection(other_utm).area
+                    overlap_sqft = overlap_area_sqm * 10.7639
+                    violations.append(
+                        ConstraintViolation(
+                            asset_id=asset.id,
+                            constraint_type=ConstraintType.SETBACK,
+                            severity="error",
+                            message=(
+                                f"Asset overlaps with another asset "
+                                f"(overlap: {overlap_sqft:.0f} sq ft)"
+                            ),
+                            location=None,
+                        )
+                    )
+
+            # Check against site boundary first, then buildable area
+            if not site_boundary.contains(asset_utm):
+                outside_area_sqm = asset_utm.difference(site_boundary).area
+                outside_sqft = outside_area_sqm * 10.7639
+                violations.append(
+                    ConstraintViolation(
+                        asset_id=asset.id,
+                        constraint_type=ConstraintType.PROPERTY_LINE,
+                        severity="error",
+                        message=(
+                            f"Asset extends {outside_sqft:.0f} sq ft " f"beyond property boundary"
+                            if asset_utm.intersects(site_boundary)
+                            else "Asset is completely outside property boundary"
+                        ),
+                        location=None,
+                    )
+                )
+            elif not buildable_area.contains(asset_utm):
+                outside_area_sqm = asset_utm.difference(buildable_area).area
+                outside_sqft = outside_area_sqm * 10.7639
+                violations.append(
+                    ConstraintViolation(
+                        asset_id=asset.id,
+                        constraint_type=ConstraintType.SETBACK,
+                        severity="error",
+                        message=(
+                            f"Asset extends {outside_sqft:.0f} sq ft "
+                            f"beyond buildable area (setback/slope)"
+                        ),
+                        location=None,
+                    )
+                )
+
+            # Check exclusion zones
+            for ez in exclusion_zones:
+                if asset_utm.intersects(ez):
+                    intersection_sqm = asset_utm.intersection(ez).area
+                    if intersection_sqm > 0.1:  # > ~1 sq ft
+                        violations.append(
+                            ConstraintViolation(
+                                asset_id=asset.id,
+                                constraint_type=ConstraintType.EXCLUSION,
+                                severity="error",
+                                message=(
+                                    f"Asset intersects exclusion zone "
+                                    f"({intersection_sqm * 10.7639:.0f} sq ft)"
+                                ),
+                                location=None,
+                            )
+                        )
+
         return violations
 
     # ------------------------------------------------------------------
@@ -414,3 +562,173 @@ class ProjectService:
             rotated.append((asset.position.longitude + rot_x, asset.position.latitude + rot_y))
 
         return ShapelyPolygon(rotated)
+
+    # ------------------------------------------------------------------
+    # Single-asset placement validation (for drag-and-drop)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def validate_single_asset_placement(
+        asset_id: str,
+        lat: float,
+        lng: float,
+        rotation: float,
+        width_ft: float,
+        length_ft: float,
+        other_assets: list,
+        utm_data: Optional[Dict[str, Any]] = None,
+    ) -> List[ConstraintViolation]:
+        """Validate a single asset's placement against constraints.
+
+        Builds the asset footprint from the given parameters, transforms to
+        UTM when possible, and checks against the buildable area, exclusion
+        zones, and other placed assets.
+        """
+        violations: List[ConstraintViolation] = []
+
+        # Build WGS84 footprint
+        width_m = width_ft * 0.3048
+        length_m = length_ft * 0.3048
+        half_w_deg = (width_ft / 2) * LAT_PER_FOOT / (math.cos(math.radians(lat)) or 1)
+        half_l_deg = (length_ft / 2) * LAT_PER_FOOT
+
+        rot_rad = math.radians(rotation)
+        cos_r = math.cos(rot_rad)
+        sin_r = math.sin(rot_rad)
+
+        corners_deg = [
+            (-half_w_deg, -half_l_deg),
+            (half_w_deg, -half_l_deg),
+            (half_w_deg, half_l_deg),
+            (-half_w_deg, half_l_deg),
+        ]
+        wgs_coords = []
+        for dx, dy in corners_deg:
+            rx = dx * cos_r - dy * sin_r
+            ry = dx * sin_r + dy * cos_r
+            wgs_coords.append((lng + rx, lat + ry))
+        wgs_poly = ShapelyPolygon(wgs_coords)
+
+        if utm_data is not None:
+            try:
+                from pyproj import Transformer
+                from shapely import wkt
+                from shapely.ops import transform as shapely_transform
+
+                crs_epsg = utm_data["crs_epsg"]
+                site_boundary = wkt.loads(utm_data["site_boundary_wkt"])
+                buildable_area = wkt.loads(utm_data["buildable_area_wkt"])
+                exclusion_zones = [wkt.loads(w) for w in utm_data.get("exclusion_zones_wkt", [])]
+
+                proj = Transformer.from_crs("EPSG:4326", f"EPSG:{crs_epsg}", always_xy=True)
+
+                def to_utm(x: float, y: float) -> tuple:
+                    return proj.transform(x, y)  # type: ignore[no-any-return]
+
+                asset_utm = shapely_transform(to_utm, wgs_poly)
+
+                # Check site boundary first, then buildable area
+                if not site_boundary.contains(asset_utm):
+                    outside_sqft = asset_utm.difference(site_boundary).area * 10.7639
+                    violations.append(
+                        ConstraintViolation(
+                            asset_id=asset_id,
+                            constraint_type=ConstraintType.PROPERTY_LINE,
+                            severity="error",
+                            message=(
+                                f"Asset extends {outside_sqft:.0f} sq ft "
+                                f"beyond property boundary"
+                                if asset_utm.intersects(site_boundary)
+                                else "Asset is completely outside property boundary"
+                            ),
+                            location=None,
+                        )
+                    )
+                elif not buildable_area.contains(asset_utm):
+                    outside_sqft = asset_utm.difference(buildable_area).area * 10.7639
+                    violations.append(
+                        ConstraintViolation(
+                            asset_id=asset_id,
+                            constraint_type=ConstraintType.SETBACK,
+                            severity="error",
+                            message=(
+                                f"Asset extends {outside_sqft:.0f} sq ft "
+                                f"beyond buildable area (setback/slope)"
+                            ),
+                            location=None,
+                        )
+                    )
+
+                # Check exclusion zones
+                for ez in exclusion_zones:
+                    if asset_utm.intersects(ez):
+                        isect_sqm = asset_utm.intersection(ez).area
+                        if isect_sqm > 0.1:
+                            violations.append(
+                                ConstraintViolation(
+                                    asset_id=asset_id,
+                                    constraint_type=ConstraintType.EXCLUSION,
+                                    severity="error",
+                                    message=(
+                                        f"Asset intersects exclusion zone "
+                                        f"({isect_sqm * 10.7639:.0f} sq ft)"
+                                    ),
+                                    location=None,
+                                )
+                            )
+
+                # Check overlaps with other placed assets
+                for other in other_assets:
+                    if other.id == asset_id:
+                        continue
+                    other_wgs = ProjectService._asset_polygon(other)
+                    other_utm = shapely_transform(to_utm, other_wgs)
+                    if asset_utm.intersects(other_utm):
+                        overlap_sqft = asset_utm.intersection(other_utm).area * 10.7639
+                        violations.append(
+                            ConstraintViolation(
+                                asset_id=asset_id,
+                                constraint_type=ConstraintType.SETBACK,
+                                severity="error",
+                                message=(
+                                    f"Asset overlaps with {other.id} " f"({overlap_sqft:.0f} sq ft)"
+                                ),
+                                location=None,
+                            )
+                        )
+
+                return violations
+            except Exception as e:
+                logger.warning(f"UTM validate failed, falling back to WGS84: {e}")
+                violations = []
+
+        # Fallback: WGS84-only checks (no utm_data or UTM failed)
+        # Boundary/buildable-area checks are not available without UTM data
+        violations.append(
+            ConstraintViolation(
+                asset_id=asset_id,
+                constraint_type=ConstraintType.SETBACK,
+                severity="error",
+                message=(
+                    "UTM projection data unavailable — boundary and buildable-area "
+                    "checks could not run; placement cannot be validated"
+                ),
+                location=None,
+            )
+        )
+        for other in other_assets:
+            if other.id == asset_id:
+                continue
+            other_poly = ProjectService._asset_polygon(other)
+            if wgs_poly.intersects(other_poly):
+                violations.append(
+                    ConstraintViolation(
+                        asset_id=asset_id,
+                        constraint_type=ConstraintType.SETBACK,
+                        severity="error",
+                        message=f"Asset overlaps with {other.id}",
+                        location=None,
+                    )
+                )
+
+        return violations

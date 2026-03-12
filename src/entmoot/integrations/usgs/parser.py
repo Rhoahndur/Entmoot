@@ -244,7 +244,7 @@ class USGSResponseParser:
         if "error" in data:
             error = data["error"]
             if isinstance(error, dict):
-                return error.get("message", str(error))
+                return str(error.get("message", str(error)))
             return str(error)
 
         # Check for error message field
@@ -255,7 +255,7 @@ class USGSResponseParser:
         if "status" in data:
             status = str(data["status"]).lower()
             if "error" in status or "fail" in status:
-                return data.get("message", f"Query failed with status: {status}")
+                return str(data.get("message", f"Query failed with status: {status}"))
 
         # Check if value is explicitly null with a reason
         if "value" in data and data["value"] is None:

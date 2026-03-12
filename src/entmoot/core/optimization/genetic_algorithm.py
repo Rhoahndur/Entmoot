@@ -513,6 +513,18 @@ class GeneticOptimizer:
                 else:
                     child_asset.set_rotation(parent2.assets[i].rotation)
 
+                # Validate blended position is within buildable area
+                buildable = self.constraints.get_buildable_area()
+                asset_geom = child_asset.get_geometry()
+                if not buildable.contains(asset_geom):
+                    # Fallback: keep fitter parent's position
+                    if parent1.fitness >= parent2.fitness:
+                        child_asset.set_position(p1_pos[0], p1_pos[1])
+                        child_asset.set_rotation(parent1.assets[i].rotation)
+                    else:
+                        child_asset.set_position(p2_pos[0], p2_pos[1])
+                        child_asset.set_rotation(parent2.assets[i].rotation)
+
         return child
 
     def _mutate(self, solution: PlacementSolution) -> PlacementSolution:
@@ -650,6 +662,14 @@ class GeneticOptimizer:
 
         asset1.set_position(pos2[0], pos2[1])
         asset2.set_position(pos1[0], pos1[1])
+
+        # Validate both assets remain within buildable area; revert if not
+        buildable = self.constraints.get_buildable_area()
+        geom1 = asset1.get_geometry()
+        geom2 = asset2.get_geometry()
+        if not buildable.contains(geom1) or not buildable.contains(geom2):
+            asset1.set_position(pos1[0], pos1[1])
+            asset2.set_position(pos2[0], pos2[1])
 
         return solution
 

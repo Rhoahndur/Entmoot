@@ -7,14 +7,9 @@ This module provides terrain-aware road network generation, including:
 - Road network optimization and geometry generation
 """
 
-from entmoot.core.roads.graph import NavigationGraph, GraphNode
+from entmoot.core.roads.graph import GraphNode, NavigationGraph
+from entmoot.core.roads.network import RoadIntersection, RoadNetwork, RoadSegment, RoadType
 from entmoot.core.roads.pathfinding import AStarPathfinder, Path, PathfinderConfig
-from entmoot.core.roads.network import (
-    RoadNetwork,
-    RoadSegment,
-    RoadType,
-    RoadIntersection,
-)
 
 __all__ = [
     "NavigationGraph",

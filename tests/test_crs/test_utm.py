@@ -1,8 +1,7 @@
-"""
-Tests for UTM zone detection and utilities.
-"""
+"""Tests for UTM zone detection and utilities."""
 
 import pytest
+
 from entmoot.core.crs import utm
 from entmoot.models.crs import CoordinateOrder, DistanceUnit
 

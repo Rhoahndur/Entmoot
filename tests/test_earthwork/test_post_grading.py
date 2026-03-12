@@ -1,17 +1,18 @@
 """Tests for post-grading model."""
 
-import pytest
-import numpy as np
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import numpy as np
+import pytest
+from pyproj import CRS
 
 from entmoot.core.earthwork.post_grading import PostGradingModel
 from entmoot.models.earthwork import GradingZone, GradingZoneType
 from entmoot.models.terrain import DEMMetadata, ElevationUnit
-from pyproj import CRS
 
 try:
-    from shapely.geometry import Polygon, LineString, Point
+    from shapely.geometry import LineString, Point, Polygon
 
     SHAPELY_AVAILABLE = True
 except ImportError:

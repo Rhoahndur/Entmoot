@@ -7,7 +7,8 @@ and earthwork cost estimation.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Tuple, Dict, Any, List
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 
 

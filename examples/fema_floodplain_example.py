@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example: FEMA Floodplain Data Query
+Example: FEMA Floodplain Data Query.
 
 This script demonstrates how to use the FEMA NFHL integration to:
 1. Query floodplain data for a specific location
@@ -24,8 +24,8 @@ from entmoot.integrations.fema.client import FEMAClientConfig
 from entmoot.models.regulatory import RegulatoryConstraint
 
 
-async def query_floodplain_example():
-    """Example: Query floodplain data for a location."""
+async def query_floodplain_example() -> None:
+    """Query floodplain data for a location."""
     print("=" * 60)
     print("FEMA Floodplain Data Query Example")
     print("=" * 60)
@@ -155,8 +155,10 @@ async def query_floodplain_example():
             max_lat=latitude + 0.005,
         )
 
-        print(f"\nBounding Box: ({bbox_result.bbox_min_lon:.4f}, {bbox_result.bbox_min_lat:.4f}) to "
-              f"({bbox_result.bbox_max_lon:.4f}, {bbox_result.bbox_max_lat:.4f})")
+        print(
+            f"\nBounding Box: ({bbox_result.bbox_min_lon:.4f}, {bbox_result.bbox_min_lat:.4f}) to "
+            f"({bbox_result.bbox_max_lon:.4f}, {bbox_result.bbox_max_lat:.4f})"
+        )
         print(f"Zones Found: {len(bbox_result.zones)}")
 
         if bbox_result.zones:
@@ -170,8 +172,8 @@ async def query_floodplain_example():
     print("=" * 60)
 
 
-async def multiple_locations_example():
-    """Example: Query multiple locations efficiently."""
+async def multiple_locations_example() -> None:
+    """Query multiple locations efficiently."""
     print("\n\n" + "=" * 60)
     print("MULTIPLE LOCATIONS EXAMPLE")
     print("=" * 60)
@@ -189,7 +191,10 @@ async def multiple_locations_example():
             result = await client.query_by_point(lon, lat)
 
             if result.in_sfha:
-                print(f"  ⚠️  SFHA: Yes - Zone {result.highest_risk_zone.value}")
+                zone_value = (
+                    result.highest_risk_zone.value if result.highest_risk_zone else "Unknown"
+                )
+                print(f"  ⚠️  SFHA: Yes - Zone {zone_value}")
                 max_bfe = result.get_max_bfe()
                 if max_bfe:
                     print(f"  Max BFE: {max_bfe:.2f} feet")
@@ -199,7 +204,7 @@ async def multiple_locations_example():
             print(f"  Zones: {len(result.zones)}")
 
 
-def main():
+def main() -> None:
     """Run examples."""
     print("\nFEMA NFHL Integration Examples")
     print("Note: These examples make real API calls to FEMA's servers\n")
@@ -216,6 +221,7 @@ def main():
     except Exception as e:
         print(f"\n\nError running example: {e}")
         import traceback
+
         traceback.print_exc()
 
 

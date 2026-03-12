@@ -23,7 +23,7 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 async def verify_api_key(
     api_key: Optional[str] = Security(_api_key_header),
 ) -> Optional[str]:
-    """FastAPI dependency that validates the ``X-API-Key`` header.
+    """Validate the ``X-API-Key`` header via FastAPI dependency.
 
     When authentication is disabled (``ENTMOOT_AUTH_ENABLED=false`` or no
     keys configured) this dependency is a no-op.

@@ -1,6 +1,4 @@
-"""
-Unit tests for file validation utilities.
-"""
+"""Unit tests for file validation utilities."""
 
 import pytest
 

@@ -9,19 +9,20 @@ Tests include:
 - Multiple calculation methods
 """
 
-import pytest
-import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
 import time
+
+import numpy as np
+import pytest
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from entmoot.core.terrain.slope import (
     SlopeCalculator,
-    SlopeMethod,
     SlopeClassification,
+    SlopeMethod,
     calculate_slope,
+    calculate_slope_statistics,
     classify_slope,
     get_classification_name,
-    calculate_slope_statistics,
 )
 
 

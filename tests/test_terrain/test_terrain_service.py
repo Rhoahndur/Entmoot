@@ -1,6 +1,4 @@
-"""
-Tests for terrain service — TerrainData and prepare_terrain_data().
-"""
+"""Tests for terrain service -- TerrainData and prepare_terrain_data()."""
 
 import math
 from pathlib import Path
@@ -57,23 +55,30 @@ def sloped_terrain():
 
 
 class TestTerrainDataSampling:
+    """Unit tests for TerrainData point and footprint sampling methods."""
+
     def test_sample_elevation_within_grid(self, flat_terrain):
+        """Verify sample_elevation returns correct value for a point inside the grid."""
         val = flat_terrain.sample_elevation(500005.5, 4400005.5)
         assert val is not None
         assert val == pytest.approx(1650.0, abs=0.1)
 
     def test_sample_elevation_outside_grid(self, flat_terrain):
+        """Verify sample_elevation returns None for a point outside the grid."""
         assert flat_terrain.sample_elevation(0.0, 0.0) is None
 
     def test_sample_slope_within_grid(self, flat_terrain):
+        """Verify sample_slope returns correct value for a point inside the grid."""
         val = flat_terrain.sample_slope(500005.5, 4400005.5)
         assert val is not None
         assert val == pytest.approx(0.0, abs=0.1)
 
     def test_sample_slope_outside_grid(self, flat_terrain):
+        """Verify sample_slope returns None for a point outside the grid."""
         assert flat_terrain.sample_slope(0.0, 0.0) is None
 
     def test_get_mean_slope_in_footprint(self, sloped_terrain):
+        """Verify mean slope computation for a polygon overlapping the grid."""
         # A 4x4 m box in the centre
         poly = box(500003.0, 4400003.0, 500007.0, 4400007.0)
         mean_slope = sloped_terrain.get_mean_slope_in_footprint(poly)
@@ -81,16 +86,19 @@ class TestTerrainDataSampling:
         assert mean_slope == pytest.approx(20.0, abs=0.5)
 
     def test_get_mean_slope_no_overlap(self, flat_terrain):
+        """Verify get_mean_slope_in_footprint returns None when polygon is outside the grid."""
         poly = box(0.0, 0.0, 1.0, 1.0)
         assert flat_terrain.get_mean_slope_in_footprint(poly) is None
 
     def test_get_elevation_under_footprint(self, flat_terrain):
+        """Verify elevation extraction for a polygon overlapping the grid."""
         poly = box(500002.0, 4400002.0, 500008.0, 4400008.0)
         elevations = flat_terrain.get_elevation_under_footprint(poly)
         assert len(elevations) > 0
         assert np.allclose(elevations, 1650.0, atol=0.1)
 
     def test_get_elevation_under_footprint_no_overlap(self, flat_terrain):
+        """Verify get_elevation_under_footprint returns empty array when polygon is outside the grid."""
         poly = box(0.0, 0.0, 1.0, 1.0)
         elevations = flat_terrain.get_elevation_under_footprint(poly)
         assert len(elevations) == 0
@@ -106,8 +114,11 @@ class TestTerrainDataSampling:
     reason="Sample elevation.tif not found",
 )
 class TestPrepareTerrainData:
+    """Integration tests for prepare_terrain_data() using sample elevation files."""
+
     def _load_boundary(self):
         import json
+
         from shapely.geometry import shape
 
         geojson_path = SAMPLES_DIR / "property_boundary.geojson"
@@ -132,6 +143,7 @@ class TestPrepareTerrainData:
         return shapely_transform(transformer.transform, raw)
 
     def test_prepare_terrain_data_succeeds(self):
+        """Verify prepare_terrain_data returns valid TerrainData from a real DEM file."""
         utm_boundary = self._get_utm_boundary()
         td = prepare_terrain_data(
             SAMPLES_DIR / "elevation.tif",
@@ -143,6 +155,7 @@ class TestPrepareTerrainData:
         assert td.cell_size > 0
 
     def test_sampling_after_prepare(self):
+        """Verify elevation sampling returns a reasonable value after prepare_terrain_data."""
         utm_boundary = self._get_utm_boundary()
         td = prepare_terrain_data(
             SAMPLES_DIR / "elevation.tif",
@@ -156,6 +169,7 @@ class TestPrepareTerrainData:
         assert 1500.0 < elev < 2000.0
 
     def test_invalid_dem_path_raises(self):
+        """Verify prepare_terrain_data raises ValidationError for a nonexistent DEM path."""
         from entmoot.core.errors import ValidationError
 
         utm_boundary = self._get_utm_boundary()
@@ -177,9 +191,9 @@ class TestObjectiveWithTerrain:
 
     def _make_objective(self, terrain_data=None):
         from entmoot.core.optimization.problem import (
-            OptimizationObjective,
-            OptimizationConstraints,
             ObjectiveWeights,
+            OptimizationConstraints,
+            OptimizationObjective,
         )
 
         site = box(0, 0, 200, 200)
@@ -201,6 +215,7 @@ class TestObjectiveWithTerrain:
         )
 
     def test_no_terrain_returns_neutral_cut_fill(self):
+        """Verify cut/fill evaluation returns neutral score of 50 when no terrain is provided."""
         obj = self._make_objective(terrain_data=None)
         from entmoot.core.optimization.problem import PlacementSolution
 
@@ -209,6 +224,7 @@ class TestObjectiveWithTerrain:
         assert score == 50.0
 
     def test_no_terrain_returns_neutral_slope_variance(self):
+        """Verify slope variance evaluation returns neutral score of 50 when no terrain is provided."""
         obj = self._make_objective(terrain_data=None)
         from entmoot.core.optimization.problem import PlacementSolution
 
@@ -230,8 +246,9 @@ class TestObjectiveWithTerrain:
         )
         obj = self._make_objective(terrain_data=td)
 
-        from entmoot.core.optimization.problem import PlacementSolution
         from unittest.mock import MagicMock
+
+        from entmoot.core.optimization.problem import PlacementSolution
 
         # Create a mock asset placed in the middle
         asset = MagicMock()
@@ -260,8 +277,9 @@ class TestObjectiveWithTerrain:
         )
         obj = self._make_objective(terrain_data=td)
 
-        from entmoot.core.optimization.problem import PlacementSolution
         from unittest.mock import MagicMock
+
+        from entmoot.core.optimization.problem import PlacementSolution
 
         asset = MagicMock()
         asset.position = (100.0, 100.0)

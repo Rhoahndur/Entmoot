@@ -1,6 +1,4 @@
-"""
-Tests for CRS transformation service.
-"""
+"""Tests for CRS transformation service."""
 
 import numpy as np
 import pytest

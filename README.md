@@ -148,8 +148,7 @@ Entmoot/
 ├── docs/
 │   └── openapi.yaml          # versioned OpenAPI schema (CI-checked)
 ├── .github/workflows/
-│   ├── ci.yml                # lint, test, security, build, openapi-check
-│   └── deploy.yml            # staging & production deployment
+│   └── ci.yml                # lint, test, security, build, frontend-lint
 ├── Dockerfile                # multi-stage backend image
 ├── docker-compose.yml        # production stack
 ├── docker-compose.dev.yml    # development stack
@@ -228,8 +227,9 @@ All `/api/v1` routes require an `X-API-Key` header when authentication is enable
 | `GET` | `/api/v1/projects/{id}/status` | Poll optimization progress |
 | `GET` | `/api/v1/projects/{id}/results` | Retrieve optimization results |
 | `POST` | `/api/v1/projects/{id}/reoptimize` | Re-run with updated config |
+| `POST` | `/api/v1/projects/{id}/validate-placement` | Validate single asset placement (drag-and-drop) |
 | `PUT` | `/api/v1/projects/{id}/alternatives/{alt}/` | Save edited layout |
-| `GET` | `/api/v1/projects/{id}/alternatives/{alt}/export/{fmt}` | Export layout |
+| `GET` | `/api/v1/projects/{id}/alternatives/{alt}/export/{fmt}` | Export layout (not yet implemented) |
 | `DELETE` | `/api/v1/projects/{id}` | Delete project |
 
 Interactive documentation is available at `/docs` (Swagger UI) and `/redoc`.
@@ -245,13 +245,6 @@ Runs on every push/PR to `main` and `develop`:
 3. **Security** — Bandit (SAST) and Safety (dependency audit)
 4. **Build** — Docker image builds for backend and frontend
 5. **Frontend lint** — ESLint + production build
-6. **OpenAPI check** — verifies `docs/openapi.yaml` is current
-
-### Deployment Pipeline (`.github/workflows/deploy.yml`)
-
-- Staging deploys from `develop` branch
-- Production deploys from release tags
-- Automated rollback on failure
 
 ## Docker
 

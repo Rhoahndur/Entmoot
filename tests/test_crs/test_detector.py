@@ -1,6 +1,4 @@
-"""
-Tests for CRS detection from various file formats.
-"""
+"""Tests for CRS detection from various file formats."""
 
 import json
 import tempfile

@@ -1,18 +1,17 @@
-"""
-Tests for optimization problem definition.
-"""
+"""Tests for optimization problem definition."""
 
-import pytest
 import numpy as np
-from shapely.geometry import Polygon as ShapelyPolygon, Point as ShapelyPoint
+import pytest
+from shapely.geometry import Point as ShapelyPoint
+from shapely.geometry import Polygon as ShapelyPolygon
 
-from entmoot.models.assets import BuildingAsset, EquipmentYardAsset
 from entmoot.core.optimization.problem import (
     ObjectiveWeights,
     OptimizationConstraints,
     OptimizationObjective,
     PlacementSolution,
 )
+from entmoot.models.assets import BuildingAsset, EquipmentYardAsset
 
 
 @pytest.fixture

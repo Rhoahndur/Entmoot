@@ -19,17 +19,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
 
 import ezdxf
+import simplekml
 from ezdxf import units
 from ezdxf.enums import TextEntityAlignment
-import simplekml
-from shapely.geometry import (
-    Point as ShapelyPoint,
-    Polygon as ShapelyPolygon,
-    LineString as ShapelyLineString,
-    MultiPolygon,
-    MultiLineString,
-    MultiPoint,
-)
+from shapely.geometry import LineString as ShapelyLineString
+from shapely.geometry import MultiLineString, MultiPoint, MultiPolygon
+from shapely.geometry import Point as ShapelyPoint
+from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry.base import BaseGeometry
 
 logger = logging.getLogger(__name__)
@@ -404,14 +400,15 @@ class GeoJSONExporter(GeospatialExporter):
         logger.info(f"Exporting to GeoJSON: {output_path}")
 
         # Create feature collection
-        feature_collection = {
+        features: list[dict[str, Any]] = []
+        feature_collection: dict[str, Any] = {
             "type": "FeatureCollection",
             "name": data.project_name,
             "crs": {
                 "type": "name",
                 "properties": {"name": f"urn:ogc:def:crs:EPSG::{data.crs_epsg}"},
             },
-            "features": [],
+            "features": features,
             "metadata": data.metadata,
         }
 

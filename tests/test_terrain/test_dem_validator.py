@@ -1,18 +1,11 @@
-"""
-Tests for DEM validator functionality.
-"""
+"""Tests for DEM validator functionality."""
 
-import pytest
 import numpy as np
+import pytest
 from pyproj import CRS
 
 from entmoot.core.terrain.dem_validator import DEMValidator
-from entmoot.models.terrain import (
-    DEMData,
-    DEMMetadata,
-    DEMValidationResult,
-    ElevationUnit,
-)
+from entmoot.models.terrain import DEMData, DEMMetadata, DEMValidationResult, ElevationUnit
 
 
 @pytest.fixture

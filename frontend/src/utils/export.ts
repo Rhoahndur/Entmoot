@@ -2,14 +2,14 @@
  * Export utilities for downloading layouts in various formats
  */
 
-import { jsPDF } from 'jspdf';
-import { saveAs } from 'file-saver';
+import { jsPDF } from "jspdf";
+import { saveAs } from "file-saver";
 import type {
   OptimizationResults,
   LayoutAlternative,
   ExportFormat,
   ExportOptions,
-} from '../types/results';
+} from "../types/results";
 
 /**
  * Export layout as PDF report
@@ -17,12 +17,12 @@ import type {
 export const exportToPDF = async (
   alternative: LayoutAlternative,
   projectName: string,
-  options?: ExportOptions
+  options?: ExportOptions,
 ): Promise<void> => {
   const pdf = new jsPDF({
-    orientation: options?.orientation || 'portrait',
-    unit: 'mm',
-    format: options?.pageSize || 'letter',
+    orientation: options?.orientation || "portrait",
+    unit: "mm",
+    format: options?.pageSize || "letter",
   });
 
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -44,18 +44,33 @@ export const exportToPDF = async (
   // Metrics section
   let y = margin + 40;
   pdf.setFontSize(14);
-  pdf.text('Project Metrics', margin, y);
+  pdf.text("Project Metrics", margin, y);
 
   y += 10;
   pdf.setFontSize(10);
 
   const metrics = [
-    ['Property Area', `${alternative.metrics.property_area.toLocaleString('en-US', { maximumFractionDigits: 1 })} sq ft`],
-    ['Buildable Area', `${alternative.metrics.buildable_area.toLocaleString('en-US', { maximumFractionDigits: 1 })} sq ft (${alternative.metrics.buildable_percentage.toFixed(1)}%)`],
-    ['Assets Placed', alternative.metrics.assets_placed.toString()],
-    ['Total Road Length', `${alternative.metrics.total_road_length.toLocaleString('en-US', { maximumFractionDigits: 1 })} ft`],
-    ['Optimization Score', `${alternative.metrics.optimization_score.toFixed(1)}%`],
-    ['Constraint Violations', alternative.metrics.constraint_violations.toString()],
+    [
+      "Property Area",
+      `${alternative.metrics.property_area.toLocaleString("en-US", { maximumFractionDigits: 1 })} sq ft`,
+    ],
+    [
+      "Buildable Area",
+      `${alternative.metrics.buildable_area.toLocaleString("en-US", { maximumFractionDigits: 1 })} sq ft (${alternative.metrics.buildable_percentage.toFixed(1)}%)`,
+    ],
+    ["Assets Placed", alternative.metrics.assets_placed.toString()],
+    [
+      "Total Road Length",
+      `${alternative.metrics.total_road_length.toLocaleString("en-US", { maximumFractionDigits: 1 })} ft`,
+    ],
+    [
+      "Optimization Score",
+      `${alternative.metrics.optimization_score.toFixed(1)}%`,
+    ],
+    [
+      "Constraint Violations",
+      alternative.metrics.constraint_violations.toString(),
+    ],
   ];
 
   metrics.forEach(([label, value]) => {
@@ -67,23 +82,23 @@ export const exportToPDF = async (
   // Cost breakdown
   y += 10;
   pdf.setFontSize(14);
-  pdf.text('Cost Breakdown', margin, y);
+  pdf.text("Cost Breakdown", margin, y);
 
   y += 10;
   pdf.setFontSize(10);
 
   const costs = [
-    ['Earthwork', alternative.metrics.estimated_cost.earthwork],
-    ['Roads', alternative.metrics.estimated_cost.roads],
-    ['Utilities', alternative.metrics.estimated_cost.utilities],
-    ['Drainage', alternative.metrics.estimated_cost.drainage],
-    ['Landscaping', alternative.metrics.estimated_cost.landscaping],
-    ['Contingency', alternative.metrics.estimated_cost.contingency],
-    ['Total', alternative.metrics.estimated_cost.total],
+    ["Earthwork", alternative.metrics.estimated_cost.earthwork],
+    ["Roads", alternative.metrics.estimated_cost.roads],
+    ["Utilities", alternative.metrics.estimated_cost.utilities],
+    ["Drainage", alternative.metrics.estimated_cost.drainage],
+    ["Landscaping", alternative.metrics.estimated_cost.landscaping],
+    ["Contingency", alternative.metrics.estimated_cost.contingency],
+    ["Total", alternative.metrics.estimated_cost.total],
   ];
 
   costs.forEach(([label, value]) => {
-    const formattedValue = `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    const formattedValue = `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     pdf.text(`${label}:`, margin, y);
     pdf.text(formattedValue, margin + 70, y);
     y += 7;
@@ -92,16 +107,28 @@ export const exportToPDF = async (
   // Earthwork section
   y += 10;
   pdf.setFontSize(14);
-  pdf.text('Earthwork Summary', margin, y);
+  pdf.text("Earthwork Summary", margin, y);
 
   y += 10;
   pdf.setFontSize(10);
 
   const earthwork = [
-    ['Cut Volume', `${Math.abs(alternative.metrics.earthwork_volumes.cut).toLocaleString('en-US', { maximumFractionDigits: 1 })} yd³`],
-    ['Fill Volume', `${alternative.metrics.earthwork_volumes.fill.toLocaleString('en-US', { maximumFractionDigits: 1 })} yd³`],
-    ['Net Volume', `${alternative.metrics.earthwork_volumes.net.toLocaleString('en-US', { maximumFractionDigits: 1 })} yd³`],
-    ['Balance Ratio', alternative.metrics.earthwork_volumes.balance_ratio.toFixed(1)],
+    [
+      "Cut Volume",
+      `${Math.abs(alternative.metrics.earthwork_volumes.cut).toLocaleString("en-US", { maximumFractionDigits: 1 })} yd³`,
+    ],
+    [
+      "Fill Volume",
+      `${alternative.metrics.earthwork_volumes.fill.toLocaleString("en-US", { maximumFractionDigits: 1 })} yd³`,
+    ],
+    [
+      "Net Volume",
+      `${alternative.metrics.earthwork_volumes.net.toLocaleString("en-US", { maximumFractionDigits: 1 })} yd³`,
+    ],
+    [
+      "Balance Ratio",
+      alternative.metrics.earthwork_volumes.balance_ratio.toFixed(1),
+    ],
   ];
 
   earthwork.forEach(([label, value]) => {
@@ -119,16 +146,16 @@ export const exportToPDF = async (
   }
 
   pdf.setFontSize(14);
-  pdf.text('Asset List', margin, y);
+  pdf.text("Asset List", margin, y);
 
   y += 10;
   pdf.setFontSize(9);
 
   // Table headers
-  pdf.text('Type', margin, y);
-  pdf.text('Size (ft)', margin + 40, y);
-  pdf.text('Rotation', margin + 80, y);
-  pdf.text('Position', margin + 110, y);
+  pdf.text("Type", margin, y);
+  pdf.text("Size (ft)", margin + 40, y);
+  pdf.text("Rotation", margin + 80, y);
+  pdf.text("Position", margin + 110, y);
 
   y += 7;
 
@@ -138,8 +165,8 @@ export const exportToPDF = async (
       y = margin;
     }
 
-    const type = asset.type.replace('_', ' ');
-    const size = `${asset.width.toFixed(1)} × ${asset.length.toFixed(1)}${asset.height ? ` × ${asset.height.toFixed(1)}` : ''}`;
+    const type = asset.type.replace("_", " ");
+    const size = `${asset.width.toFixed(1)} × ${asset.length.toFixed(1)}${asset.height ? ` × ${asset.height.toFixed(1)}` : ""}`;
     const rotation = `${asset.rotation.toFixed(1)}°`;
     const position = `${asset.position.latitude.toFixed(6)}, ${asset.position.longitude.toFixed(6)}`;
 
@@ -157,16 +184,20 @@ export const exportToPDF = async (
   pdf.text(`Generated on ${timestamp} by Entmoot`, margin, pageHeight - 10);
 
   // Save
-  pdf.save(`${projectName.replace(/\s+/g, '_')}_${alternative.name.replace(/\s+/g, '_')}.pdf`);
+  pdf.save(
+    `${projectName.replace(/\s+/g, "_")}_${alternative.name.replace(/\s+/g, "_")}.pdf`,
+  );
 };
 
 /**
  * Validate coordinate has required properties
  */
-const validateCoordinate = (coord: unknown): coord is { latitude: number; longitude: number } => {
-  if (typeof coord !== 'object' || coord === null) return false;
+const validateCoordinate = (
+  coord: unknown,
+): coord is { latitude: number; longitude: number } => {
+  if (typeof coord !== "object" || coord === null) return false;
   const c = coord as Record<string, unknown>;
-  return typeof c.latitude === 'number' && typeof c.longitude === 'number';
+  return typeof c.latitude === "number" && typeof c.longitude === "number";
 };
 
 /**
@@ -175,30 +206,30 @@ const validateCoordinate = (coord: unknown): coord is { latitude: number; longit
 export const exportToGeoJSON = async (
   alternative: LayoutAlternative,
   propertyBoundary: Array<{ latitude: number; longitude: number }>,
-  projectName: string
+  projectName: string,
 ): Promise<void> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const features: any[] = [];
 
   // Validate property boundary
   if (!propertyBoundary || propertyBoundary.length === 0) {
-    throw new Error('Property boundary is missing or empty');
+    throw new Error("Property boundary is missing or empty");
   }
 
   const validBoundary = propertyBoundary.filter(validateCoordinate);
   if (validBoundary.length === 0) {
-    throw new Error('Property boundary has no valid coordinates');
+    throw new Error("Property boundary has no valid coordinates");
   }
 
   // Property boundary
   features.push({
-    type: 'Feature',
+    type: "Feature",
     properties: {
-      name: 'Property Boundary',
-      type: 'boundary',
+      name: "Property Boundary",
+      type: "boundary",
     },
     geometry: {
-      type: 'Polygon',
+      type: "Polygon",
       coordinates: [
         [
           ...validBoundary.map((p) => [p.longitude, p.latitude]),
@@ -217,12 +248,14 @@ export const exportToGeoJSON = async (
 
     const validPolygon = asset.polygon.filter(validateCoordinate);
     if (validPolygon.length < 3) {
-      console.warn(`Asset ${asset.id} has insufficient valid coordinates, skipping`);
+      console.warn(
+        `Asset ${asset.id} has insufficient valid coordinates, skipping`,
+      );
       return;
     }
 
     features.push({
-      type: 'Feature',
+      type: "Feature",
       properties: {
         id: asset.id,
         type: asset.type,
@@ -232,7 +265,7 @@ export const exportToGeoJSON = async (
         rotation: asset.rotation,
       },
       geometry: {
-        type: 'Polygon',
+        type: "Polygon",
         coordinates: [
           [
             ...validPolygon.map((p) => [p.longitude, p.latitude]),
@@ -247,28 +280,32 @@ export const exportToGeoJSON = async (
   if (alternative.road_network && alternative.road_network.segments) {
     alternative.road_network.segments.forEach((segment) => {
       if (!segment.points || segment.points.length < 2) {
-        console.warn(`Road segment ${segment.id} has insufficient points, skipping`);
+        console.warn(
+          `Road segment ${segment.id} has insufficient points, skipping`,
+        );
         return;
       }
 
       const validPoints = segment.points.filter(validateCoordinate);
       if (validPoints.length < 2) {
-        console.warn(`Road segment ${segment.id} has insufficient valid coordinates, skipping`);
+        console.warn(
+          `Road segment ${segment.id} has insufficient valid coordinates, skipping`,
+        );
         return;
       }
 
       features.push({
-        type: 'Feature',
+        type: "Feature",
         properties: {
           id: segment.id,
-          type: 'road',
+          type: "road",
           width: segment.width,
           grade: segment.grade,
           surface_type: segment.surface_type,
           length: segment.length,
         },
         geometry: {
-          type: 'LineString',
+          type: "LineString",
           coordinates: validPoints.map((p) => [p.longitude, p.latitude]),
         },
       });
@@ -288,7 +325,7 @@ export const exportToGeoJSON = async (
       }
 
       features.push({
-        type: 'Feature',
+        type: "Feature",
         properties: {
           id: zone.id,
           type: zone.type,
@@ -296,7 +333,7 @@ export const exportToGeoJSON = async (
           description: zone.description,
         },
         geometry: {
-          type: 'Polygon',
+          type: "Polygon",
           coordinates: [
             [
               ...validPolygon.map((p) => [p.longitude, p.latitude]),
@@ -321,14 +358,14 @@ export const exportToGeoJSON = async (
       }
 
       features.push({
-        type: 'Feature',
+        type: "Feature",
         properties: {
-          type: 'buildable_area',
+          type: "buildable_area",
           area: area.area,
           usable: area.usable,
         },
         geometry: {
-          type: 'Polygon',
+          type: "Polygon",
           coordinates: [
             [
               ...validPolygon.map((p) => [p.longitude, p.latitude]),
@@ -341,7 +378,7 @@ export const exportToGeoJSON = async (
   }
 
   const geojson = {
-    type: 'FeatureCollection',
+    type: "FeatureCollection",
     properties: {
       name: projectName,
       alternative: alternative.name,
@@ -351,10 +388,13 @@ export const exportToGeoJSON = async (
   };
 
   const blob = new Blob([JSON.stringify(geojson, null, 2)], {
-    type: 'application/geo+json',
+    type: "application/geo+json",
   });
 
-  saveAs(blob, `${projectName.replace(/\s+/g, '_')}_${alternative.name.replace(/\s+/g, '_')}.geojson`);
+  saveAs(
+    blob,
+    `${projectName.replace(/\s+/g, "_")}_${alternative.name.replace(/\s+/g, "_")}.geojson`,
+  );
 };
 
 /**
@@ -364,16 +404,16 @@ export const exportToGeoJSON = async (
 export const exportToKMZ = async (
   alternative: LayoutAlternative,
   propertyBoundary: Array<{ latitude: number; longitude: number }>,
-  projectName: string
+  projectName: string,
 ): Promise<void> => {
   // Validate property boundary
   if (!propertyBoundary || propertyBoundary.length === 0) {
-    throw new Error('Property boundary is missing or empty');
+    throw new Error("Property boundary is missing or empty");
   }
 
   const validBoundary = propertyBoundary.filter(validateCoordinate);
   if (validBoundary.length === 0) {
-    throw new Error('Property boundary has no valid coordinates');
+    throw new Error("Property boundary has no valid coordinates");
   }
 
   let kml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -444,7 +484,7 @@ export const exportToKMZ = async (
 
     kml += `    <Placemark>
       <name>${asset.type} - ${asset.id.substring(0, 8)}</name>
-      <description>Size: ${asset.width}' x ${asset.length}'${asset.height ? ` x ${asset.height}'` : ''}, Rotation: ${asset.rotation}°</description>
+      <description>Size: ${asset.width}' x ${asset.length}'${asset.height ? ` x ${asset.height}'` : ""}, Rotation: ${asset.rotation}°</description>
       <styleUrl>#building</styleUrl>
       <Polygon>
         <outerBoundaryIs>
@@ -502,8 +542,13 @@ export const exportToKMZ = async (
   kml += `  </Document>
 </kml>`;
 
-  const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
-  saveAs(blob, `${projectName.replace(/\s+/g, '_')}_${alternative.name.replace(/\s+/g, '_')}.kml`);
+  const blob = new Blob([kml], {
+    type: "application/vnd.google-earth.kml+xml",
+  });
+  saveAs(
+    blob,
+    `${projectName.replace(/\s+/g, "_")}_${alternative.name.replace(/\s+/g, "_")}.kml`,
+  );
 };
 
 /**
@@ -512,16 +557,16 @@ export const exportToKMZ = async (
 export const exportToDXF = async (
   alternative: LayoutAlternative,
   propertyBoundary: Array<{ latitude: number; longitude: number }>,
-  projectName: string
+  projectName: string,
 ): Promise<void> => {
   // Validate property boundary
   if (!propertyBoundary || propertyBoundary.length === 0) {
-    throw new Error('Property boundary is missing or empty');
+    throw new Error("Property boundary is missing or empty");
   }
 
   const validBoundary = propertyBoundary.filter(validateCoordinate);
   if (validBoundary.length === 0) {
-    throw new Error('Property boundary has no valid coordinates');
+    throw new Error("Property boundary has no valid coordinates");
   }
 
   // Basic DXF header
@@ -661,8 +706,11 @@ ENDSEC
 EOF
 `;
 
-  const blob = new Blob([dxf], { type: 'application/dxf' });
-  saveAs(blob, `${projectName.replace(/\s+/g, '_')}_${alternative.name.replace(/\s+/g, '_')}.dxf`);
+  const blob = new Blob([dxf], { type: "application/dxf" });
+  saveAs(
+    blob,
+    `${projectName.replace(/\s+/g, "_")}_${alternative.name.replace(/\s+/g, "_")}.dxf`,
+  );
 };
 
 /**
@@ -672,22 +720,36 @@ export const exportLayout = async (
   format: ExportFormat,
   results: OptimizationResults,
   alternativeId: string,
-  options?: ExportOptions
+  options?: ExportOptions,
 ): Promise<void> => {
-  const alternative = results.alternatives.find((alt) => alt.id === alternativeId);
+  const alternative = results.alternatives.find(
+    (alt) => alt.id === alternativeId,
+  );
   if (!alternative) {
-    throw new Error('Alternative not found');
+    throw new Error("Alternative not found");
   }
 
   switch (format) {
-    case 'pdf':
+    case "pdf":
       return exportToPDF(alternative, results.project_name, options);
-    case 'geojson':
-      return exportToGeoJSON(alternative, results.property_boundary, results.project_name);
-    case 'kmz':
-      return exportToKMZ(alternative, results.property_boundary, results.project_name);
-    case 'dxf':
-      return exportToDXF(alternative, results.property_boundary, results.project_name);
+    case "geojson":
+      return exportToGeoJSON(
+        alternative,
+        results.property_boundary,
+        results.project_name,
+      );
+    case "kmz":
+      return exportToKMZ(
+        alternative,
+        results.property_boundary,
+        results.project_name,
+      );
+    case "dxf":
+      return exportToDXF(
+        alternative,
+        results.property_boundary,
+        results.project_name,
+      );
     default:
       throw new Error(`Unsupported export format: ${format}`);
   }

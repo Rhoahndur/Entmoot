@@ -1,15 +1,14 @@
-"""
-Tests for DEM loader functionality.
-"""
+"""Tests for DEM loader functionality."""
 
-import pytest
-import numpy as np
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
+import numpy as np
+import pytest
+
+from entmoot.core.errors import ParseError, ValidationError
 from entmoot.core.terrain.dem_loader import DEMLoader
 from entmoot.models.terrain import DEMData, DEMMetadata, ElevationUnit
-from entmoot.core.errors import ValidationError, ParseError
 
 
 @pytest.fixture
@@ -29,8 +28,8 @@ def simple_dem_path(fixtures_dir, tmp_path):
     """Create a simple test DEM."""
     try:
         import rasterio
-        from rasterio.transform import from_bounds
         from rasterio.crs import CRS
+        from rasterio.transform import from_bounds
 
         dem_path = tmp_path / "test_simple.tif"
 
@@ -338,8 +337,8 @@ class TestDEMLoaderEdgeCases:
         """Test loading DEM with all no-data values."""
         try:
             import rasterio
-            from rasterio.transform import from_bounds
             from rasterio.crs import CRS
+            from rasterio.transform import from_bounds
         except ImportError:
             pytest.skip("rasterio not available")
 
@@ -375,8 +374,8 @@ class TestDEMLoaderEdgeCases:
         """Test loading very small DEM (1x1)."""
         try:
             import rasterio
-            from rasterio.transform import from_bounds
             from rasterio.crs import CRS
+            from rasterio.transform import from_bounds
         except ImportError:
             pytest.skip("rasterio not available")
 

@@ -1,6 +1,4 @@
-"""
-Unit tests for cleanup service.
-"""
+"""Unit tests for cleanup service."""
 
 import asyncio
 from datetime import datetime, timedelta

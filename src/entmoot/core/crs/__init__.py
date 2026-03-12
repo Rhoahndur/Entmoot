@@ -5,11 +5,11 @@ This module provides comprehensive CRS handling including:
 - CRS detection from various file formats
 - Coordinate transformation between CRS
 - UTM zone detection and utilities
-- CRS normalization for mixed inputs
 """
 
 from entmoot.core.crs.detector import (
     CRSDetectionError,
+    crs_to_info,
     detect_crs_from_file,
     detect_crs_from_geojson,
     detect_crs_from_geotiff,
@@ -17,14 +17,6 @@ from entmoot.core.crs.detector import (
     detect_crs_from_ogr,
     detect_crs_from_prj,
     parse_crs_string,
-    crs_to_info,
-)
-from entmoot.core.crs.normalizer import (
-    CRSNormalizer,
-    NormalizedData,
-    NormalizationError,
-    normalize_to_utm,
-    normalize_to_wgs84,
 )
 from entmoot.core.crs.transformer import (
     CRSTransformer,
@@ -58,12 +50,6 @@ __all__ = [
     "detect_crs_from_prj",
     "parse_crs_string",
     "crs_to_info",
-    # Normalizer
-    "CRSNormalizer",
-    "NormalizedData",
-    "NormalizationError",
-    "normalize_to_utm",
-    "normalize_to_wgs84",
     # Transformer
     "CRSTransformer",
     "TransformationError",

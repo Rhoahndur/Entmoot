@@ -19,7 +19,7 @@ from rasterio.transform import from_bounds
 HERE = Path(__file__).parent
 
 
-def create_kmz():
+def create_kmz() -> None:
     """Package the KML file into a KMZ archive."""
     kml_path = HERE / "property_boundary.kml"
     kmz_path = HERE / "property_boundary.kmz"
@@ -28,7 +28,7 @@ def create_kmz():
     print(f"Created {kmz_path} ({kmz_path.stat().st_size} bytes)")
 
 
-def create_geotiff():
+def create_geotiff() -> None:
     """Create a synthetic elevation GeoTIFF covering the sample property.
 
     Generates a 100x100 pixel raster with gentle terrain:

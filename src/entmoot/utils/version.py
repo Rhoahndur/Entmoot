@@ -1,6 +1,4 @@
-"""
-Version utility functions.
-"""
+"""Version utility functions."""
 
 
 def get_version() -> str:

@@ -1,3 +1,1 @@
-"""
-Tests for constraint management system.
-"""
+"""Tests for constraint management system."""

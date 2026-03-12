@@ -94,7 +94,7 @@ class CRSInfo:
         )
 
     def __str__(self) -> str:
-        """String representation."""
+        """Return string representation."""
         if self.epsg:
             return f"EPSG:{self.epsg}"
         elif self.authority and self.code:
@@ -134,7 +134,7 @@ class CoordinateTransformation:
         }
 
     def __str__(self) -> str:
-        """String representation."""
+        """Return string representation."""
         return f"{self.source_crs} -> {self.target_crs}"
 
 
@@ -227,5 +227,5 @@ class BoundingBox:
         return (self.min_x, self.min_y, self.max_x, self.max_y)
 
     def __str__(self) -> str:
-        """String representation."""
+        """Return string representation."""
         return f"BBox({self.min_x:.6f}, {self.min_y:.6f}, {self.max_x:.6f}, {self.max_y:.6f}) [{self.crs}]"

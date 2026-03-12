@@ -1,6 +1,4 @@
-"""
-Integration tests for upload API endpoint.
-"""
+"""Integration tests for upload API endpoint."""
 
 import io
 from pathlib import Path
@@ -21,8 +19,8 @@ def temp_upload_dir(tmp_path: Path, monkeypatch) -> Path:  # type: ignore
     monkeypatch.setattr(settings, "uploads_dir", upload_dir)
 
     # Replace the global storage service instance
-    from entmoot.core import storage
     from entmoot.api import upload as upload_module
+    from entmoot.core import storage
 
     new_storage = storage.FileStorageService(base_dir=upload_dir)
     monkeypatch.setattr(storage, "storage_service", new_storage)

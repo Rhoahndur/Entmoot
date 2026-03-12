@@ -22,11 +22,7 @@ import httpx
 import pytest
 
 from entmoot.integrations.usgs.cache import ElevationCacheManager
-from entmoot.integrations.usgs.client import (
-    RateLimiter,
-    USGSClient,
-    USGSClientConfig,
-)
+from entmoot.integrations.usgs.client import RateLimiter, USGSClient, USGSClientConfig
 from entmoot.integrations.usgs.parser import USGSResponseParser
 from entmoot.models.elevation import (
     DEMTileMetadata,
