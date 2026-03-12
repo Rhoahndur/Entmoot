@@ -112,6 +112,7 @@ site/
 # Exclude large data directories
 data/raw/
 data/processed/
+data/uploads/
 
 # Logs
 logs/
