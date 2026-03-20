@@ -1,6 +1,5 @@
 """Tests for custom exception hierarchy."""
 
-
 from entmoot.core.errors import (
     APIError,
     ConfigurationError,
