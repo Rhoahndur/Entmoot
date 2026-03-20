@@ -11,12 +11,11 @@ Tests cover:
 - Error handling
 """
 
-import json
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
@@ -34,7 +33,6 @@ from entmoot.models.elevation import (
     ElevationQuery,
     ElevationQueryStatus,
     ElevationUnit,
-    USRegion,
 )
 
 # Fixtures

@@ -8,11 +8,7 @@ to identify and evaluate buildable areas on a property based on terrain analysis
 import numpy as np
 from rasterio.transform import from_bounds
 
-from entmoot.core.terrain.buildability import (
-    BuildabilityClass,
-    BuildabilityThresholds,
-    analyze_buildability,
-)
+from entmoot.core.terrain.buildability import BuildabilityThresholds, analyze_buildability
 
 
 def demo_basic_buildability() -> None:
@@ -73,7 +69,7 @@ def demo_custom_thresholds() -> None:
 
     result = analyze_buildability(slope, elevation, cell_size=1.0, thresholds=strict_thresholds)
 
-    print(f"\nWith strict thresholds:")
+    print("\nWith strict thresholds:")
     print(f"  excellent_slope_max: {strict_thresholds.excellent_slope_max}%")
     print(f"  good_slope_max: {strict_thresholds.good_slope_max}%")
     print(f"  difficult_slope_max: {strict_thresholds.difficult_slope_max}%")
@@ -87,7 +83,7 @@ def demo_custom_thresholds() -> None:
 
     # Count zones by class
     class_counts = result.metrics.get("buildability_class_distribution", {})
-    print(f"\n  Buildability class distribution:")
+    print("\n  Buildability class distribution:")
     for cls, count in class_counts.items():
         if count > 0:
             print(f"    - {cls}: {count} zone(s)")

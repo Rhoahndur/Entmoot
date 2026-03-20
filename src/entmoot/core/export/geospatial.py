@@ -9,14 +9,11 @@ Provides export functionality to:
 All exports are properly georeferenced.
 """
 
-import io
 import json
 import logging
-import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
-from xml.etree import ElementTree as ET
+from typing import Any, Dict, List, Optional
 
 import ezdxf
 import simplekml

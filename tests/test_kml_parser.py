@@ -19,9 +19,6 @@ from shapely.geometry import LineString, Point, Polygon
 from entmoot.core.parsers import (
     GeometryType,
     KMLParser,
-    KMLValidator,
-    ParsedKML,
-    Placemark,
     parse_kml_file,
     parse_kml_string,
     validate_kml_file,

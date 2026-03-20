@@ -12,8 +12,7 @@ Tests all buffer creation functionality including:
 """
 
 import pytest
-from shapely.geometry import LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon
-from shapely.validation import make_valid
+from shapely.geometry import LineString, MultiLineString, Polygon
 
 from entmoot.core.constraints.buffers import (
     PROPERTY_LINE_SETBACK,

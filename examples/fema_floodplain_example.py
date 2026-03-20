@@ -34,7 +34,7 @@ async def query_floodplain_example() -> None:
     longitude = -122.084
     latitude = 37.422
 
-    print(f"\nQuerying FEMA NFHL for location:")
+    print("\nQuerying FEMA NFHL for location:")
     print(f"  Longitude: {longitude}")
     print(f"  Latitude: {latitude}")
 

@@ -6,9 +6,8 @@ for large files.
 """
 
 import logging
-import warnings
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from pyproj import CRS

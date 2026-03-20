@@ -9,19 +9,12 @@ Tests cover:
 - Error handling
 """
 
-import tempfile
 import zipfile
 from pathlib import Path
 
 import pytest
 
-from entmoot.core.parsers import (
-    GeometryType,
-    KMZParser,
-    KMZValidator,
-    parse_kmz_file,
-    validate_kmz_file,
-)
+from entmoot.core.parsers import GeometryType, KMZParser, parse_kmz_file, validate_kmz_file
 
 # Test fixtures path
 FIXTURES_DIR = Path(__file__).parent / "fixtures"

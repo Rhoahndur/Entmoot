@@ -187,10 +187,10 @@ def create_ascii_grid(
         # Write header
         f.write(f"ncols         {width}\n")
         f.write(f"nrows         {height}\n")
-        f.write(f"xllcorner     0.0\n")
-        f.write(f"yllcorner     0.0\n")
+        f.write("xllcorner     0.0\n")
+        f.write("yllcorner     0.0\n")
         f.write(f"cellsize      {cellsize}\n")
-        f.write(f"NODATA_value  -9999\n")
+        f.write("NODATA_value  -9999\n")
 
         # Write data
         for row in elevation:

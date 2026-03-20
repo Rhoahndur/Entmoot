@@ -263,7 +263,7 @@ def generate_visualizations(calculator: VolumeCalculator) -> None:
     section = calculator.generate_cross_section(
         start=(50.0, 50.0), end=(150.0, 150.0), num_points=100
     )
-    print(f"\n  Cross-section generated:")
+    print("\n  Cross-section generated:")
     print(f"    Length: {section.distance[-1]:.1f} ft")
     print(f"    Volume: {section.section_volume_cy:.0f} CY")
     print(f"    Max cut: {np.nanmax(section.cut_fill):.2f} ft")

@@ -10,7 +10,7 @@ Digital Elevation Models. Aspect is important for:
 """
 
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
 from numpy.typing import NDArray

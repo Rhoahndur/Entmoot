@@ -10,8 +10,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
-from shapely.geometry import Polygon as ShapelyPolygon
-from shapely.geometry.base import BaseGeometry
 
 
 class FloodZoneType(str, Enum):

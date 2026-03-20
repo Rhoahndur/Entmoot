@@ -11,7 +11,6 @@ from entmoot.core.optimization.genetic_algorithm import (
     InitializationStrategy,
 )
 from entmoot.core.optimization.problem import (
-    ObjectiveWeights,
     OptimizationConstraints,
     OptimizationObjective,
     PlacementSolution,

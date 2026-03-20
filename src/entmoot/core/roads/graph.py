@@ -7,11 +7,10 @@ are calculated based on terrain cost factors like slope, length, and cut/fill.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString
 from shapely.geometry import Point as ShapelyPoint
 
 try:

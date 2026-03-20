@@ -4,7 +4,6 @@ import pytest
 from shapely.geometry import Point as ShapelyPoint
 
 from entmoot.models.assets import (
-    Asset,
     AssetType,
     BuildingAsset,
     EquipmentYardAsset,

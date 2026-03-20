@@ -5,7 +5,7 @@ This module defines data models for elevation queries, including
 single point elevations, DEM tile metadata, and elevation datasets.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple

@@ -864,6 +864,7 @@ components:
           description: Additional technical details about the error
         timestamp:
           type: string
+          format: date-time
           title: Timestamp
           description: When the error occurred (UTC)
         request_id:

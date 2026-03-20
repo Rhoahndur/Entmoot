@@ -8,7 +8,7 @@ from KML, GeoTIFF, GeoJSON, and other geospatial file formats.
 import json
 import re
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import defusedxml.ElementTree as ET
 

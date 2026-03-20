@@ -12,7 +12,6 @@ import logging
 from typing import Optional, Tuple, Union
 
 import numpy as np
-from pyproj import CRS, Transformer
 from scipy import interpolate, ndimage
 from shapely.geometry import Polygon, box
 

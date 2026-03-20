@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon as ShapelyPolygon
 
 from entmoot.core.optimization.problem import (

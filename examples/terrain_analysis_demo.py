@@ -9,7 +9,6 @@ import numpy as np
 
 from entmoot.core.terrain.aspect import (
     AspectCalculator,
-    aspect_to_cardinal,
     calculate_aspect,
     calculate_aspect_distribution,
     calculate_solar_exposure,
@@ -64,12 +63,12 @@ def demo_basic_slope_calculation() -> None:
 
     print(f"DEM size: {dem.shape}")
     print(f"Elevation range: {dem.min():.2f}m - {dem.max():.2f}m")
-    print(f"\nSlope (degrees):")
+    print("\nSlope (degrees):")
     print(f"  Min: {slope_degrees.min():.2f}°")
     print(f"  Max: {slope_degrees.max():.2f}°")
     print(f"  Mean: {slope_degrees.mean():.2f}°")
     print(f"  Median: {np.median(slope_degrees):.2f}°")
-    print(f"\nSlope (percent):")
+    print("\nSlope (percent):")
     print(f"  Min: {slope_percent.min():.2f}%")
     print(f"  Max: {slope_percent.max():.2f}%")
     print(f"  Mean: {slope_percent.mean():.2f}%")
@@ -92,7 +91,7 @@ def demo_slope_classification() -> None:
     # Calculate statistics
     stats = calculate_slope_statistics(slope_percent, classified)
 
-    print(f"\nBuildability Analysis:")
+    print("\nBuildability Analysis:")
     print(f"  Flat (0-5%): {stats['class_percentages']['flat']:.1f}% of area")
     print(f"  Moderate (5-15%): {stats['class_percentages']['moderate']:.1f}% of area")
     print(f"  Steep (15-25%): {stats['class_percentages']['steep']:.1f}% of area")
@@ -117,7 +116,7 @@ def demo_aspect_calculation() -> None:
     # Get distribution by cardinal direction
     distribution = calculate_aspect_distribution(aspect)
 
-    print(f"\nAspect Distribution (direction slope faces):")
+    print("\nAspect Distribution (direction slope faces):")
     for direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "FLAT"]:
         count = distribution["counts"][direction]
         percent = distribution["percentages"][direction]
@@ -138,7 +137,7 @@ def demo_multiple_methods() -> None:
         SlopeMethod.ZEVENBERGEN_THORNE,
     ]
 
-    print(f"\nComparing slope calculation methods:")
+    print("\nComparing slope calculation methods:")
     for method in methods:
         calc = SlopeCalculator(cell_size=1.0, method=method, units="degrees")
         slope = calc.calculate(dem)
@@ -160,7 +159,7 @@ def demo_solar_exposure() -> None:
     # Calculate solar exposure for northern hemisphere (latitude 40°N)
     solar = calculate_solar_exposure(aspect, slope, latitude=40.0)
 
-    print(f"\nSolar Exposure (40°N latitude):")
+    print("\nSolar Exposure (40°N latitude):")
     print(f"  Min: {solar.min():.3f}")
     print(f"  Max: {solar.max():.3f}")
     print(f"  Mean: {solar.mean():.3f}")
@@ -187,7 +186,7 @@ def demo_wind_exposure() -> None:
     # Calculate wind exposure from west (270°)
     wind = calculate_wind_exposure(aspect, slope, prevailing_wind_direction=270.0)
 
-    print(f"\nWind Exposure (prevailing wind from West):")
+    print("\nWind Exposure (prevailing wind from West):")
     print(f"  Min: {wind.min():.3f}")
     print(f"  Max: {wind.max():.3f}")
     print(f"  Mean: {wind.mean():.3f}")
@@ -214,7 +213,7 @@ def demo_complete_analysis() -> None:
     slope_calc = SlopeCalculator(cell_size=1.0, units="percent")
     result = slope_calc.calculate_with_metadata(dem)
 
-    print(f"\nSlope Statistics:")
+    print("\nSlope Statistics:")
     print(f"  Min: {result['min']:.2f}%")
     print(f"  Max: {result['max']:.2f}%")
     print(f"  Mean: {result['mean']:.2f}%")
@@ -224,7 +223,7 @@ def demo_complete_analysis() -> None:
     aspect_calc = AspectCalculator(cell_size=1.0)
     aspect_result = aspect_calc.calculate_with_metadata(dem)
 
-    print(f"\nAspect Statistics:")
+    print("\nAspect Statistics:")
     print(f"  Defined pixels: {aspect_result['defined_pixels']}")
     print(f"  Undefined (flat): {aspect_result['undefined_pixels']}")
     if "mean" in aspect_result:
@@ -234,7 +233,7 @@ def demo_complete_analysis() -> None:
     classified = classify_slope(result["slope"])
     stats = calculate_slope_statistics(result["slope"], classified)
 
-    print(f"\nBuildability Assessment:")
+    print("\nBuildability Assessment:")
     print(f"  Easily buildable: {stats['class_percentages']['flat']:.1f}%")
     print(f"  Moderate difficulty: {stats['class_percentages']['moderate']:.1f}%")
     print(f"  Challenging: {stats['class_percentages']['steep']:.1f}%")

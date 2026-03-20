@@ -10,13 +10,12 @@ Tests cover:
 - File output
 """
 
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pytest
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import Polygon
 
 from entmoot.core.reports.pdf_generator import PDFReportGenerator, ReportData
 

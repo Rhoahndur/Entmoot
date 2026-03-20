@@ -8,7 +8,7 @@ and storage tanks.
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from shapely.affinity import rotate as shapely_rotate

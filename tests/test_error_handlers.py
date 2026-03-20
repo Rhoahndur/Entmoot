@@ -1,7 +1,7 @@
 """Tests for FastAPI error handlers."""
 
 import pytest
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,6 @@ from entmoot.core.errors import (
     APIError,
     ConfigurationError,
     CRSError,
-    EntmootException,
     GeometryError,
     ParseError,
     ServiceUnavailableError,
