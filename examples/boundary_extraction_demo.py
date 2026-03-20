@@ -9,10 +9,7 @@ This example demonstrates:
 4. Exporting to GeoJSON
 """
 
-from pathlib import Path
 
-from entmoot.core.boundaries import extract_boundaries_from_kml
-from entmoot.core.parsers.kml_parser import parse_kml_file
 from entmoot.models.boundary import BoundarySource
 
 

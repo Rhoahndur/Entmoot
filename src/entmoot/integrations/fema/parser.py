@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 
 from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry import shape
-from shapely.ops import unary_union
 
 from entmoot.models.regulatory import FloodplainData, FloodZone, FloodZoneType, RegulatoryDataSource
 

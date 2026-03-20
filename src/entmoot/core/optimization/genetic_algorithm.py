@@ -9,17 +9,16 @@ import random
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
-from numpy.typing import NDArray
 
 from entmoot.core.optimization.problem import (
     OptimizationConstraints,
     OptimizationObjective,
     PlacementSolution,
 )
-from entmoot.models.assets import Asset, RotationAngle
+from entmoot.models.assets import Asset
 
 
 class InitializationStrategy(str, Enum):

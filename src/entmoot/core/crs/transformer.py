@@ -10,7 +10,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from pyproj import CRS, Transformer
 
-from entmoot.models.crs import BoundingBox, CoordinateOrder, CoordinateTransformation, CRSInfo
+from entmoot.models.crs import BoundingBox, CoordinateTransformation, CRSInfo
 
 
 class TransformationError(Exception):
@@ -258,7 +258,7 @@ def transform_wgs84_to_utm(
     Raises:
         TransformationError: If transformation fails
     """
-    from entmoot.core.crs.utm import detect_utm_zone, get_utm_crs_info, get_utm_epsg
+    from entmoot.core.crs.utm import get_utm_crs_info, get_utm_epsg
 
     # Create WGS84 CRS info
     wgs84 = CRSInfo.from_epsg(4326)

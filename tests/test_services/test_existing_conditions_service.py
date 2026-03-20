@@ -6,12 +6,6 @@ import pytest
 from shapely.geometry import LineString
 from shapely.geometry import Polygon as ShapelyPolygon
 
-from entmoot.core.constraints.buffers import (
-    ROAD_SETBACK,
-    WATER_FEATURE_SETBACK,
-    RoadType,
-    WaterFeatureType,
-)
 from entmoot.models.existing_conditions import (
     ExistingConditionsData,
     OSMFeature,
@@ -21,7 +15,6 @@ from entmoot.models.existing_conditions import (
     OSMWaterType,
 )
 from entmoot.services.existing_conditions_service import (
-    BUILDING_BUFFER_M,
     ExistingConditionsResult,
     ExistingConditionsService,
 )

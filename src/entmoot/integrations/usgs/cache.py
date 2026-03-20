@@ -13,13 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from entmoot.models.elevation import (
-    DEMTileMetadata,
-    ElevationDataSource,
-    ElevationDatum,
-    ElevationPoint,
-    ElevationUnit,
-)
+from entmoot.models.elevation import DEMTileMetadata, ElevationPoint
 
 logger = logging.getLogger(__name__)
 

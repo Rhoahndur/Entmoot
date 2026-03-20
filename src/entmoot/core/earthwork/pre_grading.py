@@ -22,7 +22,7 @@ except ImportError:
     RASTERIO_AVAILABLE = False
 
 from entmoot.core.errors import ValidationError
-from entmoot.models.terrain import DEMData, DEMMetadata
+from entmoot.models.terrain import DEMData
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,6 @@ import type {
 import type {
   OptimizationResults,
   PlacedAsset,
-  ExportFormat,
   ConstraintViolation,
 } from "../types/results";
 import type { ProjectConfig } from "../types/config";
@@ -244,23 +243,6 @@ export const reoptimizeLayout = async (
   const response = await apiClient.post(
     `${API_V1_PREFIX}/projects/${projectId}/reoptimize`,
     config || {},
-  );
-  return response.data;
-};
-
-/**
- * Export layout in specified format
- */
-export const exportLayout = async (
-  projectId: string,
-  alternativeId: string,
-  format: ExportFormat,
-): Promise<Blob> => {
-  const response = await apiClient.get(
-    `${API_V1_PREFIX}/projects/${projectId}/alternatives/${alternativeId}/export/${format}`,
-    {
-      responseType: "blob",
-    },
   );
   return response.data;
 };

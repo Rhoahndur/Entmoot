@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional, Tuple
 
 from shapely import wkt
-from shapely.geometry import LineString, Point
 from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import nearest_points
@@ -22,7 +21,6 @@ from entmoot.core.constraints.buffers import (
 from entmoot.core.crs.transformer import CRSTransformer
 from entmoot.integrations.osm.client import OSMClient, OSMClientConfig
 from entmoot.models.existing_conditions import (
-    ExistingConditionsData,
     OSMFeature,
     OSMRoadClass,
     OSMUtilityType,

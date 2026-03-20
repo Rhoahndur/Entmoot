@@ -1,7 +1,7 @@
 """Tests for DEM loader functionality."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -75,10 +75,10 @@ def ascii_grid_path(tmp_path):
     with open(asc_path, "w") as f:
         f.write(f"ncols         {width}\n")
         f.write(f"nrows         {height}\n")
-        f.write(f"xllcorner     0.0\n")
-        f.write(f"yllcorner     0.0\n")
-        f.write(f"cellsize      1.0\n")
-        f.write(f"NODATA_value  -9999\n")
+        f.write("xllcorner     0.0\n")
+        f.write("yllcorner     0.0\n")
+        f.write("cellsize      1.0\n")
+        f.write("NODATA_value  -9999\n")
         for row in elevation:
             f.write(" ".join(f"{val:.2f}" for val in row) + "\n")
 
@@ -189,10 +189,10 @@ class TestDEMLoaderASCIIGrid:
         with open(asc_path, "w") as f:
             f.write(f"ncols         {width}\n")
             f.write(f"nrows         {height}\n")
-            f.write(f"xllcorner     0.0\n")
-            f.write(f"yllcorner     0.0\n")
-            f.write(f"cellsize      1.0\n")
-            f.write(f"NODATA_value  -9999\n")
+            f.write("xllcorner     0.0\n")
+            f.write("yllcorner     0.0\n")
+            f.write("cellsize      1.0\n")
+            f.write("NODATA_value  -9999\n")
             for row in elevation:
                 f.write(" ".join(f"{val:.2f}" for val in row) + "\n")
 

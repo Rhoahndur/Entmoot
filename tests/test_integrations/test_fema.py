@@ -4,10 +4,8 @@ Tests for FEMA National Flood Hazard Layer integration.
 Tests API client, parser, caching, and error handling with mocked responses.
 """
 
-import json
 import time
 from datetime import datetime
-from typing import Any, Dict
 
 import httpx
 import pytest
@@ -16,7 +14,7 @@ import respx
 from entmoot.integrations.fema.cache import CacheManager, InMemoryCache
 from entmoot.integrations.fema.client import FEMAClient, FEMAClientConfig, RateLimiter
 from entmoot.integrations.fema.parser import FEMAResponseParser
-from entmoot.models.regulatory import FloodplainData, FloodZone, FloodZoneType, RegulatoryDataSource
+from entmoot.models.regulatory import FloodplainData, FloodZone, FloodZoneType
 
 # Mock FEMA API responses
 MOCK_ZONE_AE_FEATURE = {

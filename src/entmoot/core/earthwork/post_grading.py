@@ -25,7 +25,6 @@ try:
 except ImportError:
     DEPENDENCIES_AVAILABLE = False
 
-from entmoot.core.errors import ValidationError
 from entmoot.models.earthwork import GradingZone, GradingZoneType
 from entmoot.models.terrain import DEMMetadata
 

@@ -139,7 +139,6 @@ def prepare_terrain_data(
     Raises:
         TerrainPreparationError: If validation fails critically.
     """
-    import rasterio
     from pyproj import CRS
     from rasterio.warp import Resampling, calculate_default_transform, reproject
 

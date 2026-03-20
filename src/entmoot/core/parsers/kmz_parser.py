@@ -5,10 +5,9 @@ Extracts and parses KML from KMZ (zipped KML) files, handling embedded resources
 """
 
 import logging
-import tempfile
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from .kml_parser import KMLParser, ParsedKML
 from .kmz_validator import KMZValidator

@@ -7,10 +7,9 @@ KML/KMZ files, including metrics, metadata, and validation.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from shapely.geometry import Point as ShapelyPoint
+from pydantic import BaseModel, ConfigDict, Field
 from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry.base import BaseGeometry
 

@@ -842,7 +842,7 @@ def run_optimization_sync(  # noqa: C901
             config=config,
         )
         logger.info(f"Intelligent road network generated: {len(road_segments)} segments")
-    except Exception as e:
+    except Exception:
         logger.warning(
             "Intelligent road network failed, falling back to straight lines",
             exc_info=True,

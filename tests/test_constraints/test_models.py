@@ -11,12 +11,10 @@ Tests the Constraint base class and all derived constraint types including:
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from shapely import wkt as shapely_wkt
 from shapely.geometry import LineString, Point, Polygon
 
 from entmoot.models.constraints import (
     STANDARD_SETBACKS,
-    Constraint,
     ConstraintPriority,
     ConstraintSeverity,
     ConstraintType,

@@ -7,15 +7,12 @@ including road topology, geometry, intersections, and cut/fill calculations.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
-from numpy.typing import NDArray
-from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import LineString
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon as ShapelyPolygon
-from shapely.geometry import box
-from shapely.ops import unary_union
 
 try:
     import networkx as nx

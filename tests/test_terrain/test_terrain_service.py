@@ -1,12 +1,11 @@
 """Tests for terrain service -- TerrainData and prepare_terrain_data()."""
 
-import math
 from pathlib import Path
 
 import numpy as np
 import pytest
 from rasterio.transform import Affine
-from shapely.geometry import Polygon, box
+from shapely.geometry import box
 
 from entmoot.services.terrain_service import TerrainData, prepare_terrain_data
 

@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from entmoot.core.config import Settings
 
 
